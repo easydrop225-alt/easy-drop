@@ -1,0 +1,52 @@
+import { createClient } from "@/lib/supabase/server";
+import { OrderTimeline } from "@/components/commandes/order-timeline";
+import { Card } from "@/components/ui/card";
+import { formatFCFA, formatDate } from "@/lib/utils";
+import { notFound } from "next/navigation";
+import type { Order, OrderItem, Product } from "@/types/database";
+
+export default async function DetailCommandePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data: order } = await supabase.from("orders").select("*").eq("id", id).single();
+  if (!order) notFound();
+
+  const { data: items } = await supabase.from("order_items").select("*, products(*)").eq("order_id", id);
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold">{(order as Order).numero_commande}</h1>
+        <p className="text-sm text-ink-900/60">Créée le {formatDate((order as Order).created_at)}</p>
+      </div>
+
+      <Card>
+        <h2 className="mb-3 font-medium">Statut</h2>
+        <OrderTimeline statut={(order as Order).statut} />
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-medium">Client</h2>
+        <p>{(order as Order).client_nom} — {(order as Order).client_telephone}</p>
+        <p className="text-sm text-ink-900/60">{(order as Order).client_adresse}, {(order as Order).client_commune}</p>
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-medium">Articles</h2>
+        <ul className="space-y-2 text-sm">
+          {((items ?? []) as (OrderItem & { products: Product })[]).map((item) => (
+            <li key={item.id} className="flex justify-between border-b border-ink-900/5 pb-2 last:border-0">
+              <span>{item.products?.nom} × {item.quantite}</span>
+              <span>{formatFCFA(item.prix_vente_unitaire * item.quantite)}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
+    </div>
+  );
+}

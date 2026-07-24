@@ -1,0 +1,14 @@
+import { createClient } from "@/lib/supabase/server";
+import { ProduitForm } from "../form";
+import type { Category } from "@/types/database";
+
+export default async function NouveauProduitPage() {
+  const supabase = await createClient();
+  const { data: categories } = await supabase.from("categories").select("*").order("ordre");
+  return (
+    <div className="mx-auto max-w-xl">
+      <h1 className="mb-6 text-2xl font-semibold">Nouveau produit</h1>
+      <ProduitForm categories={(categories ?? []) as Category[]} />
+    </div>
+  );
+}
