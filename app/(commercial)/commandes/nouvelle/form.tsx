@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import { creerCommande } from "../actions";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -20,14 +20,26 @@ export function NouvelleCommandeForm({
   const [state, formAction, pending] = useActionState(creerCommande, undefined as { error?: string } | undefined);
   const [productId, setProductId] = useState(produitPreselectionne ?? products[0]?.id ?? "");
   const [quantite, setQuantite] = useState(1);
-  const [prixVente, setPrixVente] = useState(0);
+  const [prixVenteUnitaire, setPrixVenteUnitaire] = useState(0);
   const [zone, setZone] = useState<ZoneLivraison>("abidjan");
+  const [prixLivraison, setPrixLivraison] = useState(fourchetteFraisParDefaut("abidjan").min);
+  const [livraisonModifieeManuellement, setLivraisonModifieeManuellement] = useState(false);
 
   const produit = useMemo(() => products.find((p) => p.id === productId), [products, productId]);
-  const fourchette = zone ? fourchetteFraisParDefaut(zone) : { min: 0, max: 0 };
-  const fraisLivraison = fourchette.min;
-  const benefice = produit ? calculBeneficeLigne(prixVente, produit.prix_fournisseur, quantite) : 0;
-  const horsFourchette = produit ? !estDansFourchette(prixVente, produit.prix_min_conseille, produit.prix_max_conseille) : false;
+
+  // Pré-remplit une suggestion de frais de livraison quand la zone change,
+  // sauf si le commercial a déjà personnalisé le montant lui-même.
+  useEffect(() => {
+    if (!livraisonModifieeManuellement) {
+      setPrixLivraison(fourchetteFraisParDefaut(zone).min);
+    }
+  }, [zone, livraisonModifieeManuellement]);
+
+  const prixVenteTotal = prixVenteUnitaire * quantite;
+  const prixTotal = prixVenteTotal + prixLivraison;
+  // Bénéfice = Prix total - Prix livraison - Prix fournisseur = Prix de vente - Prix fournisseur.
+  const benefice = produit ? calculBeneficeLigne(prixVenteUnitaire, produit.prix_fournisseur, quantite) : 0;
+  const horsFourchette = produit ? !estDansFourchette(prixVenteUnitaire, produit.prix_min_conseille, produit.prix_max_conseille) : false;
 
   return (
     <form action={formAction} className="space-y-6">
@@ -55,9 +67,9 @@ export function NouvelleCommandeForm({
                 onChange={(e) => setQuantite(Number(e.target.value))} required />
             </div>
             <div>
-              <Label htmlFor="prixVenteUnitaire">Prix de vente (FCFA)</Label>
-              <Input id="prixVenteUnitaire" name="prixVenteUnitaire" type="number" min={0} value={prixVente}
-                onChange={(e) => setPrixVente(Number(e.target.value))} required />
+              <Label htmlFor="prixVenteUnitaire">Prix de vente unitaire (FCFA, sans la livraison)</Label>
+              <Input id="prixVenteUnitaire" name="prixVenteUnitaire" type="number" min={0} value={prixVenteUnitaire}
+                onChange={(e) => setPrixVenteUnitaire(Number(e.target.value))} required />
             </div>
           </div>
           {horsFourchette && (
@@ -89,15 +101,43 @@ export function NouvelleCommandeForm({
               <option value="hors_abidjan">Hors Abidjan (paiement avant expédition)</option>
             </select>
           </div>
-          <input type="hidden" name="fraisLivraison" value={fraisLivraison} />
+          <div>
+            <Label htmlFor="fraisLivraison">Prix de la livraison (FCFA)</Label>
+            <Input
+              id="fraisLivraison"
+              name="fraisLivraison"
+              type="number"
+              min={0}
+              value={prixLivraison}
+              onChange={(e) => { setPrixLivraison(Number(e.target.value)); setLivraisonModifieeManuellement(true); }}
+              required
+            />
+            <p className="mt-1 text-xs text-ink-900/50">
+              Suggestion pour {zone === "abidjan" ? "Abidjan" : "hors Abidjan"} : {formatFCFA(fourchetteFraisParDefaut(zone).min)} – {formatFCFA(fourchetteFraisParDefaut(zone).max)}.
+              Tu peux ajuster ce montant ; l'administration pourra aussi le corriger si besoin.
+            </p>
+          </div>
           <input type="hidden" name="modeLivraison" value="normal" />
-          <p className="text-sm text-ink-900/60">Frais de livraison estimés : {formatFCFA(fraisLivraison)}</p>
         </div>
       </Card>
 
-      <Card className="bg-beige-100">
-        <p className="text-sm text-ink-900/60">Bénéfice estimé pour cette commande</p>
-        <p className="text-2xl font-semibold text-terracotta-600">{formatFCFA(benefice)}</p>
+      <Card className="space-y-2 bg-beige-100">
+        <div className="flex justify-between text-sm">
+          <span className="text-ink-900/60">Prix de vente</span>
+          <span>{formatFCFA(prixVenteTotal)}</span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-ink-900/60">Prix de la livraison</span>
+          <span>{formatFCFA(prixLivraison)}</span>
+        </div>
+        <div className="flex justify-between border-t border-ink-900/10 pt-2 font-medium">
+          <span>Prix total (payé par le client)</span>
+          <span>{formatFCFA(prixTotal)}</span>
+        </div>
+        <div className="mt-3 border-t border-ink-900/10 pt-3">
+          <p className="text-sm text-ink-900/60">Bénéfice estimé pour cette commande</p>
+          <p className="text-2xl font-semibold text-terracotta-600">{formatFCFA(benefice)}</p>
+        </div>
       </Card>
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}

@@ -26,6 +26,7 @@ export interface Profile {
   statut: ProfileStatut;
   date_validation: string | null;
   valide_par: string | null;
+  photo_url: string | null;
   created_at: string;
 }
 
@@ -114,6 +115,7 @@ export interface Payment {
   statut: StatutPaiement;
   date_paiement: string;
   reference_paiement: string | null;
+  preuve_url: string | null;
 }
 
 export interface Profit {

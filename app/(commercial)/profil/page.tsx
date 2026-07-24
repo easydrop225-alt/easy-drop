@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
+import { AvatarUploader } from "@/components/produits/avatar-uploader";
 import type { Profile } from "@/types/database";
 
 export default async function ProfilPage() {
@@ -9,8 +10,11 @@ export default async function ProfilPage() {
   const p = profile as Profile | null;
 
   return (
-    <div className="mx-auto max-w-md">
-      <h1 className="mb-6 text-2xl font-semibold">Mon profil</h1>
+    <div className="mx-auto max-w-md space-y-4">
+      <h1 className="mb-2 text-2xl font-semibold">Mon profil</h1>
+      <Card>
+        {user?.id && <AvatarUploader userId={user.id} photoUrl={p?.photo_url ?? null} />}
+      </Card>
       <Card className="space-y-3 text-sm">
         <p><span className="text-ink-900/50">Nom : </span>{p?.prenom} {p?.nom}</p>
         <p><span className="text-ink-900/50">Téléphone : </span>{p?.telephone}</p>

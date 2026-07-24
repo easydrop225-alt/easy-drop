@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { nouvelleCommandeSchema } from "@/lib/validations/schemas";
 import { calculDateLivraisonPrevue } from "@/lib/calculs/calcul-livraison";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 
 export async function creerCommande(_prevState: unknown, formData: FormData) {
   const raw = {
@@ -74,4 +75,53 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
   }
 
   redirect(`/commandes/${order.id}`);
+}
+
+const STATUTS_MODIFIABLES = ["nouvelle", "en_attente", "confirmee", "en_preparation"];
+
+export interface InfosCommandeCommercialInput {
+  clientNom: string;
+  clientTelephone: string;
+  clientCommune: string;
+  clientAdresse: string;
+  itemId: string;
+  quantite: number;
+  prixVenteUnitaire: number;
+}
+
+// Le commercial ne peut modifier sa commande que tant qu'elle n'est pas
+// encore en livraison (les policies RLS appliquent la même règle côté base
+// de données, cette vérification côté serveur donne un message plus clair).
+export async function modifierMaCommande(orderId: string, infos: InfosCommandeCommercialInput) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Session expirée, merci de te reconnecter." };
+
+  const { data: order } = await supabase.from("orders").select("statut, commercial_id").eq("id", orderId).single();
+  if (!order || order.commercial_id !== user.id) return { error: "Commande introuvable." };
+  if (!STATUTS_MODIFIABLES.includes(order.statut)) {
+    return { error: "Cette commande ne peut plus être modifiée (elle est déjà en cours de livraison ou au-delà)." };
+  }
+
+  const { error: orderError } = await supabase
+    .from("orders")
+    .update({
+      client_nom: infos.clientNom,
+      client_telephone: infos.clientTelephone,
+      client_commune: infos.clientCommune,
+      client_adresse: infos.clientAdresse,
+    })
+    .eq("id", orderId);
+
+  if (orderError) return { error: orderError.message };
+
+  const { error: itemError } = await supabase
+    .from("order_items")
+    .update({ quantite: infos.quantite, prix_vente_unitaire: infos.prixVenteUnitaire })
+    .eq("id", infos.itemId);
+
+  if (itemError) return { error: itemError.message };
+
+  revalidatePath(`/commandes/${orderId}`);
+  return { success: true };
 }

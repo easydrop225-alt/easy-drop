@@ -32,23 +32,27 @@ export async function creerProduit(_prevState: unknown, formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.from("products").insert({
-    nom: parsed.data.nom,
-    slug: slugify(parsed.data.nom) + "-" + Date.now().toString(36),
-    category_id: parsed.data.categoryId,
-    description: parsed.data.description,
-    prix_fournisseur: parsed.data.prixFournisseur,
-    prix_min_conseille: parsed.data.prixMinConseille ?? null,
-    prix_max_conseille: parsed.data.prixMaxConseille ?? null,
-    couleurs: parsed.data.couleurs,
-    tailles: parsed.data.tailles,
-    actif: parsed.data.actif,
-  });
+  const { data: product, error } = await supabase
+    .from("products")
+    .insert({
+      nom: parsed.data.nom,
+      slug: slugify(parsed.data.nom) + "-" + Date.now().toString(36),
+      category_id: parsed.data.categoryId,
+      description: parsed.data.description,
+      prix_fournisseur: parsed.data.prixFournisseur,
+      prix_min_conseille: parsed.data.prixMinConseille ?? null,
+      prix_max_conseille: parsed.data.prixMaxConseille ?? null,
+      couleurs: parsed.data.couleurs,
+      tailles: parsed.data.tailles,
+      actif: parsed.data.actif,
+    })
+    .select()
+    .single();
 
   if (error) return { error: error.message };
 
   revalidatePath("/admin/produits");
-  redirect("/admin/produits");
+  redirect(`/admin/produits/${product.id}/edit`);
 }
 
 export async function modifierProduit(productId: string, _prevState: unknown, formData: FormData) {

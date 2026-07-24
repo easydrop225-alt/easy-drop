@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
+import { StatutBadge } from "@/components/ui/badge";
 import { formatFCFA } from "@/lib/utils";
-import type { Order, Profit } from "@/types/database";
+import type { Order, OrderItem, Profit } from "@/types/database";
 
 export default async function DashboardCommercialPage() {
   const supabase = await createClient();
@@ -28,6 +29,25 @@ export default async function DashboardCommercialPage() {
   const commandesAnnulees = list.filter((o) => o.statut === "annulee").length;
   const tauxReussite = list.length > 0 ? Math.round((commandesLivrees / list.length) * 100) : 0;
 
+  // Commandes du jour (toutes commandes du commercial créées aujourd'hui).
+  const debutJour = new Date(); debutJour.setHours(0, 0, 0, 0);
+  const { data: commandesJourData } = await supabase
+    .from("orders")
+    .select("*, order_items(*)")
+    .eq("commercial_id", user?.id)
+    .gte("created_at", debutJour.toISOString())
+    .order("created_at", { ascending: false });
+
+  const commandesJour = (commandesJourData ?? []) as (Order & { order_items: OrderItem[] })[];
+  const ventesJour = commandesJour.reduce(
+    (acc, o) => acc + o.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0),
+    0
+  );
+  const beneficeJour = commandesJour.reduce(
+    (acc, o) => acc + o.order_items.reduce((a, i) => a + Number(i.benefice_ligne), 0),
+    0
+  );
+
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Mon dashboard</h1>
@@ -52,6 +72,47 @@ export default async function DashboardCommercialPage() {
       </div>
 
       <div>
+        <h2 className="mb-3 text-lg font-medium">Résumé de mes commandes du jour</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <Card>
+            <CardTitle>Commandes aujourd'hui</CardTitle>
+            <CardValue>{commandesJour.length}</CardValue>
+          </Card>
+          <Card>
+            <CardTitle>Ventes du jour</CardTitle>
+            <CardValue>{formatFCFA(ventesJour)}</CardValue>
+          </Card>
+          <Card>
+            <CardTitle>Bénéfice du jour</CardTitle>
+            <CardValue>{formatFCFA(beneficeJour)}</CardValue>
+          </Card>
+        </div>
+        <Card className="mt-3 p-0">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-ink-900/5 text-left text-ink-900/50">
+                <th className="p-3">Numéro</th>
+                <th className="p-3">Client</th>
+                <th className="p-3">Statut</th>
+              </tr>
+            </thead>
+            <tbody>
+              {commandesJour.map((order) => (
+                <tr key={order.id} className="border-b border-ink-900/5 last:border-0">
+                  <td className="p-3"><a href={`/commandes/${order.id}`} className="font-medium hover:underline">{order.numero_commande}</a></td>
+                  <td className="p-3">{order.client_nom}</td>
+                  <td className="p-3"><StatutBadge statut={order.statut} /></td>
+                </tr>
+              ))}
+              {commandesJour.length === 0 && (
+                <tr><td colSpan={3} className="p-6 text-center text-ink-900/40">Aucune commande créée aujourd'hui.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </Card>
+      </div>
+
+      <div>
         <h2 className="mb-3 text-lg font-medium">Dernières commandes</h2>
         <Card className="p-0">
           <table className="w-full text-sm">
@@ -65,9 +126,9 @@ export default async function DashboardCommercialPage() {
             <tbody>
               {list.map((order) => (
                 <tr key={order.id} className="border-b border-ink-900/5 last:border-0">
-                  <td className="p-3">{order.numero_commande}</td>
+                  <td className="p-3"><a href={`/commandes/${order.id}`} className="hover:underline">{order.numero_commande}</a></td>
                   <td className="p-3">{order.client_nom}</td>
-                  <td className="p-3">{order.statut}</td>
+                  <td className="p-3"><StatutBadge statut={order.statut} /></td>
                 </tr>
               ))}
               {list.length === 0 && (
