@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { formatFCFA } from "@/lib/utils";
 import { fourchetteFraisParDefaut } from "@/lib/calculs/calcul-livraison";
 import { calculBeneficeLigne, estDansFourchette } from "@/lib/calculs/calcul-benefice";
+import { COMMUNES_ABIDJAN, tarifPourCommune } from "@/lib/data/communes-abidjan";
 import type { Product, ZoneLivraison } from "@/types/database";
 
 export function NouvelleCommandeForm({
@@ -22,6 +23,7 @@ export function NouvelleCommandeForm({
   const [quantite, setQuantite] = useState(1);
   const [prixVenteUnitaire, setPrixVenteUnitaire] = useState(0);
   const [zone, setZone] = useState<ZoneLivraison>("abidjan");
+  const [commune, setCommune] = useState("");
   const [prixLivraison, setPrixLivraison] = useState(fourchetteFraisParDefaut("abidjan").min);
   const [livraisonModifieeManuellement, setLivraisonModifieeManuellement] = useState(false);
 
@@ -34,6 +36,18 @@ export function NouvelleCommandeForm({
       setPrixLivraison(fourchetteFraisParDefaut(zone).min);
     }
   }, [zone, livraisonModifieeManuellement]);
+
+  // Dès que la commune saisie correspond exactement à une commune connue
+  // (via la liste déroulante/autocomplétion), le prix de la livraison se
+  // met à jour automatiquement selon son tarif.
+  function handleCommuneChange(valeur: string) {
+    setCommune(valeur);
+    const tarif = tarifPourCommune(valeur);
+    if (tarif != null) {
+      setPrixLivraison(tarif);
+      setLivraisonModifieeManuellement(false);
+    }
+  }
 
   const prixVenteTotal = prixVenteUnitaire * quantite;
   const prixTotal = prixVenteTotal + prixLivraison;
@@ -95,7 +109,24 @@ export function NouvelleCommandeForm({
         <div className="space-y-3">
           <div><Label htmlFor="clientNom">Nom du client</Label><Input id="clientNom" name="clientNom" required /></div>
           <div><Label htmlFor="clientTelephone">Téléphone du client</Label><Input id="clientTelephone" name="clientTelephone" required /></div>
-          <div><Label htmlFor="clientCommune">Commune</Label><Input id="clientCommune" name="clientCommune" required /></div>
+          <div>
+            <Label htmlFor="clientCommune">Commune</Label>
+            <Input
+              id="clientCommune"
+              name="clientCommune"
+              list="communes-liste"
+              value={commune}
+              onChange={(e) => handleCommuneChange(e.target.value)}
+              placeholder="Commence à écrire pour voir les suggestions..."
+              autoComplete="off"
+              required
+            />
+            <datalist id="communes-liste">
+              {COMMUNES_ABIDJAN.map((c) => (
+                <option key={c.commune} value={c.commune} />
+              ))}
+            </datalist>
+          </div>
           <div><Label htmlFor="clientAdresse">Adresse complète</Label><Input id="clientAdresse" name="clientAdresse" required /></div>
         </div>
       </Card>
@@ -108,7 +139,7 @@ export function NouvelleCommandeForm({
             <select id="zone" name="zone" value={zone} onChange={(e) => setZone(e.target.value as ZoneLivraison)}
               className="h-10 w-full rounded-xl border border-ink-900/10 bg-white px-3 text-sm">
               <option value="abidjan">Abidjan (paiement à la livraison)</option>
-              <option value="hors_abidjan">Hors Abidjan (paiement avant expédition)</option>
+              <option value="hors_abidjan">Hors Abidjan / Expédition (paiement avant expédition)</option>
             </select>
           </div>
           <div>
@@ -123,11 +154,25 @@ export function NouvelleCommandeForm({
               required
             />
             <p className="mt-1 text-xs text-ink-900/50">
-              Suggestion pour {zone === "abidjan" ? "Abidjan" : "hors Abidjan"} : {formatFCFA(fourchetteFraisParDefaut(zone).min)} – {formatFCFA(fourchetteFraisParDefaut(zone).max)}.
-              Tu peux ajuster ce montant ; l'administration pourra aussi le corriger si besoin.
+              {zone === "abidjan"
+                ? "Le tarif se met à jour automatiquement selon la commune choisie ci-dessus. Tu peux aussi l'ajuster manuellement."
+                : `Suggestion hors Abidjan : ${formatFCFA(fourchetteFraisParDefaut(zone).min)} – ${formatFCFA(fourchetteFraisParDefaut(zone).max)}.`}
             </p>
           </div>
           <input type="hidden" name="modeLivraison" value="normal" />
+
+          {zone === "hors_abidjan" && (
+            <div className="grid grid-cols-2 gap-3 rounded-xl bg-beige-100 p-3">
+              <div>
+                <Label htmlFor="gare">Gare (point de dépôt)</Label>
+                <Input id="gare" name="gare" placeholder="Ex : Gare UTB Yamoussoukro" />
+              </div>
+              <div>
+                <Label htmlFor="villeExpedition">Ville de destination</Label>
+                <Input id="villeExpedition" name="villeExpedition" placeholder="Ex : Yamoussoukro" />
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 

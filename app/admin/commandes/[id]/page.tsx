@@ -7,6 +7,7 @@ import type { Order, OrderItem, Product, Profile } from "@/types/database";
 import { StatutForm } from "./statut-form";
 import { LivraisonForm } from "./livraison-form";
 import { InfosCommandeForm } from "./infos-form";
+import { RecuExpeditionUploader } from "@/components/commandes/recu-expedition-uploader";
 
 export default async function DetailCommandeAdminPage({
   params,
@@ -52,6 +53,16 @@ export default async function DetailCommandeAdminPage({
         <h2 className="mb-3 font-medium">Prix de la livraison</h2>
         <LivraisonForm orderId={o.id} fraisActuel={o.frais_livraison} />
       </Card>
+
+      {o.zone === "hors_abidjan" && (
+        <Card>
+          <h2 className="mb-3 font-medium">Expédition</h2>
+          <p className="mb-3 text-sm text-ink-900/60">
+            Gare : {o.gare || "non précisée"} — Ville de destination : {o.ville_expedition || "non précisée"}
+          </p>
+          <RecuExpeditionUploader orderId={o.id} recuActuel={o.recu_expedition_url} />
+        </Card>
+      )}
 
       <Card className="space-y-2 bg-beige-100">
         <div className="flex justify-between text-sm">

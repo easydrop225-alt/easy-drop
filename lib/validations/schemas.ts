@@ -41,6 +41,8 @@ export const nouvelleCommandeSchema = z.object({
   modeLivraison: z.enum(["normal", "yango_urgent"]).default("normal"),
   fraisLivraison: z.coerce.number().min(0),
   observation: z.string().max(500).optional(),
+  gare: z.string().max(200).optional(),
+  villeExpedition: z.string().max(200).optional(),
 });
 export type NouvelleCommandeInput = z.infer<typeof nouvelleCommandeSchema>;
 

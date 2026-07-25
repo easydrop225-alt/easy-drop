@@ -20,6 +20,8 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
     modeLivraison: formData.get("modeLivraison") || "normal",
     fraisLivraison: formData.get("fraisLivraison"),
     observation: formData.get("observation") || undefined,
+    gare: formData.get("gare") || undefined,
+    villeExpedition: formData.get("villeExpedition") || undefined,
   };
 
   const parsed = nouvelleCommandeSchema.safeParse(raw);
@@ -53,6 +55,8 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
       mode_livraison: parsed.data.modeLivraison,
       frais_livraison: parsed.data.fraisLivraison,
       date_livraison_prevue: dateLivraison.toISOString().slice(0, 10),
+      gare: parsed.data.gare ?? null,
+      ville_expedition: parsed.data.villeExpedition ?? null,
       statut: "nouvelle",
     })
     .select()

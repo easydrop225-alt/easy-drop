@@ -72,6 +72,30 @@ export default async function DetailCommandePage({
         </ul>
       </Card>
 
+      {(order as Order).zone === "hors_abidjan" && (
+        <Card>
+          <h2 className="mb-3 font-medium">Expédition</h2>
+          <p className="text-sm text-ink-900/60">
+            Gare : {(order as Order).gare || "non précisée"} — Ville : {(order as Order).ville_expedition || "non précisée"}
+          </p>
+          {["livree", "terminee"].includes((order as Order).statut) && (order as Order).recu_expedition_url ? (
+            <a
+              href={(order as Order).recu_expedition_url!}
+              download
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-block rounded-xl bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600"
+            >
+              Télécharger le reçu d'expédition
+            </a>
+          ) : (
+            <p className="mt-2 text-xs text-ink-900/40">
+              Le reçu d'expédition sera téléchargeable ici une fois la commande marquée comme livrée/terminée par l'administration.
+            </p>
+          )}
+        </Card>
+      )}
+
       <Card className="space-y-2 bg-beige-100">
         <div className="flex justify-between text-sm">
           <span className="text-ink-900/60">Prix de vente</span>

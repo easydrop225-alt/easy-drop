@@ -56,6 +56,9 @@ export default async function AdminCommandesPage() {
                   <div>
                     <p className="text-ink-900/50">Produit</p>
                     <p>{premierArticle?.products?.nom ?? "—"}</p>
+                    {premierArticle?.observation && (
+                      <p className="text-xs italic text-ink-900/40">{premierArticle.observation}</p>
+                    )}
                   </div>
                   <div>
                     <p className="text-ink-900/50">Commercial</p>
@@ -70,6 +73,9 @@ export default async function AdminCommandesPage() {
                   <div className="col-span-2 sm:col-span-2">
                     <p className="text-ink-900/50">Adresse de livraison</p>
                     <p>{order.client_adresse}, {order.client_commune}</p>
+                    {order.zone === "hors_abidjan" && order.ville_expedition && (
+                      <p className="text-xs text-ink-900/40">Expédition → {order.ville_expedition} ({order.gare ?? "gare non précisée"})</p>
+                    )}
                   </div>
                   <div>
                     <p className="text-ink-900/50">Date</p>

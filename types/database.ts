@@ -92,6 +92,9 @@ export interface Order {
   zone: ZoneLivraison;
   frais_livraison: number;
   date_livraison_prevue: string | null;
+  gare: string | null;
+  ville_expedition: string | null;
+  recu_expedition_url: string | null;
   created_at: string;
   updated_at: string;
 }
