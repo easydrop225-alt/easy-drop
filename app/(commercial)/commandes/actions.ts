@@ -19,6 +19,7 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
     zone: formData.get("zone"),
     modeLivraison: formData.get("modeLivraison") || "normal",
     fraisLivraison: formData.get("fraisLivraison"),
+    observation: formData.get("observation") || undefined,
   };
 
   const parsed = nouvelleCommandeSchema.safeParse(raw);
@@ -68,6 +69,7 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
     quantite: parsed.data.quantite,
     prix_vente_unitaire: parsed.data.prixVenteUnitaire,
     prix_fournisseur_unitaire: product.prix_fournisseur,
+    observation: parsed.data.observation ?? null,
   });
 
   if (itemError) {
@@ -87,6 +89,7 @@ export interface InfosCommandeCommercialInput {
   itemId: string;
   quantite: number;
   prixVenteUnitaire: number;
+  observation: string;
 }
 
 // Le commercial ne peut modifier sa commande que tant qu'elle n'est pas
@@ -117,7 +120,11 @@ export async function modifierMaCommande(orderId: string, infos: InfosCommandeCo
 
   const { error: itemError } = await supabase
     .from("order_items")
-    .update({ quantite: infos.quantite, prix_vente_unitaire: infos.prixVenteUnitaire })
+    .update({
+      quantite: infos.quantite,
+      prix_vente_unitaire: infos.prixVenteUnitaire,
+      observation: infos.observation || null,
+    })
     .eq("id", infos.itemId);
 
   if (itemError) return { error: itemError.message };

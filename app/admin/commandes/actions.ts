@@ -44,6 +44,7 @@ export interface InfosCommandeInput {
   itemId: string;
   quantite: number;
   prixVenteUnitaire: number;
+  observation: string;
 }
 
 // L'administrateur peut modifier toutes les informations d'une commande,
@@ -68,6 +69,7 @@ export async function modifierInfosCommandeAdmin(orderId: string, infos: InfosCo
     .update({
       quantite: infos.quantite,
       prix_vente_unitaire: infos.prixVenteUnitaire,
+      observation: infos.observation || null,
     })
     .eq("id", infos.itemId);
 

@@ -59,9 +59,14 @@ export default async function DetailCommandePage({
         <h2 className="mb-3 font-medium">Articles</h2>
         <ul className="space-y-2 text-sm">
           {itemList.map((item) => (
-            <li key={item.id} className="flex justify-between border-b border-ink-900/5 pb-2 last:border-0">
-              <span>{item.products?.nom} × {item.quantite}</span>
-              <span>{formatFCFA(item.prix_vente_unitaire * item.quantite)}</span>
+            <li key={item.id} className="border-b border-ink-900/5 pb-2 last:border-0">
+              <div className="flex justify-between">
+                <span>{item.products?.nom} × {item.quantite}</span>
+                <span>{formatFCFA(item.prix_vente_unitaire * item.quantite)}</span>
+              </div>
+              {item.observation && (
+                <p className="mt-1 text-xs text-ink-900/50">Observation : {item.observation}</p>
+              )}
             </li>
           ))}
         </ul>

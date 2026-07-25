@@ -77,6 +77,16 @@ export function NouvelleCommandeForm({
               Ce prix sort de la fourchette conseillée ({formatFCFA(produit?.prix_min_conseille ?? 0)} – {formatFCFA(produit?.prix_max_conseille ?? 0)}).
             </p>
           )}
+          <div>
+            <Label htmlFor="observation">Observation (couleur, taille, précisions...)</Label>
+            <textarea
+              id="observation"
+              name="observation"
+              rows={2}
+              placeholder="Ex : Couleur noire, taille M"
+              className="w-full rounded-xl border border-ink-900/10 p-3 text-sm"
+            />
+          </div>
         </div>
       </Card>
 

@@ -105,6 +105,7 @@ export interface OrderItem {
   prix_vente_unitaire: number;
   prix_fournisseur_unitaire: number;
   benefice_ligne: number;
+  observation: string | null;
 }
 
 export interface Payment {
