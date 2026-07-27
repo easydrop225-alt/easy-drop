@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
-import { formatFCFA, formatDate } from "@/lib/utils";
 import type { Payment, Profile, Profit } from "@/types/database";
 import { PaiementEnAttenteCard } from "./paiement-en-attente-card";
+import { HistoriqueVersementsGroupe } from "./historique-groupe";
 
 interface CommercialDu {
   commercial: Profile;
@@ -72,39 +72,7 @@ export default async function AdminPaiementsPage() {
 
       <div>
         <h2 className="mb-3 text-lg font-medium">Historique des versements</h2>
-        <Card className="p-0">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-ink-900/5 text-left text-ink-900/50">
-                <th className="p-3">Date</th>
-                <th className="p-3">Commercial</th>
-                <th className="p-3">Montant</th>
-                <th className="p-3">Mode</th>
-                <th className="p-3">Référence</th>
-                <th className="p-3">Preuve</th>
-                <th className="p-3">Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {list.map((p) => (
-                <tr key={p.id} className="border-b border-ink-900/5 last:border-0">
-                  <td className="p-3">{formatDate(p.date_paiement)}</td>
-                  <td className="p-3">{p.profiles?.prenom} {p.profiles?.nom}</td>
-                  <td className="p-3">{formatFCFA(p.montant)}</td>
-                  <td className="p-3">{p.mode}</td>
-                  <td className="p-3">{p.reference_paiement ?? "—"}</td>
-                  <td className="p-3">
-                    {p.preuve_url ? (
-                      <a href={p.preuve_url} target="_blank" rel="noreferrer" className="text-terracotta-600 underline">Voir</a>
-                    ) : "—"}
-                  </td>
-                  <td className="p-3">{p.statut}</td>
-                </tr>
-              ))}
-              {list.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-ink-900/40">Aucun paiement enregistré.</td></tr>}
-            </tbody>
-          </table>
-        </Card>
+        <HistoriqueVersementsGroupe payments={list} />
       </div>
     </div>
   );
