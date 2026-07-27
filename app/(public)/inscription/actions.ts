@@ -37,12 +37,12 @@ export async function inscrireCommercial(_prevState: unknown, formData: FormData
     prenom,
     telephone,
     email: email || null,
-    statut: "en_attente",
+    statut: "valide",
   });
 
   if (profileError) {
     return { error: profileError.message };
   }
 
-  redirect("/attente-validation");
+  redirect("/dashboard");
 }

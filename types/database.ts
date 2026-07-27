@@ -8,9 +8,7 @@
 
 export type UserRole = "super_admin" | "admin" | "commercial";
 export type ProfileStatut = "en_attente" | "valide" | "refuse" | "desactive";
-export type OrderStatut =
-  | "nouvelle" | "en_attente" | "confirmee" | "en_preparation" | "en_livraison"
-  | "livree" | "terminee" | "annulee" | "refusee" | "client_injoignable" | "relance" | "retour";
+export type OrderStatut = "nouvelle" | "livree" | "non_livree" | "relance";
 export type ModeLivraison = "normal" | "yango_urgent";
 export type ZoneLivraison = "abidjan" | "hors_abidjan";
 export type ModePaiement = "wave" | "orange_money" | "especes";
@@ -27,6 +25,7 @@ export interface Profile {
   date_validation: string | null;
   valide_par: string | null;
   photo_url: string | null;
+  telephone_modifie_le: string | null;
   created_at: string;
 }
 
@@ -36,6 +35,7 @@ export interface Category {
   slug: string;
   ordre: number;
   actif: boolean;
+  icone: string;
 }
 
 export interface Product {
@@ -75,6 +75,8 @@ export interface Inventory {
   id: string;
   product_variant_id: string;
   quantite_disponible: number;
+  stock_total_recu: number;
+  stock_ecoule: number;
   seuil_alerte: number;
 }
 
@@ -92,6 +94,9 @@ export interface Order {
   zone: ZoneLivraison;
   frais_livraison: number;
   date_livraison_prevue: string | null;
+  date_relance: string | null;
+  demande_suppression: boolean;
+  demande_suppression_motif: string | null;
   gare: string | null;
   ville_expedition: string | null;
   recu_expedition_url: string | null;

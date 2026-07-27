@@ -13,10 +13,13 @@ export default async function MesGainsPage() {
     .eq("commercial_id", user?.id)
     .order("date_paiement", { ascending: false });
 
+  // "En attente de paiement" = bénéfices des commandes livrées avec succès,
+  // pas encore marquées comme payées par l'admin.
   const { data: profits } = await supabase
     .from("profits")
-    .select("*")
-    .eq("commercial_id", user?.id);
+    .select("*, orders!inner(statut)")
+    .eq("commercial_id", user?.id)
+    .eq("orders.statut", "livree");
 
   const paymentList = (payments ?? []) as Payment[];
   const profitList = (profits ?? []) as Profit[];

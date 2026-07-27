@@ -10,6 +10,7 @@ function slugify(text: string) {
 
 export async function creerCategorie(_prevState: unknown, formData: FormData) {
   const nom = String(formData.get("nom") ?? "").trim();
+  const icone = String(formData.get("icone") ?? "").trim() || "📦";
   if (nom.length < 2) return { error: "Le nom de la catégorie est trop court." };
 
   const supabase = await createClient();
@@ -18,11 +19,20 @@ export async function creerCategorie(_prevState: unknown, formData: FormData) {
 
   const { error } = await supabase.from("categories").insert({
     nom,
+    icone,
     slug: slugify(nom) + "-" + Date.now().toString(36),
     ordre: (count ?? 0) + 1,
     actif: true,
   });
 
+  if (error) return { error: error.message };
+  revalidatePath("/admin/categories");
+  return { success: true };
+}
+
+export async function modifierIcone(categoryId: string, icone: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("categories").update({ icone: icone || "📦" }).eq("id", categoryId);
   if (error) return { error: error.message };
   revalidatePath("/admin/categories");
   return { success: true };

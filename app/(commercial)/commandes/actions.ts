@@ -83,7 +83,7 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
   redirect(`/commandes/${order.id}`);
 }
 
-const STATUTS_MODIFIABLES = ["nouvelle", "en_attente", "confirmee", "en_preparation"];
+const STATUTS_MODIFIABLES = ["nouvelle"];
 
 export interface InfosCommandeCommercialInput {
   clientNom: string;
@@ -133,6 +133,36 @@ export async function modifierMaCommande(orderId: string, infos: InfosCommandeCo
 
   if (itemError) return { error: itemError.message };
 
+  revalidatePath(`/commandes/${orderId}`);
+  return { success: true };
+}
+
+// Le commercial valide la demande de suppression émise par l'admin.
+export async function validerSuppressionCommande(orderId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Session expirée." };
+
+  const { error } = await supabase
+    .from("orders")
+    .delete()
+    .eq("id", orderId)
+    .eq("commercial_id", user.id)
+    .eq("demande_suppression", true);
+
+  if (error) return { error: error.message };
+  revalidatePath("/commandes");
+  return { success: true };
+}
+
+// Le commercial refuse la demande de suppression.
+export async function refuserSuppressionCommande(orderId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("orders")
+    .update({ demande_suppression: false, demande_suppression_motif: null })
+    .eq("id", orderId);
+  if (error) return { error: error.message };
   revalidatePath(`/commandes/${orderId}`);
   return { success: true };
 }

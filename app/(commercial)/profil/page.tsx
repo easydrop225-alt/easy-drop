@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { AvatarUploader } from "@/components/produits/avatar-uploader";
+import { TelephoneForm } from "./telephone-form";
 import type { Profile } from "@/types/database";
 
 export default async function ProfilPage() {
@@ -17,7 +18,7 @@ export default async function ProfilPage() {
       </Card>
       <Card className="space-y-3 text-sm">
         <p><span className="text-ink-900/50">Nom : </span>{p?.prenom} {p?.nom}</p>
-        <p><span className="text-ink-900/50">Téléphone : </span>{p?.telephone}</p>
+        {p && <TelephoneForm telephoneActuel={p.telephone} derniereModification={p.telephone_modifie_le} />}
         <p><span className="text-ink-900/50">Email : </span>{p?.email ?? "—"}</p>
         <p><span className="text-ink-900/50">Statut : </span>{p?.statut}</p>
       </Card>

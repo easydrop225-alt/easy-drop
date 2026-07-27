@@ -4,15 +4,62 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { OrderStatut } from "@/types/database";
 
-export async function changerStatutCommande(orderId: string, statut: OrderStatut, motif?: string) {
+export async function changerStatutCommande(
+  orderId: string,
+  statut: OrderStatut,
+  motif?: string,
+  dateRelance?: string
+) {
   const supabase = await createClient();
   const { error } = await supabase
     .from("orders")
-    .update({ statut, motif_annulation: motif ?? null })
+    .update({
+      statut,
+      motif_annulation: statut === "non_livree" ? (motif ?? null) : null,
+      date_relance: statut === "relance" ? (dateRelance ?? null) : null,
+    })
     .eq("id", orderId);
 
   if (error) return { error: error.message };
   revalidatePath("/admin/commandes");
+  revalidatePath(`/admin/commandes/${orderId}`);
+  revalidatePath(`/commandes/${orderId}`);
+  return { success: true };
+}
+
+// Demande de suppression : l'admin déclenche, le commercial doit valider.
+export async function demanderSuppressionCommande(orderId: string, motif: string) {
+  const supabase = await createClient();
+  const { data: order } = await supabase.from("orders").select("commercial_id, numero_commande").eq("id", orderId).single();
+  if (!order) return { error: "Commande introuvable." };
+
+  const { error } = await supabase
+    .from("orders")
+    .update({ demande_suppression: true, demande_suppression_motif: motif || null })
+    .eq("id", orderId);
+
+  if (error) return { error: error.message };
+
+  await supabase.from("notifications").insert({
+    destinataire_id: order.commercial_id,
+    type: "demande_suppression",
+    titre: "Suppression demandée",
+    message: `L'administration souhaite supprimer la commande ${order.numero_commande}. Merci de valider ou refuser.`,
+    lien: `/commandes/${orderId}`,
+  });
+
+  revalidatePath("/admin/commandes");
+  revalidatePath(`/admin/commandes/${orderId}`);
+  return { success: true };
+}
+
+export async function annulerDemandeSuppression(orderId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("orders")
+    .update({ demande_suppression: false, demande_suppression_motif: null })
+    .eq("id", orderId);
+  if (error) return { error: error.message };
   revalidatePath(`/admin/commandes/${orderId}`);
   return { success: true };
 }

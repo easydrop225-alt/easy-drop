@@ -79,7 +79,7 @@ export default async function AdminCommandesPage() {
                   </div>
                   <div>
                     <p className="text-ink-900/50">Date</p>
-                    <p>{formatDate(order.created_at)}</p>
+                    <p>{formatDate(order.created_at)} à {new Date(order.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p>
                   </div>
                   <div>
                     <p className="text-ink-900/50">Statut</p>

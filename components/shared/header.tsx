@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "./logout-button";
 
@@ -19,6 +21,7 @@ function isActive(pathname: string, href: string) {
 
 export function HeaderCommercial() {
   const pathname = usePathname();
+  const [menuOuvert, setMenuOuvert] = useState(false);
 
   return (
     <header className="border-b border-ink-900/5 bg-white">
@@ -40,19 +43,50 @@ export function HeaderCommercial() {
             </Link>
           ))}
         </nav>
-        <LogoutButton />
+        <div className="flex items-center gap-3">
+          <div className="hidden md:block"><LogoutButton /></div>
+          <button
+            onClick={() => setMenuOuvert(!menuOuvert)}
+            className="rounded-lg p-2 hover:bg-beige-100 md:hidden"
+            aria-label="Menu"
+          >
+            {menuOuvert ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
+
+      {menuOuvert && (
+        <nav className="flex flex-col gap-1 border-t border-ink-900/5 px-6 py-3 text-sm md:hidden">
+          {NAV_COMMERCIAL.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMenuOuvert(false)}
+              className={cn(
+                "rounded-lg px-3 py-2 transition",
+                isActive(pathname, item.href)
+                  ? "bg-terracotta-500 text-white"
+                  : "text-ink-900/70 hover:bg-beige-100"
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
+          <div className="mt-2 border-t border-ink-900/5 pt-2"><LogoutButton /></div>
+        </nav>
+      )}
     </header>
   );
 }
 
 export interface AdminNavCounts {
-  commerciauxEnAttente: number;
+  commerciauxRecents: number;
   commandesNouvelles: number;
 }
 
 export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
   const pathname = usePathname();
+  const [menuOuvert, setMenuOuvert] = useState(false);
 
   const NAV_ADMIN = [
     { href: "/admin/dashboard", label: "Dashboard" },
@@ -60,8 +94,9 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
     { href: "/admin/categories", label: "Catégories" },
     { href: "/admin/stocks", label: "Stocks" },
     { href: "/admin/commandes", label: "Commandes", badge: counts?.commandesNouvelles },
-    { href: "/admin/commerciaux", label: "Commerciaux", badge: counts?.commerciauxEnAttente },
+    { href: "/admin/commerciaux", label: "Commerciaux", badge: counts?.commerciauxRecents },
     { href: "/admin/paiements", label: "Paiements" },
+    { href: "/admin/rapports", label: "Rapports" },
     { href: "/admin/notifications", label: "Notifications" },
     { href: "/admin/parametres", label: "Paramètres" },
   ];
@@ -91,8 +126,43 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
             </Link>
           ))}
         </nav>
-        <LogoutButton />
+        <div className="flex items-center gap-3">
+          <div className="hidden lg:block"><LogoutButton /></div>
+          <button
+            onClick={() => setMenuOuvert(!menuOuvert)}
+            className="rounded-lg p-2 hover:bg-beige-100 lg:hidden"
+            aria-label="Menu"
+          >
+            {menuOuvert ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
+
+      {menuOuvert && (
+        <nav className="flex flex-col gap-1 border-t border-ink-900/5 px-6 py-3 text-sm lg:hidden">
+          {NAV_ADMIN.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMenuOuvert(false)}
+              className={cn(
+                "relative rounded-lg px-3 py-2 transition",
+                isActive(pathname, item.href)
+                  ? "bg-terracotta-500 text-white"
+                  : "text-ink-900/70 hover:bg-beige-100"
+              )}
+            >
+              {item.label}
+              {!!item.badge && item.badge > 0 && (
+                <span className="ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
+                  {item.badge}
+                </span>
+              )}
+            </Link>
+          ))}
+          <div className="mt-2 border-t border-ink-900/5 pt-2"><LogoutButton /></div>
+        </nav>
+      )}
     </header>
   );
 }

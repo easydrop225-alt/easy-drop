@@ -21,8 +21,9 @@ export default async function AdminPaiementsPage() {
 
   const { data: profitsEnAttente } = await supabase
     .from("profits")
-    .select("*, profiles(*)")
+    .select("*, profiles(*), orders!inner(statut)")
     .eq("statut", "en_attente")
+    .eq("orders.statut", "livree")
     .order("created_at");
 
   const list = (payments ?? []) as (Payment & { profiles: Pick<Profile, "nom" | "prenom"> })[];

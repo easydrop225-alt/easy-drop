@@ -12,6 +12,7 @@ export function NouvelleCategorieForm() {
   return (
     <Card>
       <form action={formAction} className="flex gap-3">
+        <Input name="icone" placeholder="📦" defaultValue="📦" className="w-16 text-center" maxLength={4} />
         <Input name="nom" placeholder="Nom de la nouvelle catégorie (ex : Sacs à main)" required className="flex-1" />
         <Button type="submit" disabled={pending}>{pending ? "Ajout..." : "Ajouter"}</Button>
       </form>

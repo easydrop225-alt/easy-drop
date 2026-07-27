@@ -33,6 +33,7 @@ export default async function MesCommandesPage() {
               <th className="p-3">Commune</th>
               <th className="p-3">Date</th>
               <th className="p-3">Statut</th>
+              <th className="p-3">Motif</th>
             </tr>
           </thead>
           <tbody>
@@ -43,10 +44,14 @@ export default async function MesCommandesPage() {
                 <td className="p-3">{order.client_commune}</td>
                 <td className="p-3">{formatDate(order.created_at)}</td>
                 <td className="p-3"><StatutBadge statut={order.statut} /></td>
+                <td className="p-3 text-xs text-ink-900/50">
+                  {order.statut === "non_livree" && order.motif_annulation}
+                  {order.statut === "relance" && order.date_relance && `Relance le ${formatDate(order.date_relance)}`}
+                </td>
               </tr>
             ))}
             {list.length === 0 && (
-              <tr><td colSpan={5} className="p-6 text-center text-ink-900/40">Aucune commande pour l'instant.</td></tr>
+              <tr><td colSpan={6} className="p-6 text-center text-ink-900/40">Aucune commande pour l'instant.</td></tr>
             )}
           </tbody>
         </table>

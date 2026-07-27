@@ -1,40 +1,45 @@
-import { cn } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import type { OrderStatut } from "@/types/database";
 
-const ETAPES: { key: OrderStatut; label: string }[] = [
-  { key: "nouvelle", label: "Créée" },
-  { key: "confirmee", label: "Confirmée" },
-  { key: "en_preparation", label: "Préparation" },
-  { key: "en_livraison", label: "En livraison" },
-  { key: "livree", label: "Livrée" },
-  { key: "terminee", label: "Terminée" },
-];
-
-export function OrderTimeline({ statut }: { statut: OrderStatut }) {
-  const isCancelled = ["annulee", "refusee", "retour"].includes(statut);
-  const currentIndex = ETAPES.findIndex((e) => e.key === statut);
-
-  if (isCancelled) {
+export function OrderTimeline({
+  statut,
+  motif,
+  dateRelance,
+}: {
+  statut: OrderStatut;
+  motif?: string | null;
+  dateRelance?: string | null;
+}) {
+  if (statut === "nouvelle") {
     return (
-      <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
-        Cette commande est marquée comme : {statut.replace("_", " ")}.
+      <p className="rounded-xl bg-blue-50 p-3 text-sm text-blue-700">
+        Commande en cours de traitement.
       </p>
     );
   }
 
+  if (statut === "livree") {
+    return (
+      <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">
+        Commande livrée avec succès ✓
+      </p>
+    );
+  }
+
+  if (statut === "non_livree") {
+    return (
+      <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
+        <p>Commande non livrée.</p>
+        {motif && <p className="mt-1 text-xs">Motif : {motif}</p>}
+      </div>
+    );
+  }
+
+  // relance
   return (
-    <ol className="flex flex-wrap gap-2">
-      {ETAPES.map((etape, i) => (
-        <li
-          key={etape.key}
-          className={cn(
-            "rounded-full px-3 py-1.5 text-xs font-medium",
-            i <= currentIndex ? "bg-terracotta-500 text-white" : "bg-beige-100 text-ink-900/40"
-          )}
-        >
-          {etape.label}
-        </li>
-      ))}
-    </ol>
+    <div className="rounded-xl bg-orange-50 p-3 text-sm text-orange-700">
+      <p>Relance programmée.</p>
+      {dateRelance && <p className="mt-1 text-xs">Nouvelle date : {formatDate(dateRelance)}</p>}
+    </div>
   );
 }

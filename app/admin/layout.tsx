@@ -4,11 +4,17 @@ import { createClient } from "@/lib/supabase/server";
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
 
-  const { count: commerciauxEnAttente } = await supabase
+  // Les inscriptions sont désormais validées automatiquement (voir
+  // 06_DECISIONS_TECHNIQUES.md) — ce badge informe des inscriptions
+  // récentes plutôt que d'une file d'attente à traiter.
+  const septJoursAvant = new Date();
+  septJoursAvant.setDate(septJoursAvant.getDate() - 7);
+
+  const { count: commerciauxRecents } = await supabase
     .from("profiles")
     .select("*", { count: "exact", head: true })
     .eq("role", "commercial")
-    .eq("statut", "en_attente");
+    .gte("created_at", septJoursAvant.toISOString());
 
   const { count: commandesNouvelles } = await supabase
     .from("orders")
@@ -19,7 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="min-h-screen bg-beige-50">
       <HeaderAdmin
         counts={{
-          commerciauxEnAttente: commerciauxEnAttente ?? 0,
+          commerciauxRecents: commerciauxRecents ?? 0,
           commandesNouvelles: commandesNouvelles ?? 0,
         }}
       />

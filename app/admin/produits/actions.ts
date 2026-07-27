@@ -82,3 +82,16 @@ export async function modifierProduit(productId: string, _prevState: unknown, fo
   revalidatePath("/admin/produits");
   redirect("/admin/produits");
 }
+
+export async function supprimerProduit(productId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("products").delete().eq("id", productId);
+  if (error) {
+    if (error.message.includes("foreign key") || error.message.includes("violates")) {
+      return { error: "Ce produit a déjà des commandes associées et ne peut pas être supprimé — désactive-le plutôt (case \"actif\" dans le formulaire de modification)." };
+    }
+    return { error: error.message };
+  }
+  revalidatePath("/admin/produits");
+  return { success: true };
+}
