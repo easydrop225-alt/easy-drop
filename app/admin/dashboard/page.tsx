@@ -63,6 +63,7 @@ export default async function DashboardAdminPage() {
 
   const debutJour = new Date(); debutJour.setHours(0, 0, 0, 0);
   const debutSemaine = new Date(); debutSemaine.setDate(debutSemaine.getDate() - 7);
+  const debutMois = new Date(); debutMois.setDate(1); debutMois.setHours(0, 0, 0, 0);
   const debutAnnee = new Date(); debutAnnee.setMonth(0, 1); debutAnnee.setHours(0, 0, 0, 0);
 
   const { data: orders } = await supabase.from("orders").select("*");
@@ -75,6 +76,7 @@ export default async function DashboardAdminPage() {
 
   const metriquesJour = calculerMetriquesPeriode(list, itemList, debutJour);
   const metriquesSemaine = calculerMetriquesPeriode(list, itemList, debutSemaine);
+  const metriquesMois = calculerMetriquesPeriode(list, itemList, debutMois);
   const metriquesAnnee = calculerMetriquesPeriode(list, itemList, debutAnnee);
 
   const nouveauxCommerciaux7j = commerciauxList.filter((c) => new Date(c.created_at) >= debutSemaine).length;
@@ -90,6 +92,7 @@ export default async function DashboardAdminPage() {
 
       <LigneMetriques titre="Aujourd'hui" metriques={metriquesJour} />
       <LigneMetriques titre="Cette semaine (7 derniers jours)" metriques={metriquesSemaine} />
+      <LigneMetriques titre="Ce mois-ci" metriques={metriquesMois} />
       <LigneMetriques titre="Cette année" metriques={metriquesAnnee} />
 
       <div>

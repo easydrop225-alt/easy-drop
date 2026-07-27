@@ -96,7 +96,7 @@ export default async function DashboardCommercialPage() {
         data={pointsBenefice}
         type="line"
         defaultGranularite="semaine"
-        valueFormatter={formatFCFA}
+        unite="fcfa"
       />
 
       <div>

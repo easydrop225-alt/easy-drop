@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { agregerParPeriode, type Granularite, type PointJournalier } from "@/lib/stats/aggregate";
 import { Card } from "@/components/ui/card";
+import { formatFCFA } from "@/lib/utils";
 
 const OPTIONS: { value: Granularite; label: string }[] = [
   { value: "jour", label: "Journalier" },
@@ -16,20 +17,22 @@ export function PeriodChart({
   title,
   data,
   type = "bar",
-  valueFormatter,
+  unite = "nombre",
   defaultGranularite = "mois",
   color = "#C25E3F",
 }: {
   title: string;
   data: PointJournalier[];
   type?: "bar" | "line";
-  valueFormatter?: (v: number) => string;
+  /** "fcfa" formate en FCFA, "nombre" affiche la valeur brute — évite de
+   * passer une fonction en prop (impossible entre Server et Client Component). */
+  unite?: "fcfa" | "nombre";
   defaultGranularite?: Granularite;
   color?: string;
 }) {
   const [granularite, setGranularite] = useState<Granularite>(defaultGranularite);
   const points = useMemo(() => agregerParPeriode(data, granularite), [data, granularite]);
-  const format = valueFormatter ?? ((v: number) => String(v));
+  const format = unite === "fcfa" ? formatFCFA : (v: number) => String(v);
 
   return (
     <Card>

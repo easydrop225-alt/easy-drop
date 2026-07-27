@@ -90,7 +90,7 @@ export default async function RapportsPage() {
         data={toPoints(caParJour)}
         type="line"
         defaultGranularite="mois"
-        valueFormatter={formatFCFA}
+        unite="fcfa"
       />
 
       <div className="grid gap-4 md:grid-cols-2">
