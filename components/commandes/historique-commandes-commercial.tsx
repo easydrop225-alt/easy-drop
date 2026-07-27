@@ -38,7 +38,7 @@ export function HistoriqueCommandesCommercial({ orders }: { orders: Order[] }) {
                 <td className="p-3">{formatDate(order.created_at)}</td>
                 <td className="p-3"><StatutBadge statut={order.statut} /></td>
                 <td className="p-3 text-xs text-ink-900/50">
-                  {order.statut === "non_livree" && order.motif_annulation}
+                  {order.statut === "annulee" && order.motif_annulation}
                   {order.statut === "relance" && order.date_relance && `Relance le ${formatDate(order.date_relance)}`}
                 </td>
               </tr>

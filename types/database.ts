@@ -8,7 +8,7 @@
 
 export type UserRole = "super_admin" | "admin" | "commercial";
 export type ProfileStatut = "en_attente" | "valide" | "refuse" | "desactive";
-export type OrderStatut = "nouvelle" | "livree" | "non_livree" | "relance";
+export type OrderStatut = "confirmation" | "traitement" | "livraison" | "livree" | "annulee" | "relance";
 export type ModeLivraison = "normal" | "yango_urgent";
 export type ZoneLivraison = "abidjan" | "hors_abidjan";
 export type ModePaiement = "wave" | "orange_money" | "especes";

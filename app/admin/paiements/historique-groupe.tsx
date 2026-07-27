@@ -38,7 +38,7 @@ export function HistoriqueVersementsGroupe({ payments }: { payments: PaymentAvec
           <Card key={commercialId} className="p-0">
             <div className="flex items-center justify-between border-b border-ink-900/5 px-4 py-3">
               <p className="font-medium">{groupe.nom}</p>
-              <p className="text-sm text-ink-900/60">{groupe.versements.length} versement(s) — {formatFCFA(total)}</p>
+              <p className="text-sm text-ink-900/60">{groupe.versements.length} versement(s) — Déjà payé : <span className="font-medium text-emerald-600">{formatFCFA(total)}</span></p>
             </div>
             <table className="w-full text-sm">
               <thead>
@@ -63,7 +63,11 @@ export function HistoriqueVersementsGroupe({ payments }: { payments: PaymentAvec
                         <a href={p.preuve_url} target="_blank" rel="noreferrer" className="text-terracotta-600 underline">Voir</a>
                       ) : "—"}
                     </td>
-                    <td className="p-3">{p.statut}</td>
+                    <td className="p-3">
+                      <span className={p.statut === "paye" ? "font-medium text-emerald-600" : "text-ink-900/60"}>
+                        {p.statut === "paye" ? "✓ Payé" : p.statut}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>

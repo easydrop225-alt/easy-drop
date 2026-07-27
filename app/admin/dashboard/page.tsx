@@ -14,21 +14,23 @@ function calculerMetriquesPeriode(
     (o) => o.statut === "livree" && new Date(o.updated_at) >= debutPeriode
   );
   const nonLivreesPeriode = orders.filter(
-    (o) => o.statut === "non_livree" && new Date(o.updated_at) >= debutPeriode
+    (o) => o.statut === "annulee" && new Date(o.updated_at) >= debutPeriode
   );
 
   const idsLivreesPeriode = new Set(livreesPeriode.map((o) => o.id));
   const itemsLivresPeriode = items.filter((i) => idsLivreesPeriode.has(i.order_id));
 
   const beneficeCommerciaux = itemsLivresPeriode.reduce((a, i) => a + Number(i.benefice_ligne), 0);
-  const caAdmin = itemsLivresPeriode.reduce((a, i) => a + i.prix_fournisseur_unitaire * i.quantite, 0);
+  const caGlobal = itemsLivresPeriode.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0);
+  const caFournisseur = itemsLivresPeriode.reduce((a, i) => a + i.prix_fournisseur_unitaire * i.quantite, 0);
 
   return {
     nombreCommandes: commandesPeriode.length,
     nombreLivrees: livreesPeriode.length,
     nombreNonLivrees: nonLivreesPeriode.length,
     beneficeCommerciaux,
-    caAdmin,
+    caGlobal,
+    caFournisseur,
   };
 }
 
@@ -36,13 +38,13 @@ function LigneMetriques({ titre, metriques }: { titre: string; metriques: Return
   return (
     <div>
       <h2 className="mb-3 text-lg font-medium">{titre}</h2>
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         <Card>
           <CardTitle>Commandes</CardTitle>
           <CardValue>{metriques.nombreCommandes}</CardValue>
         </Card>
         <Card>
-          <CardTitle>Livrées / Non livrées</CardTitle>
+          <CardTitle>Livrées / Annulées</CardTitle>
           <CardValue>{metriques.nombreLivrees} / {metriques.nombreNonLivrees}</CardValue>
         </Card>
         <Card>
@@ -50,8 +52,12 @@ function LigneMetriques({ titre, metriques }: { titre: string; metriques: Return
           <CardValue>{formatFCFA(metriques.beneficeCommerciaux)}</CardValue>
         </Card>
         <Card>
-          <CardTitle>Chiffre d'affaires admin</CardTitle>
-          <CardValue>{formatFCFA(metriques.caAdmin)}</CardValue>
+          <CardTitle>CA global (ventes)</CardTitle>
+          <CardValue>{formatFCFA(metriques.caGlobal)}</CardValue>
+        </Card>
+        <Card>
+          <CardTitle>CA fournisseur</CardTitle>
+          <CardValue>{formatFCFA(metriques.caFournisseur)}</CardValue>
         </Card>
       </div>
     </div>

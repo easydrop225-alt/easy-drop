@@ -7,10 +7,12 @@ import { Input, Label } from "@/components/ui/input";
 import type { OrderStatut } from "@/types/database";
 
 const STATUTS: { value: OrderStatut; label: string }[] = [
-  { value: "nouvelle", label: "En cours (pas encore résolue)" },
-  { value: "livree", label: "Livrée" },
-  { value: "non_livree", label: "Non livrée" },
-  { value: "relance", label: "Relance" },
+  { value: "confirmation", label: "🟡 En attente de confirmation" },
+  { value: "traitement", label: "🔵 En traitement" },
+  { value: "livraison", label: "🟣 En cours de livraison" },
+  { value: "livree", label: "🟢 Livrée" },
+  { value: "annulee", label: "🔴 Annulée" },
+  { value: "relance", label: "🟠 À relancer" },
 ];
 
 const MOTIFS = ["Client absent", "Adresse incorrecte", "Téléphone injoignable", "Refus colis", "Erreur commande", "Autre"];
@@ -40,7 +42,7 @@ export function StatutForm({
       const res = await changerStatutCommande(
         orderId,
         statut,
-        statut === "non_livree" ? motif : undefined,
+        statut === "annulee" ? motif : undefined,
         statut === "relance" ? dateRelance : undefined
       );
       if (res?.error) setError(res.error);
@@ -57,7 +59,7 @@ export function StatutForm({
         {STATUTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
       </select>
 
-      {statut === "non_livree" && (
+      {statut === "annulee" && (
         <select
           value={motif}
           onChange={(e) => setMotif(e.target.value)}

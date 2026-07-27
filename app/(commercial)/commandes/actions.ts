@@ -57,7 +57,7 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
       date_livraison_prevue: dateLivraison.toISOString().slice(0, 10),
       gare: parsed.data.gare ?? null,
       ville_expedition: parsed.data.villeExpedition ?? null,
-      statut: "nouvelle",
+      statut: "confirmation",
     })
     .select()
     .single();
@@ -83,7 +83,7 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
   redirect(`/commandes/${order.id}`);
 }
 
-const STATUTS_MODIFIABLES = ["nouvelle"];
+const STATUTS_MODIFIABLES = ["confirmation", "traitement"];
 
 export interface InfosCommandeCommercialInput {
   clientNom: string;

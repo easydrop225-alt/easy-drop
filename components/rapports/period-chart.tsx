@@ -16,23 +16,47 @@ const OPTIONS: { value: Granularite; label: string }[] = [
 export function PeriodChart({
   title,
   data,
+  data2,
+  label = "Valeur",
+  label2 = "Comparaison",
   type = "bar",
   unite = "nombre",
   defaultGranularite = "mois",
   color = "#C25E3F",
+  color2 = "#1A1816",
 }: {
   title: string;
   data: PointJournalier[];
+  /** Deuxième série optionnelle, affichée en comparaison sur le même graphique (courbes uniquement). */
+  data2?: PointJournalier[];
+  label?: string;
+  label2?: string;
   type?: "bar" | "line";
   /** "fcfa" formate en FCFA, "nombre" affiche la valeur brute — évite de
    * passer une fonction en prop (impossible entre Server et Client Component). */
   unite?: "fcfa" | "nombre";
   defaultGranularite?: Granularite;
   color?: string;
+  color2?: string;
 }) {
   const [granularite, setGranularite] = useState<Granularite>(defaultGranularite);
   const points = useMemo(() => agregerParPeriode(data, granularite), [data, granularite]);
+  const points2 = useMemo(() => (data2 ? agregerParPeriode(data2, granularite) : null), [data2, granularite]);
   const format = unite === "fcfa" ? formatFCFA : (v: number) => String(v);
+
+  // Fusionne les deux séries sur le même axe (par label), pour un graphique
+  // de comparaison à deux courbes.
+  const pointsFusionnes = useMemo(() => {
+    if (!points2) return points;
+    const map = new Map<string, { label: string; valeur: number; valeur2: number }>();
+    for (const p of points) map.set(p.label, { label: p.label, valeur: p.valeur, valeur2: 0 });
+    for (const p of points2) {
+      const existant = map.get(p.label);
+      if (existant) existant.valeur2 = p.valeur;
+      else map.set(p.label, { label: p.label, valeur: 0, valeur2: p.valeur });
+    }
+    return Array.from(map.values());
+  }, [points, points2]);
 
   return (
     <Card>
@@ -56,25 +80,36 @@ export function PeriodChart({
       {points.length === 0 ? (
         <p className="py-8 text-center text-sm text-ink-900/40">Pas encore assez de données pour cette vue.</p>
       ) : (
-        <ResponsiveContainer width="100%" height={280}>
-          {type === "bar" ? (
-            <BarChart data={points}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1A181610" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: number) => format(v)} />
-              <Bar dataKey="valeur" fill={color} radius={[6, 6, 0, 0]} />
-            </BarChart>
-          ) : (
-            <LineChart data={points}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1A181610" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: number) => format(v)} />
-              <Line type="monotone" dataKey="valeur" stroke={color} strokeWidth={2} dot={false} />
-            </LineChart>
+        <>
+          {points2 && (
+            <div className="mb-2 flex gap-4 text-xs text-ink-900/60">
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: color }} />{label}</span>
+              <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: color2 }} />{label2}</span>
+            </div>
           )}
-        </ResponsiveContainer>
+          <ResponsiveContainer width="100%" height={280}>
+            {type === "bar" ? (
+              <BarChart data={pointsFusionnes}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1A181610" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(v: number) => format(v)} />
+                <Bar dataKey="valeur" fill={color} radius={[6, 6, 0, 0]} />
+              </BarChart>
+            ) : (
+              <LineChart data={pointsFusionnes}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1A181610" />
+                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip formatter={(v: number) => format(v)} />
+                <Line type="monotone" dataKey="valeur" name={label} stroke={color} strokeWidth={2} dot={false} />
+                {points2 && (
+                  <Line type="monotone" dataKey="valeur2" name={label2} stroke={color2} strokeWidth={2} dot={false} />
+                )}
+              </LineChart>
+            )}
+          </ResponsiveContainer>
+        </>
       )}
     </Card>
   );

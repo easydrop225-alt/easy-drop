@@ -18,8 +18,9 @@ export default async function RapportsPage() {
   const commerciaux = (profiles ?? []) as Profile[];
   const nomParId = new Map(commerciaux.map((c) => [c.id, `${c.prenom} ${c.nom}`]));
 
-  // --- 1. CA mensuel (commandes livrées) ---
+  // --- 1. CA mensuel (commandes livrées) : global (ventes) + fournisseur ---
   const caParJour = new Map<string, number>();
+  const caFournisseurParJour = new Map<string, number>();
   // --- 2. Livraisons réussies par zone ---
   const livraisonsAbidjanParJour = new Map<string, number>();
   const livraisonsHorsAbidjanParJour = new Map<string, number>();
@@ -35,6 +36,9 @@ export default async function RapportsPage() {
     if (o.statut === "livree") {
       const ca = o.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0);
       caParJour.set(jour, (caParJour.get(jour) ?? 0) + ca);
+
+      const caFournisseur = o.order_items.reduce((a, i) => a + i.prix_fournisseur_unitaire * i.quantite, 0);
+      caFournisseurParJour.set(jour, (caFournisseurParJour.get(jour) ?? 0) + caFournisseur);
 
       if (o.zone === "abidjan") {
         livraisonsAbidjanParJour.set(jour, (livraisonsAbidjanParJour.get(jour) ?? 0) + 1);
@@ -88,6 +92,9 @@ export default async function RapportsPage() {
       <PeriodChart
         title="Performance mensuelle des ventes (chiffre d'affaires)"
         data={toPoints(caParJour)}
+        data2={toPoints(caFournisseurParJour)}
+        label="CA global (ventes)"
+        label2="CA fournisseur"
         type="line"
         defaultGranularite="mois"
         unite="fcfa"

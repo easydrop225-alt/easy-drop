@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
-import { formatFCFA, formatDate } from "@/lib/utils";
+import { formatFCFA } from "@/lib/utils";
+import { HistoriqueGains } from "./historique-gains";
 import type { Payment, Profit } from "@/types/database";
 
 export default async function MesGainsPage() {
@@ -31,34 +32,10 @@ export default async function MesGainsPage() {
       <h1 className="text-2xl font-semibold">Mes gains</h1>
       <div className="grid grid-cols-2 gap-4">
         <Card><CardTitle>En attente de paiement</CardTitle><CardValue>{formatFCFA(enAttente)}</CardValue></Card>
-        <Card><CardTitle>Déjà payé</CardTitle><CardValue>{formatFCFA(dejaPaye)}</CardValue></Card>
+        <Card><CardTitle>Déjà payé</CardTitle><CardValue className="text-emerald-600">{formatFCFA(dejaPaye)}</CardValue></Card>
       </div>
 
-      <Card className="p-0">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-ink-900/5 text-left text-ink-900/50">
-              <th className="p-3">Date</th>
-              <th className="p-3">Montant</th>
-              <th className="p-3">Mode</th>
-              <th className="p-3">Statut</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paymentList.map((p) => (
-              <tr key={p.id} className="border-b border-ink-900/5 last:border-0">
-                <td className="p-3">{formatDate(p.date_paiement)}</td>
-                <td className="p-3">{formatFCFA(p.montant)}</td>
-                <td className="p-3">{p.mode}</td>
-                <td className="p-3">{p.statut}</td>
-              </tr>
-            ))}
-            {paymentList.length === 0 && (
-              <tr><td colSpan={4} className="p-6 text-center text-ink-900/40">Aucun paiement enregistré.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </Card>
+      <HistoriqueGains payments={paymentList} />
     </div>
   );
 }

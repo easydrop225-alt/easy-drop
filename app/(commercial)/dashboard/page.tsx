@@ -35,7 +35,7 @@ export default async function DashboardCommercialPage() {
       (o.statut === "relance" && o.date_relance === demainStr)
   );
   const commandesLivreesJour = commandesJour.filter((o) => o.statut === "livree");
-  const commandesEnCoursJour = commandesJour.filter((o) => o.statut === "nouvelle" || o.statut === "relance");
+  const commandesEnCoursJour = commandesJour.filter((o) => o.statut === "confirmation" || o.statut === "traitement" || o.statut === "livraison" || o.statut === "relance");
 
   // Bénéfice attendu = commandes du jour pas encore résolues (nouvelle/relance).
   const beneficeAttendu = commandesEnCoursJour.reduce(
@@ -47,7 +47,7 @@ export default async function DashboardCommercialPage() {
   );
 
   const commandesLivreesTotal = list.filter((o) => o.statut === "livree").length;
-  const commandesNonLivreesTotal = list.filter((o) => o.statut === "non_livree").length;
+  const commandesNonLivreesTotal = list.filter((o) => o.statut === "annulee").length;
   const resolues = commandesLivreesTotal + commandesNonLivreesTotal;
   const tauxReussite = resolues > 0 ? Math.round((commandesLivreesTotal / resolues) * 100) : 0;
 

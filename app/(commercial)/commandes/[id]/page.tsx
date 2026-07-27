@@ -7,7 +7,7 @@ import type { Order, OrderItem, Product } from "@/types/database";
 import { MesInfosCommandeForm } from "./infos-form";
 import { SuppressionBanner } from "./suppression-banner";
 
-const STATUTS_MODIFIABLES = ["nouvelle"];
+const STATUTS_MODIFIABLES = ["confirmation", "traitement"];
 
 export default async function DetailCommandePage({
   params,

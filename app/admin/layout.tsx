@@ -1,8 +1,10 @@
 import { HeaderAdmin } from "@/components/shared/header";
 import { createClient } from "@/lib/supabase/server";
+import { SonNouvelleCommande } from "@/components/shared/son-nouvelle-commande";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Les inscriptions sont désormais validées automatiquement (voir
   // 06_DECISIONS_TECHNIQUES.md) — ce badge informe des inscriptions
@@ -19,10 +21,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { count: commandesNouvelles } = await supabase
     .from("orders")
     .select("*", { count: "exact", head: true })
-    .eq("statut", "nouvelle");
+    .eq("statut", "confirmation");
 
   return (
     <div className="min-h-screen bg-beige-50">
+      {user?.id && <SonNouvelleCommande adminId={user.id} />}
       <HeaderAdmin
         counts={{
           commerciauxRecents: commerciauxRecents ?? 0,

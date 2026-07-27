@@ -10,10 +10,26 @@ export function OrderTimeline({
   motif?: string | null;
   dateRelance?: string | null;
 }) {
-  if (statut === "nouvelle") {
+  if (statut === "confirmation") {
+    return (
+      <p className="rounded-xl bg-yellow-50 p-3 text-sm text-yellow-800">
+        🟡 En attente de confirmation.
+      </p>
+    );
+  }
+
+  if (statut === "traitement") {
     return (
       <p className="rounded-xl bg-blue-50 p-3 text-sm text-blue-700">
-        Commande en cours de traitement.
+        🔵 Commande en traitement.
+      </p>
+    );
+  }
+
+  if (statut === "livraison") {
+    return (
+      <p className="rounded-xl bg-purple-50 p-3 text-sm text-purple-700">
+        🟣 Commande en cours de livraison.
       </p>
     );
   }
@@ -21,15 +37,15 @@ export function OrderTimeline({
   if (statut === "livree") {
     return (
       <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">
-        Commande livrée avec succès ✓
+        🟢 Commande livrée avec succès ✓
       </p>
     );
   }
 
-  if (statut === "non_livree") {
+  if (statut === "annulee") {
     return (
       <div className="rounded-xl bg-red-50 p-3 text-sm text-red-700">
-        <p>Commande non livrée.</p>
+        <p>🔴 Commande annulée.</p>
         {motif && <p className="mt-1 text-xs">Motif : {motif}</p>}
       </div>
     );
@@ -38,7 +54,7 @@ export function OrderTimeline({
   // relance
   return (
     <div className="rounded-xl bg-orange-50 p-3 text-sm text-orange-700">
-      <p>Relance programmée.</p>
+      <p>🟠 À relancer.</p>
       {dateRelance && <p className="mt-1 text-xs">Nouvelle date : {formatDate(dateRelance)}</p>}
     </div>
   );
