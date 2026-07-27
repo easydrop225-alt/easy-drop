@@ -11,7 +11,10 @@ export default async function RapportsPage() {
   const { data: orders } = await supabase.from("orders").select("*, order_items(*)");
   const { data: profiles } = await supabase.from("profiles").select("*").eq("role", "commercial");
 
-  const list = (orders ?? []) as (Order & { order_items: OrderItem[] })[];
+  const list = ((orders ?? []) as (Order & { order_items: OrderItem[] | null })[]).map((o) => ({
+    ...o,
+    order_items: o.order_items ?? [],
+  }));
   const commerciaux = (profiles ?? []) as Profile[];
   const nomParId = new Map(commerciaux.map((c) => [c.id, `${c.prenom} ${c.nom}`]));
 

@@ -16,7 +16,10 @@ export default async function DashboardCommercialPage() {
     .eq("commercial_id", user?.id)
     .order("created_at", { ascending: false });
 
-  const list = (ordersData ?? []) as (Order & { order_items: OrderItem[] })[];
+  const list = ((ordersData ?? []) as (Order & { order_items: OrderItem[] | null })[]).map((o) => ({
+    ...o,
+    order_items: o.order_items ?? [],
+  }));
 
   const debutJour = new Date(); debutJour.setHours(0, 0, 0, 0);
   const debutJourStr = debutJour.toISOString().slice(0, 10);
