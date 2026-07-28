@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { AvatarUploader } from "@/components/produits/avatar-uploader";
+import { BadgesPerformance } from "@/components/produits/badges-performance";
 import { TelephoneForm } from "./telephone-form";
 import { BoutiqueForm } from "./boutique-form";
 import { LogoutButton } from "@/components/shared/logout-button";
@@ -12,11 +13,26 @@ export default async function ProfilPage() {
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user?.id).single();
   const p = profile as Profile | null;
 
+  const { count: commandesLivrees } = await supabase
+    .from("orders")
+    .select("*", { count: "exact", head: true })
+    .eq("commercial_id", user?.id ?? "")
+    .eq("statut", "livree");
+
+  const { data: rangDuMois } = await supabase.rpc("mon_rang_du_mois");
+
   return (
     <div className="mx-auto max-w-md space-y-4">
       <h1 className="mb-2 text-2xl font-semibold">Mon profil</h1>
       <Card>
         {user?.id && <AvatarUploader userId={user.id} photoUrl={p?.photo_url ?? null} />}
+      </Card>
+      <Card>
+        <h2 className="mb-2 text-sm font-medium text-ink-900/60">Mes badges</h2>
+        <BadgesPerformance
+          commandesLivrees={commandesLivrees ?? 0}
+          estTopVendeurDuMois={rangDuMois === 1}
+        />
       </Card>
       <Card className="space-y-3 text-sm">
         <p><span className="text-ink-900/50">Nom : </span>{p?.prenom} {p?.nom}</p>

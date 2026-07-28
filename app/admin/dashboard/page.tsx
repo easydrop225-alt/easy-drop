@@ -74,15 +74,25 @@ export default async function DashboardAdminPage() {
 
   // Les 3 requêtes sont indépendantes : on les lance en parallèle plutôt
   // que l'une après l'autre, pour diviser le temps d'attente réseau.
-  const [{ data: orders }, { data: items }, { data: commerciaux }] = await Promise.all([
+  const [{ data: orders }, { data: items }, { data: commerciaux }, { data: inventaire }, { data: profitsEnAttente }] = await Promise.all([
     supabase.from("orders").select("*"),
     supabase.from("order_items").select("*"),
     supabase.from("profiles").select("*").eq("role", "commercial"),
+    supabase.from("inventory").select("quantite_disponible, seuil_alerte"),
+    supabase.from("profits").select("commercial_id, montant_benefice, statut, orders!inner(statut)").eq("statut", "en_attente").eq("orders.statut", "livree"),
   ]);
 
   const list = (orders ?? []) as Order[];
   const itemList = (items ?? []) as OrderItem[];
   const commerciauxList = (commerciaux ?? []) as Profile[];
+
+  const nouvellesCommandes = list.filter((o) => o.statut === "confirmation").length;
+  const stockFaible = (inventaire ?? []).filter((i) => i.quantite_disponible <= i.seuil_alerte).length;
+  const commerciauxAPayer = new Set(
+    (profitsEnAttente ?? [])
+      .filter((p) => Number(p.montant_benefice) > 0)
+      .map((p) => p.commercial_id)
+  ).size;
 
   const metriquesJour = calculerMetriquesPeriode(list, itemList, debutJour);
   const metriquesSemaine = calculerMetriquesPeriode(list, itemList, debutSemaine);
@@ -98,6 +108,24 @@ export default async function DashboardAdminPage() {
         <a href="/admin/rapports" className="text-sm font-medium text-terracotta-600 underline">
           Voir les rapports détaillés →
         </a>
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-lg font-medium">À faire aujourd'hui</h2>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <a href="/admin/commandes" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-white p-4 hover:shadow-md">
+            <span className="text-sm">🟡 Nouvelles commandes à traiter</span>
+            <span className="text-xl font-semibold">{nouvellesCommandes}</span>
+          </a>
+          <a href="/admin/paiements" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-white p-4 hover:shadow-md">
+            <span className="text-sm">💰 Commerciaux à payer</span>
+            <span className="text-xl font-semibold">{commerciauxAPayer}</span>
+          </a>
+          <a href="/admin/stocks" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-white p-4 hover:shadow-md">
+            <span className="text-sm">📦 Stocks presque épuisés</span>
+            <span className="text-xl font-semibold">{stockFaible}</span>
+          </a>
+        </div>
       </div>
 
       <LigneMetriques titre="Aujourd'hui" metriques={metriquesJour} />

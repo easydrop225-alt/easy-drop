@@ -2,7 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { formatFCFA, formatDate } from "@/lib/utils";
+import { exporterCSV } from "@/lib/export-csv";
 import { FiltreDate, correspondAuFiltre, type FiltreDateValeur } from "@/components/commandes/filtre-date";
 import type { Payment, Profile } from "@/types/database";
 
@@ -26,7 +28,27 @@ export function HistoriqueVersementsGroupe({ payments }: { payments: PaymentAvec
 
   return (
     <div className="space-y-4">
-      <FiltreDate dates={dates} valeur={filtre} onChange={setFiltre} />
+      <div className="flex items-center justify-between">
+        <FiltreDate dates={dates} valeur={filtre} onChange={setFiltre} />
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            const lignes = filtres.map((p) => [
+              formatDate(p.date_paiement),
+              `${p.profiles?.prenom ?? ""} ${p.profiles?.nom ?? ""}`.trim(),
+              p.profiles?.nom_boutique ?? "",
+              p.montant,
+              p.mode,
+              p.statut,
+              p.reference_paiement ?? "",
+            ]);
+            exporterCSV("easydrop-paiements", ["Date", "Commercial", "Boutique", "Montant", "Mode", "Statut", "Référence"], lignes);
+          }}
+        >
+          📊 Exporter CSV
+        </Button>
+      </div>
 
       {groupes.length === 0 && (
         <Card><p className="text-sm text-ink-900/50">Aucun paiement enregistré pour cette période.</p></Card>
