@@ -8,8 +8,10 @@ import type { Order, OrderItem, Profile } from "@/types/database";
 export default async function RapportsPage() {
   const supabase = await createClient();
 
-  const { data: orders } = await supabase.from("orders").select("*, order_items(*)");
-  const { data: profiles } = await supabase.from("profiles").select("*").eq("role", "commercial");
+  const [{ data: orders }, { data: profiles }] = await Promise.all([
+    supabase.from("orders").select("*, order_items(*)"),
+    supabase.from("profiles").select("*").eq("role", "commercial"),
+  ]);
 
   const list = ((orders ?? []) as (Order & { order_items: OrderItem[] | null })[]).map((o) => ({
     ...o,

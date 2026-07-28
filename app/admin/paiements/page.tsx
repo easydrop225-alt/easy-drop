@@ -17,18 +17,19 @@ export default async function AdminPaiementsPage() {
 
   // Historique affiché limité aux 3 derniers mois (performance) — n'affecte
   // pas les paiements en attente ci-dessous, calculés sur tout l'historique.
-  const { data: payments } = await supabase
-    .from("payments")
-    .select("*, profiles(nom, prenom, nom_boutique)")
-    .gte("date_paiement", dateIlYA3Mois().slice(0, 10))
-    .order("date_paiement", { ascending: false });
-
-  const { data: profitsEnAttente } = await supabase
-    .from("profits")
-    .select("*, profiles(*), orders!inner(statut)")
-    .eq("statut", "en_attente")
-    .eq("orders.statut", "livree")
-    .order("created_at");
+  const [{ data: payments }, { data: profitsEnAttente }] = await Promise.all([
+    supabase
+      .from("payments")
+      .select("*, profiles(nom, prenom, nom_boutique)")
+      .gte("date_paiement", dateIlYA3Mois().slice(0, 10))
+      .order("date_paiement", { ascending: false }),
+    supabase
+      .from("profits")
+      .select("*, profiles(*), orders!inner(statut)")
+      .eq("statut", "en_attente")
+      .eq("orders.statut", "livree")
+      .order("created_at"),
+  ]);
 
   const list = (payments ?? []) as (Payment & { profiles: Pick<Profile, "nom" | "prenom" | "nom_boutique"> })[];
   const profitList = (profitsEnAttente ?? []) as (Profit & { profiles: Profile })[];

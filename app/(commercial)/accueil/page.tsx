@@ -8,7 +8,12 @@ import type { Category, Product, Media, Setting } from "@/types/database";
 export default async function AccueilCommercialPage() {
   const supabase = await createClient();
 
-  const { data: settingsData } = await supabase.from("settings").select("*");
+  const [{ data: settingsData }, { data: categoriesData }, { data: produitsActifs }] = await Promise.all([
+    supabase.from("settings").select("*"),
+    supabase.from("categories").select("*").eq("actif", true).order("ordre"),
+    supabase.from("products").select("*").eq("actif", true),
+  ]);
+
   const settings = (settingsData ?? []) as Setting[];
   const getSetting = (cle: string) => settings.find((s) => s.cle === cle)?.valeur;
   const accueilTexte = (getSetting("accueil_texte") as string | undefined)
@@ -16,10 +21,7 @@ export default async function AccueilCommercialPage() {
   const modeVedette = (getSetting("produits_vedette_mode") as "statique" | "aleatoire" | undefined) ?? "aleatoire";
   const idsVedette = (getSetting("produits_vedette_ids") as string[] | undefined) ?? [];
 
-  const { data: categoriesData } = await supabase.from("categories").select("*").eq("actif", true).order("ordre");
   const categories = (categoriesData ?? []) as Category[];
-
-  const { data: produitsActifs } = await supabase.from("products").select("*").eq("actif", true);
   const produits = (produitsActifs ?? []) as Product[];
 
   const compteParCategorie = new Map<string, number>();

@@ -7,8 +7,10 @@ import { Card } from "@/components/ui/card";
 
 export default async function ParametresPage() {
   const supabase = await createClient();
-  const { data: settings } = await supabase.from("settings").select("*");
-  const { data: produits } = await supabase.from("products").select("*").eq("actif", true).order("nom");
+  const [{ data: settings }, { data: produits }] = await Promise.all([
+    supabase.from("settings").select("*"),
+    supabase.from("products").select("*").eq("actif", true).order("nom"),
+  ]);
   const list = (settings ?? []) as Setting[];
   const get = (cle: string) => list.find((s) => s.cle === cle)?.valeur;
 

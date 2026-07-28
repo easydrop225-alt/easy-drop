@@ -72,9 +72,13 @@ export default async function DashboardAdminPage() {
   const debutMois = new Date(); debutMois.setDate(1); debutMois.setHours(0, 0, 0, 0);
   const debutAnnee = new Date(); debutAnnee.setMonth(0, 1); debutAnnee.setHours(0, 0, 0, 0);
 
-  const { data: orders } = await supabase.from("orders").select("*");
-  const { data: items } = await supabase.from("order_items").select("*");
-  const { data: commerciaux } = await supabase.from("profiles").select("*").eq("role", "commercial");
+  // Les 3 requêtes sont indépendantes : on les lance en parallèle plutôt
+  // que l'une après l'autre, pour diviser le temps d'attente réseau.
+  const [{ data: orders }, { data: items }, { data: commerciaux }] = await Promise.all([
+    supabase.from("orders").select("*"),
+    supabase.from("order_items").select("*"),
+    supabase.from("profiles").select("*").eq("role", "commercial"),
+  ]);
 
   const list = (orders ?? []) as Order[];
   const itemList = (items ?? []) as OrderItem[];
