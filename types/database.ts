@@ -78,6 +78,8 @@ export interface Inventory {
   product_variant_id: string;
   quantite_disponible: number;
   stock_total_recu: number;
+  dernier_ajout_quantite: number | null;
+  dernier_ajout_le: string | null;
   stock_ecoule: number;
   seuil_alerte: number;
 }
