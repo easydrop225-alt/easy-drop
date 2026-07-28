@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { formatFCFA } from "@/lib/utils";
 import type { Product } from "@/types/database";
 
@@ -11,8 +12,9 @@ interface ProductCardProps {
 
 export function ProductCard({ product, imageUrl, prixFournisseur, href }: ProductCardProps) {
   return (
-    <a
+    <Link
       href={href}
+      prefetch
       className="group block overflow-hidden rounded-2xl border border-ink-900/5 bg-white transition hover:shadow-md"
     >
       <div className="relative aspect-square w-full bg-beige-100">
@@ -43,6 +45,6 @@ export function ProductCard({ product, imageUrl, prixFournisseur, href }: Produc
           </p>
         )}
       </div>
-    </a>
+    </Link>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { formatDate, formatFCFA } from "@/lib/utils";
@@ -11,6 +12,10 @@ export type OrderComplete = Order & {
   profiles: Pick<Profile, "nom" | "prenom" | "telephone" | "nom_boutique">;
   order_items: (OrderItem & { products: Product })[];
 };
+
+function prixTotal(order: OrderComplete): number {
+  return order.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0) + order.frais_livraison;
+}
 
 export function CommandesGroupeesAdmin({
   orders,
@@ -58,67 +63,73 @@ export function CommandesGroupeesAdmin({
             </button>
 
             {ouvert && (
-              <div className="space-y-3">
-                {groupe.commandes.map((order) => {
-                  const premierArticle = order.order_items[0];
-                  const image = premierArticle ? imageParProduit[premierArticle.product_id] : undefined;
-
-                  return (
-                    <a key={order.id} href={`/admin/commandes/${order.id}`}>
-                      <Card className="flex flex-col gap-4 transition hover:shadow-md sm:flex-row sm:items-center">
-                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-beige-100">
-                          {image ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-[10px] text-ink-900/30">Photo</div>
-                          )}
+              <>
+                {/* Vue mobile : carte compacte */}
+                <div className="space-y-2 md:hidden">
+                  {groupe.commandes.map((order) => (
+                    <Link key={order.id} href={`/admin/commandes/${order.id}`} prefetch>
+                      <Card className="space-y-1 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium">{order.numero_commande}</span>
+                          <StatutBadge statut={order.statut} />
                         </div>
-
-                        <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
-                          <div>
-                            <p className="text-ink-900/50">Référence</p>
-                            <p className="font-medium">{order.numero_commande}</p>
-                          </div>
-                          <div>
-                            <p className="text-ink-900/50">Produit</p>
-                            <p>{premierArticle?.products?.nom ?? "—"}</p>
-                            {premierArticle?.observation && (
-                              <p className="text-xs italic text-ink-900/40">{premierArticle.observation}</p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-ink-900/50">Client</p>
-                            <p>{order.client_nom}</p>
-                            <p className="text-xs text-ink-900/40">{order.client_telephone}</p>
-                          </div>
-                          <div className="col-span-2 sm:col-span-2">
-                            <p className="text-ink-900/50">Adresse de livraison</p>
-                            <p>{order.client_adresse}, {order.client_commune}</p>
-                            {order.zone === "hors_abidjan" && order.ville_expedition && (
-                              <p className="text-xs text-ink-900/40">Expédition → {order.ville_expedition} ({order.gare ?? "gare non précisée"})</p>
-                            )}
-                          </div>
-                          <div>
-                            <p className="text-ink-900/50">Date</p>
-                            <p>{formatDate(order.created_at)} à {new Date(order.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p>
-                          </div>
-                          <div>
-                            <p className="text-ink-900/50">Prix total</p>
-                            <p className="font-medium">
-                              {formatFCFA(order.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0) + order.frais_livraison)}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-ink-900/50">Statut</p>
-                            <StatutBadge statut={order.statut} />
-                          </div>
+                        <p className="text-xs text-ink-900/60">{order.order_items[0]?.products?.nom ?? "—"} · {order.client_nom}</p>
+                        <div className="flex items-center justify-between text-[11px] text-ink-900/40">
+                          <span>{formatDate(order.created_at)}</span>
+                          <span className="font-medium text-ink-900/60">{formatFCFA(prixTotal(order))}</span>
                         </div>
                       </Card>
-                    </a>
-                  );
-                })}
-              </div>
+                    </Link>
+                  ))}
+                </div>
+
+                {/* Vue bureau : tableau compact, statut sur la même ligne que le reste. */}
+                <Card className="hidden p-0 md:block">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-ink-900/5 text-left text-ink-900/50">
+                        <th className="p-2">Référence</th>
+                        <th className="p-2">Produit</th>
+                        <th className="p-2">Client</th>
+                        <th className="p-2">Prix total</th>
+                        <th className="p-2">Date</th>
+                        <th className="p-2">Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {groupe.commandes.map((order) => {
+                        const premierArticle = order.order_items[0];
+                        const image = premierArticle ? imageParProduit[premierArticle.product_id] : undefined;
+                        return (
+                          <tr key={order.id} className="border-b border-ink-900/5 last:border-0 hover:bg-beige-50">
+                            <td className="p-2">
+                              <Link href={`/admin/commandes/${order.id}`} prefetch className="font-medium">{order.numero_commande}</Link>
+                            </td>
+                            <td className="p-2">
+                              <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-beige-100">
+                                  {image ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                                  ) : null}
+                                </div>
+                                <span className="truncate">{premierArticle?.products?.nom ?? "—"}</span>
+                              </div>
+                            </td>
+                            <td className="p-2">
+                              <p>{order.client_nom}</p>
+                              <p className="max-w-[180px] truncate text-xs text-ink-900/50">{order.client_commune} — {order.client_adresse}</p>
+                            </td>
+                            <td className="p-2 whitespace-nowrap font-medium">{formatFCFA(prixTotal(order))}</td>
+                            <td className="p-2 whitespace-nowrap">{formatDate(order.created_at)}</td>
+                            <td className="p-2"><StatutBadge statut={order.statut} /></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </Card>
+              </>
             )}
           </div>
         );

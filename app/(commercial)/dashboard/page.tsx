@@ -35,6 +35,7 @@ export default async function DashboardCommercialPage() {
       (o.statut === "relance" && o.date_relance === demainStr)
   );
   const commandesLivreesJour = commandesJour.filter((o) => o.statut === "livree");
+  const commandesNonLivreesJour = commandesJour.filter((o) => o.statut === "annulee");
   const commandesEnCoursJour = commandesJour.filter((o) => o.statut === "confirmation" || o.statut === "traitement" || o.statut === "livraison" || o.statut === "relance");
 
   const beneficeAttendu = commandesEnCoursJour.reduce(
@@ -66,7 +67,15 @@ export default async function DashboardCommercialPage() {
 
       <div>
         <h2 className="mb-3 text-lg font-medium">Aujourd'hui</h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <Card>
+            <CardTitle>Commandes aujourd'hui</CardTitle>
+            <CardValue>{commandesJour.length}</CardValue>
+          </Card>
+          <Card>
+            <CardTitle>Livrées / Non livrées</CardTitle>
+            <CardValue>{commandesLivreesJour.length} / {commandesNonLivreesJour.length}</CardValue>
+          </Card>
           <Card>
             <CardTitle>Bénéfice attendu</CardTitle>
             <CardValue>{formatFCFA(beneficeAttendu)}</CardValue>
@@ -76,10 +85,6 @@ export default async function DashboardCommercialPage() {
             <CardTitle>Bénéfice réalisé</CardTitle>
             <CardValue>{formatFCFA(beneficeRealiseJour)}</CardValue>
             <p className="mt-1 text-xs text-ink-900/40">Commandes livrées avec succès</p>
-          </Card>
-          <Card>
-            <CardTitle>Commandes aujourd'hui</CardTitle>
-            <CardValue>{commandesJour.length}</CardValue>
           </Card>
           <Card>
             <CardTitle>Taux de réussite (global)</CardTitle>

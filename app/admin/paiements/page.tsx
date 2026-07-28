@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
+import { dateIlYA3Mois } from "@/lib/utils";
 import type { Payment, Profile, Profit } from "@/types/database";
 import { PaiementEnAttenteCard } from "./paiement-en-attente-card";
 import { HistoriqueVersementsGroupe } from "./historique-groupe";
@@ -14,9 +15,12 @@ interface CommercialDu {
 export default async function AdminPaiementsPage() {
   const supabase = await createClient();
 
+  // Historique affiché limité aux 3 derniers mois (performance) — n'affecte
+  // pas les paiements en attente ci-dessous, calculés sur tout l'historique.
   const { data: payments } = await supabase
     .from("payments")
     .select("*, profiles(nom, prenom, nom_boutique)")
+    .gte("date_paiement", dateIlYA3Mois().slice(0, 10))
     .order("date_paiement", { ascending: false });
 
   const { data: profitsEnAttente } = await supabase
@@ -71,7 +75,8 @@ export default async function AdminPaiementsPage() {
       </div>
 
       <div>
-        <h2 className="mb-3 text-lg font-medium">Historique des versements</h2>
+        <h2 className="mb-1 text-lg font-medium">Historique des versements</h2>
+        <p className="mb-3 text-xs text-ink-900/40">Affichage des 3 derniers mois.</p>
         <HistoriqueVersementsGroupe payments={list} />
       </div>
     </div>
