@@ -34,7 +34,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           commandesNouvelles: commandesNouvelles ?? 0,
         }}
       />
-      <div className="mx-auto max-w-7xl px-6 py-8">{children}</div>
+      <div className="mx-auto max-w-7xl px-6 py-8 print:p-0">{children}</div>
     </div>
   );
 }
