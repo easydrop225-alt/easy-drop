@@ -6,7 +6,7 @@ import { formatFCFA, formatDate } from "@/lib/utils";
 import { FiltreDate, correspondAuFiltre, type FiltreDateValeur } from "@/components/commandes/filtre-date";
 import type { Payment, Profile } from "@/types/database";
 
-type PaymentAvecCommercial = Payment & { profiles: Pick<Profile, "nom" | "prenom"> };
+type PaymentAvecCommercial = Payment & { profiles: Pick<Profile, "nom" | "prenom" | "nom_boutique"> };
 
 export function HistoriqueVersementsGroupe({ payments }: { payments: PaymentAvecCommercial[] }) {
   const [filtre, setFiltre] = useState<FiltreDateValeur>({ annee: new Date().getFullYear(), mois: null, jour: null });
@@ -15,10 +15,10 @@ export function HistoriqueVersementsGroupe({ payments }: { payments: PaymentAvec
   const filtres = useMemo(() => payments.filter((p) => correspondAuFiltre(p.date_paiement, filtre)), [payments, filtre]);
 
   const groupes = useMemo(() => {
-    const map = new Map<string, { nom: string; versements: PaymentAvecCommercial[] }>();
+    const map = new Map<string, { nom: string; nomBoutique: string | null; versements: PaymentAvecCommercial[] }>();
     for (const p of filtres) {
       const nom = `${p.profiles?.prenom ?? "?"} ${p.profiles?.nom ?? ""}`.trim();
-      if (!map.has(p.commercial_id)) map.set(p.commercial_id, { nom, versements: [] });
+      if (!map.has(p.commercial_id)) map.set(p.commercial_id, { nom, nomBoutique: p.profiles?.nom_boutique ?? null, versements: [] });
       map.get(p.commercial_id)!.versements.push(p);
     }
     return Array.from(map.entries()).sort((a, b) => b[1].versements.length - a[1].versements.length);
@@ -37,7 +37,10 @@ export function HistoriqueVersementsGroupe({ payments }: { payments: PaymentAvec
         return (
           <Card key={commercialId} className="p-0">
             <div className="flex items-center justify-between border-b border-ink-900/5 px-4 py-3">
-              <p className="font-medium">{groupe.nom}</p>
+              <p className="font-medium">
+                {groupe.nom}
+                {groupe.nomBoutique && <span className="ml-2 rounded-full bg-beige-100 px-2 py-0.5 text-xs font-normal">🏪 {groupe.nomBoutique}</span>}
+              </p>
               <p className="text-sm text-ink-900/60">{groupe.versements.length} versement(s) — Déjà payé : <span className="font-medium text-emerald-600">{formatFCFA(total)}</span></p>
             </div>
             <table className="w-full text-sm">

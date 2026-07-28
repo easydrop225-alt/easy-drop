@@ -16,7 +16,7 @@ export default async function AdminPaiementsPage() {
 
   const { data: payments } = await supabase
     .from("payments")
-    .select("*, profiles(nom, prenom)")
+    .select("*, profiles(nom, prenom, nom_boutique)")
     .order("date_paiement", { ascending: false });
 
   const { data: profitsEnAttente } = await supabase
@@ -26,7 +26,7 @@ export default async function AdminPaiementsPage() {
     .eq("orders.statut", "livree")
     .order("created_at");
 
-  const list = (payments ?? []) as (Payment & { profiles: Pick<Profile, "nom" | "prenom"> })[];
+  const list = (payments ?? []) as (Payment & { profiles: Pick<Profile, "nom" | "prenom" | "nom_boutique"> })[];
   const profitList = (profitsEnAttente ?? []) as (Profit & { profiles: Profile })[];
 
   // Regroupe les bénéfices en attente par commercial.

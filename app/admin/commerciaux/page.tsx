@@ -30,6 +30,7 @@ export default async function AdminCommerciauxPage() {
             <tr className="border-b border-ink-900/5 text-left text-ink-900/50">
               <th className="p-3">Photo</th>
               <th className="p-3">Nom</th>
+              <th className="p-3">Boutique</th>
               <th className="p-3">Téléphone</th>
               <th className="p-3">Statut</th>
               <th className="p-3">Inscrit le</th>
@@ -51,12 +52,13 @@ export default async function AdminCommerciauxPage() {
                   </div>
                 </td>
                 <td className="p-3">{c.prenom} {c.nom}</td>
+                <td className="p-3">{c.nom_boutique ? <span className="rounded-full bg-beige-100 px-2 py-0.5 text-xs">🏪 {c.nom_boutique}</span> : "—"}</td>
                 <td className="p-3">{c.telephone}</td>
                 <td className="p-3">{c.statut}</td>
                 <td className="p-3">{formatDate(c.created_at)}</td>
               </tr>
             ))}
-            {list.length === 0 && <tr><td colSpan={5} className="p-6 text-center text-ink-900/40">Aucun commercial inscrit.</td></tr>}
+            {list.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-ink-900/40">Aucun commercial inscrit.</td></tr>}
           </tbody>
         </table>
       </Card>

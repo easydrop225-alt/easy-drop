@@ -70,7 +70,10 @@ export function PaiementEnAttenteCard({
     <Card>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-medium">{commercial.prenom} {commercial.nom}</p>
+          <p className="font-medium">
+            {commercial.prenom} {commercial.nom}
+            {commercial.nom_boutique && <span className="ml-2 rounded-full bg-beige-100 px-2 py-0.5 text-xs font-normal">🏪 {commercial.nom_boutique}</span>}
+          </p>
           <p className="text-xs text-ink-900/50">
             Commandes du {formatDate(dateDebut)} au {formatDate(dateFin)}
           </p>

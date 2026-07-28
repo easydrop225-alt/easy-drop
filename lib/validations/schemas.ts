@@ -29,11 +29,15 @@ export const produitSchema = z.object({
 });
 export type ProduitInput = z.infer<typeof produitSchema>;
 
+const ligneCommandeSchema = z.object({
+  productVariantId: z.string().uuid().nullable(),
+  quantite: z.coerce.number().int().min(1),
+});
+
 export const nouvelleCommandeSchema = z.object({
   productId: z.string().uuid(),
-  productVariantId: z.string().uuid().optional(),
-  quantite: z.coerce.number().int().min(1),
-  prixVenteUnitaire: z.coerce.number().positive(),
+  lignes: z.array(ligneCommandeSchema).min(1, "Sélectionne au moins une variante ou une quantité."),
+  prixTotalVente: z.coerce.number().positive("Le prix total de vente doit être supérieur à 0."),
   clientNom: z.string().min(2),
   clientTelephone: z.string().min(8),
   clientCommune: z.string().min(2),

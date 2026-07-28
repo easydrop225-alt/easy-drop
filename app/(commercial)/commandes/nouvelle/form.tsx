@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatFCFA } from "@/lib/utils";
 import { fourchetteFraisParDefaut } from "@/lib/calculs/calcul-livraison";
-import { calculBeneficeLigne, estDansFourchette } from "@/lib/calculs/calcul-benefice";
 import { COMMUNES_ABIDJAN, tarifPourCommune } from "@/lib/data/communes-abidjan";
 import type { Product, ProductVariant, Inventory, ZoneLivraison } from "@/types/database";
 
@@ -24,9 +23,10 @@ export function NouvelleCommandeForm({
 }) {
   const [state, formAction, pending] = useActionState(creerCommande, undefined as { error?: string } | undefined);
   const [productId, setProductId] = useState(produitPreselectionne ?? products[0]?.id ?? "");
-  const [productVariantId, setProductVariantId] = useState("");
-  const [quantite, setQuantite] = useState(1);
-  const [prixVenteUnitaire, setPrixVenteUnitaire] = useState(0);
+  // Quantité choisie par variante (clé = id de la variante), ou quantité
+  // unique si le produit n'a aucune variante (clé "sans_variante").
+  const [quantitesParVariante, setQuantitesParVariante] = useState<Record<string, number>>({});
+  const [prixTotalVente, setPrixTotalVente] = useState(0);
   const [zone, setZone] = useState<ZoneLivraison>("abidjan");
   const [commune, setCommune] = useState("");
   const [prixLivraison, setPrixLivraison] = useState(fourchetteFraisParDefaut("abidjan").min);
@@ -34,26 +34,35 @@ export function NouvelleCommandeForm({
 
   const produit = useMemo(() => products.find((p) => p.id === productId), [products, productId]);
   const variantesDuProduit = useMemo(() => variants.filter((v) => v.product_id === productId), [variants, productId]);
-  const varianteSelectionnee = useMemo(
-    () => variantesDuProduit.find((v) => v.id === productVariantId),
-    [variantesDuProduit, productVariantId]
-  );
-  const stockDisponible = varianteSelectionnee?.inventory?.[0]?.quantite_disponible;
 
-  // Dès que le produit change, on sélectionne automatiquement sa première
-  // variante disponible (s'il en a) pour que le stock soit toujours suivi.
+  // Réinitialise les quantités choisies quand on change de produit.
   useEffect(() => {
-    const premiereDispo = variantesDuProduit.find((v) => (v.inventory?.[0]?.quantite_disponible ?? 0) > 0) ?? variantesDuProduit[0];
-    setProductVariantId(premiereDispo?.id ?? "");
-  }, [productId, variantesDuProduit]);
+    setQuantitesParVariante({});
+  }, [productId]);
 
-  // Pré-remplit une suggestion de frais de livraison quand la zone change,
-  // sauf si le commercial a déjà personnalisé le montant lui-même.
-  useEffect(() => {
-    if (!livraisonModifieeManuellement) {
-      setPrixLivraison(fourchetteFraisParDefaut(zone).min);
+  function setQuantite(cle: string, valeur: number) {
+    setQuantitesParVariante((s) => ({ ...s, [cle]: Math.max(0, valeur) }));
+  }
+
+  const lignesSelectionnees = useMemo(() => {
+    if (variantesDuProduit.length > 0) {
+      return variantesDuProduit
+        .filter((v) => (quantitesParVariante[v.id] ?? 0) > 0)
+        .map((v) => ({ productVariantId: v.id, quantite: quantitesParVariante[v.id] ?? 0 }));
     }
-  }, [zone, livraisonModifieeManuellement]);
+    const q = quantitesParVariante["sans_variante"] ?? 0;
+    return q > 0 ? [{ productVariantId: null, quantite: q }] : [];
+  }, [variantesDuProduit, quantitesParVariante]);
+
+  const quantiteTotale = lignesSelectionnees.reduce((a, l) => a + l.quantite, 0);
+  const prixTotal = prixTotalVente + prixLivraison;
+  const prixVenteUnitaireMoyen = quantiteTotale > 0 ? prixTotalVente / quantiteTotale : 0;
+  // Bénéfice = Prix total - Prix livraison - Prix fournisseur = Prix de vente - Prix fournisseur.
+  const benefice = produit ? prixTotalVente - quantiteTotale * produit.prix_fournisseur : 0;
+  const horsFourchette =
+    produit && produit.prix_min_conseille != null && produit.prix_max_conseille != null && quantiteTotale > 0
+      ? prixVenteUnitaireMoyen < produit.prix_min_conseille || prixVenteUnitaireMoyen > produit.prix_max_conseille
+      : false;
 
   // Dès que la commune saisie correspond exactement à une commune connue
   // (via la liste déroulante/autocomplétion), le prix de la livraison se
@@ -67,22 +76,26 @@ export function NouvelleCommandeForm({
     }
   }
 
-  const prixVenteTotal = prixVenteUnitaire * quantite;
-  const prixTotal = prixVenteTotal + prixLivraison;
-  // Bénéfice = Prix total - Prix livraison - Prix fournisseur = Prix de vente - Prix fournisseur.
-  const benefice = produit ? calculBeneficeLigne(prixVenteUnitaire, produit.prix_fournisseur, quantite) : 0;
-  const horsFourchette = produit ? !estDansFourchette(prixVenteUnitaire, produit.prix_min_conseille, produit.prix_max_conseille) : false;
+  useEffect(() => {
+    if (!livraisonModifieeManuellement) {
+      setPrixLivraison(fourchetteFraisParDefaut(zone).min);
+    }
+  }, [zone, livraisonModifieeManuellement]);
 
   return (
     <form action={formAction} className="space-y-6">
+      <input type="hidden" name="lignesJson" value={JSON.stringify(lignesSelectionnees)} />
+      <input type="hidden" name="prixTotalVente" value={prixTotalVente} />
+      <input type="hidden" name="productId" value={productId} />
+      <input type="hidden" name="modeLivraison" value="normal" />
+
       <Card>
         <h2 className="mb-4 font-medium">Produit</h2>
         <div className="space-y-3">
           <div>
-            <Label htmlFor="productId">Produit</Label>
+            <Label htmlFor="productIdSelect">Produit</Label>
             <select
-              id="productId"
-              name="productId"
+              id="productIdSelect"
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
               className="h-10 w-full rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
@@ -92,58 +105,82 @@ export function NouvelleCommandeForm({
               ))}
             </select>
           </div>
-          {variantesDuProduit.length > 0 && (
-            <div>
-              <Label htmlFor="productVariantId">Variante (couleur / taille)</Label>
-              <select
-                id="productVariantId"
-                name="productVariantId"
-                value={productVariantId}
-                onChange={(e) => setProductVariantId(e.target.value)}
-                className="h-10 w-full rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
-                required
-              >
+
+          {variantesDuProduit.length > 0 ? (
+            <div className="space-y-2">
+              <Label>Variantes commandées (quantité par couleur/taille)</Label>
+              <p className="text-xs text-ink-900/50">
+                Tu peux commander plusieurs variantes différentes dans la même commande : indique une quantité pour chacune de celles souhaitées.
+              </p>
+              <div className="divide-y divide-ink-900/5 rounded-xl border border-ink-900/10">
                 {variantesDuProduit.map((v) => {
                   const stock = v.inventory?.[0]?.quantite_disponible ?? 0;
                   const label = [v.couleur, v.taille].filter(Boolean).join(" / ") || "Standard";
+                  const quantite = quantitesParVariante[v.id] ?? 0;
                   return (
-                    <option key={v.id} value={v.id} disabled={stock <= 0}>
-                      {label} — {stock > 0 ? `${stock} en stock` : "Rupture de stock"}
-                    </option>
+                    <div key={v.id} className="flex items-center justify-between gap-3 p-3">
+                      <div>
+                        <p className="text-sm font-medium">{label}</p>
+                        <p className={`text-xs ${stock > 0 ? "text-ink-900/50" : "text-red-600"}`}>
+                          {stock > 0 ? `${stock} en stock` : "Rupture de stock"}
+                        </p>
+                      </div>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={stock > 0 ? stock : 0}
+                        value={quantite}
+                        disabled={stock <= 0}
+                        onChange={(e) => setQuantite(v.id, Number(e.target.value))}
+                        className="w-20"
+                      />
+                    </div>
                   );
                 })}
-              </select>
-              {stockDisponible != null && quantite > stockDisponible && (
-                <p className="mt-1 text-xs text-red-600">
-                  Attention : seulement {stockDisponible} en stock pour cette variante.
-                </p>
-              )}
+              </div>
+            </div>
+          ) : (
+            <div>
+              <Label htmlFor="quantiteSansVariante">Quantité</Label>
+              <Input
+                id="quantiteSansVariante"
+                type="number"
+                min={0}
+                value={quantitesParVariante["sans_variante"] ?? 0}
+                onChange={(e) => setQuantite("sans_variante", Number(e.target.value))}
+                required
+              />
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="quantite">Quantité</Label>
-              <Input id="quantite" name="quantite" type="number" min={1} value={quantite}
-                onChange={(e) => setQuantite(Number(e.target.value))} required />
-            </div>
-            <div>
-              <Label htmlFor="prixVenteUnitaire">Prix de vente unitaire (FCFA, sans la livraison)</Label>
-              <Input id="prixVenteUnitaire" name="prixVenteUnitaire" type="number" min={0} value={prixVenteUnitaire}
-                onChange={(e) => setPrixVenteUnitaire(Number(e.target.value))} required />
-            </div>
+
+          <div>
+            <Label htmlFor="prixTotalVenteInput">Prix total de la commande (FCFA, sans la livraison)</Label>
+            <Input
+              id="prixTotalVenteInput"
+              type="number"
+              min={0}
+              value={prixTotalVente}
+              onChange={(e) => setPrixTotalVente(Number(e.target.value))}
+              required
+            />
+            <p className="mt-1 text-xs text-ink-900/50">
+              Indique le prix total que le client paie pour l'ensemble des pièces/variantes de cette commande (hors livraison).
+            </p>
           </div>
-          {horsFourchette && (
-            <p className="text-xs text-amber-600">
-              Ce prix sort de la fourchette conseillée ({formatFCFA(produit?.prix_min_conseille ?? 0)} – {formatFCFA(produit?.prix_max_conseille ?? 0)}).
+
+          {produit?.prix_min_conseille != null && produit?.prix_max_conseille != null && (
+            <p className={`text-xs ${horsFourchette ? "text-amber-600" : "text-ink-900/50"}`}>
+              Fourchette de Prix Conseillée : {formatFCFA(produit.prix_min_conseille)} – {formatFCFA(produit.prix_max_conseille)} (par pièce)
             </p>
           )}
+
           <div>
-            <Label htmlFor="observation">Observation (couleur, taille, précisions...)</Label>
+            <Label htmlFor="observation">Observation (précisions supplémentaires)</Label>
             <textarea
               id="observation"
               name="observation"
               rows={2}
-              placeholder="Ex : Couleur noire, taille M"
+              placeholder="Ex : préférence du client, remarque particulière..."
               className="w-full rounded-xl border border-ink-900/10 p-3 text-sm"
             />
           </div>
@@ -205,7 +242,6 @@ export function NouvelleCommandeForm({
                 : `Suggestion hors Abidjan : ${formatFCFA(fourchetteFraisParDefaut(zone).min)} – ${formatFCFA(fourchetteFraisParDefaut(zone).max)}.`}
             </p>
           </div>
-          <input type="hidden" name="modeLivraison" value="normal" />
 
           {zone === "hors_abidjan" && (
             <div className="grid grid-cols-2 gap-3 rounded-xl bg-beige-100 p-3">
@@ -224,8 +260,12 @@ export function NouvelleCommandeForm({
 
       <Card className="space-y-2 bg-beige-100">
         <div className="flex justify-between text-sm">
+          <span className="text-ink-900/60">Nombre de pièces</span>
+          <span>{quantiteTotale}</span>
+        </div>
+        <div className="flex justify-between text-sm">
           <span className="text-ink-900/60">Prix de vente</span>
-          <span>{formatFCFA(prixVenteTotal)}</span>
+          <span>{formatFCFA(prixTotalVente)}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-ink-900/60">Prix de la livraison</span>
@@ -242,8 +282,8 @@ export function NouvelleCommandeForm({
       </Card>
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      <Button type="submit" disabled={pending} className="w-full" size="lg">
-        {pending ? "Création en cours..." : "Valider la commande"}
+      <Button type="submit" disabled={pending || quantiteTotale === 0} className="w-full" size="lg">
+        {pending ? "Création en cours..." : quantiteTotale === 0 ? "Sélectionne une quantité" : "Valider la commande"}
       </Button>
     </form>
   );

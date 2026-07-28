@@ -24,6 +24,14 @@ export default async function ProfilPage() {
         <p><span className="text-ink-900/50">Email : </span>{p?.email ?? "—"}</p>
         <p><span className="text-ink-900/50">Statut : </span>{p?.statut}</p>
       </Card>
+      <a
+        href="https://wa.me/2250143086228"
+        target="_blank"
+        rel="noreferrer"
+        className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white hover:bg-emerald-700"
+      >
+        💬 Contacter le service client (WhatsApp)
+      </a>
     </div>
   );
 }

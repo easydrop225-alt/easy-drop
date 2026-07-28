@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 /**
- * Joue un bip sonore dès qu'une nouvelle commande est enregistrée par un
+ * Joue un son dès qu'une nouvelle commande est enregistrée par un
  * commercial, tant que cette page est ouverte (admin connecté).
  *
  * Fonctionnement : écoute en temps réel (Supabase Realtime) les nouvelles
  * lignes de la table `notifications` de type "nouvelle_commande" destinées
- * à cet admin, et génère un bip via l'API Web Audio (aucun fichier audio
- * nécessaire).
+ * à cet admin. Si l'admin a uploadé un son personnalisé depuis Paramètres,
+ * celui-ci est joué ; sinon, un bip généré (API Web Audio) sert de repli.
  *
  * Limite connue des navigateurs : la lecture automatique d'un son peut être
  * bloquée tant qu'aucune interaction (clic, etc.) n'a eu lieu sur la page
@@ -20,8 +20,17 @@ import { createClient } from "@/lib/supabase/client";
  */
 export function SonNouvelleCommande({ adminId }: { adminId: string }) {
   const audioContextRef = useRef<AudioContext | null>(null);
+  const [sonPersonnaliseUrl, setSonPersonnaliseUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    const supabase = createClient();
+
+    async function chargerSonPersonnalise() {
+      const { data } = await supabase.from("settings").select("valeur").eq("cle", "son_notification_url").maybeSingle();
+      if (data?.valeur) setSonPersonnaliseUrl(data.valeur as string);
+    }
+    chargerSonPersonnalise();
+
     function jouerBip() {
       try {
         const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -43,7 +52,15 @@ export function SonNouvelleCommande({ adminId }: { adminId: string }) {
       }
     }
 
-    const supabase = createClient();
+    function jouerSon() {
+      if (sonPersonnaliseUrl) {
+        const audio = new Audio(sonPersonnaliseUrl);
+        audio.play().catch(() => jouerBip());
+      } else {
+        jouerBip();
+      }
+    }
+
     const channel = supabase
       .channel("notifications-admin")
       .on(
@@ -51,7 +68,7 @@ export function SonNouvelleCommande({ adminId }: { adminId: string }) {
         { event: "INSERT", schema: "public", table: "notifications", filter: `destinataire_id=eq.${adminId}` },
         (payload) => {
           const type = (payload.new as { type?: string }).type;
-          if (type === "nouvelle_commande") jouerBip();
+          if (type === "nouvelle_commande") jouerSon();
         }
       )
       .subscribe();
@@ -59,7 +76,7 @@ export function SonNouvelleCommande({ adminId }: { adminId: string }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [adminId]);
+  }, [adminId, sonPersonnaliseUrl]);
 
   return null;
 }

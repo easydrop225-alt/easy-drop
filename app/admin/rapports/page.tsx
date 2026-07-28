@@ -16,7 +16,9 @@ export default async function RapportsPage() {
     order_items: o.order_items ?? [],
   }));
   const commerciaux = (profiles ?? []) as Profile[];
-  const nomParId = new Map(commerciaux.map((c) => [c.id, `${c.prenom} ${c.nom}`]));
+  const nomParId = new Map(
+    commerciaux.map((c) => [c.id, c.nom_boutique ? `${c.prenom} ${c.nom} / ${c.nom_boutique}` : `${c.prenom} ${c.nom}`])
+  );
 
   // --- 1. CA mensuel (commandes livrées) : global (ventes) + fournisseur ---
   const caParJour = new Map<string, number>();

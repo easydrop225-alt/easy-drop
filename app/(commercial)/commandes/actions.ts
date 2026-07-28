@@ -9,9 +9,8 @@ import { revalidatePath } from "next/cache";
 export async function creerCommande(_prevState: unknown, formData: FormData) {
   const raw = {
     productId: formData.get("productId"),
-    productVariantId: formData.get("productVariantId") || undefined,
-    quantite: formData.get("quantite"),
-    prixVenteUnitaire: formData.get("prixVenteUnitaire"),
+    lignes: JSON.parse(String(formData.get("lignesJson") ?? "[]")),
+    prixTotalVente: formData.get("prixTotalVente"),
     clientNom: formData.get("clientNom"),
     clientTelephone: formData.get("clientTelephone"),
     clientCommune: formData.get("clientCommune"),
@@ -66,18 +65,27 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
     return { error: orderError?.message ?? "Erreur lors de la création de la commande." };
   }
 
-  const { error: itemError } = await supabase.from("order_items").insert({
-    order_id: order.id,
-    product_id: parsed.data.productId,
-    product_variant_id: parsed.data.productVariantId ?? null,
-    quantite: parsed.data.quantite,
-    prix_vente_unitaire: parsed.data.prixVenteUnitaire,
-    prix_fournisseur_unitaire: product.prix_fournisseur,
-    observation: parsed.data.observation ?? null,
-  });
+  // Le commercial saisit un seul prix total pour toute la commande (toutes
+  // variantes confondues) : on répartit ce montant à parts égales par pièce
+  // pour conserver un prix de vente unitaire par ligne (nécessaire au calcul
+  // du bénéfice et au suivi du stock par variante).
+  const quantiteTotale = parsed.data.lignes.reduce((acc, l) => acc + l.quantite, 0);
+  const prixVenteUnitaire = parsed.data.prixTotalVente / quantiteTotale;
 
-  if (itemError) {
-    return { error: itemError.message };
+  const { error: itemsError } = await supabase.from("order_items").insert(
+    parsed.data.lignes.map((ligne) => ({
+      order_id: order.id,
+      product_id: parsed.data.productId,
+      product_variant_id: ligne.productVariantId,
+      quantite: ligne.quantite,
+      prix_vente_unitaire: prixVenteUnitaire,
+      prix_fournisseur_unitaire: product.prix_fournisseur,
+      observation: parsed.data.observation ?? null,
+    }))
+  );
+
+  if (itemsError) {
+    return { error: itemsError.message };
   }
 
   redirect(`/commandes/${order.id}`);
