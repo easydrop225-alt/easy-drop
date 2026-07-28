@@ -25,7 +25,7 @@ export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNo
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-ink-900/5 bg-white">
+    <header className="border-b border-ink-900/5 bg-white print:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/accueil" className="flex items-center gap-2 text-lg font-semibold">
           <Image src="/icons/icon-192.png" alt="Easy Drop" width={36} height={36} className="rounded-lg" />
@@ -92,7 +92,7 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
   ];
 
   return (
-    <header className="border-b border-ink-900/5 bg-white">
+    <header className="border-b border-ink-900/5 bg-white print:hidden">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
         <Link href="/admin/dashboard" className="flex items-center gap-2 text-lg font-semibold">
           <Image src="/icons/icon-192.png" alt="Easy Drop" width={36} height={36} className="rounded-lg" />
