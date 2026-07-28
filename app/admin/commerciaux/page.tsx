@@ -1,18 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card } from "@/components/ui/card";
-import { formatDate } from "@/lib/utils";
-import type { Profile } from "@/types/database";
+import { CommerciauxFiltres } from "@/components/commerciaux/commerciaux-filtres";
+import type { Profile, Order } from "@/types/database";
 
 export default async function AdminCommerciauxPage() {
   const supabase = await createClient();
-  const { data: commerciaux } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("role", "commercial")
-    .order("created_at", { ascending: false });
+  const [{ data: commerciaux }, { data: orders }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("role", "commercial").order("created_at", { ascending: false }),
+    supabase.from("orders").select("commercial_id, statut").eq("statut", "livree"),
+  ]);
 
   const list = (commerciaux ?? []) as Profile[];
   const enAttente = list.filter((c) => c.statut === "en_attente").length;
+
+  const performanceParId: Record<string, number> = {};
+  for (const o of (orders ?? []) as Pick<Order, "commercial_id" | "statut">[]) {
+    performanceParId[o.commercial_id] = (performanceParId[o.commercial_id] ?? 0) + 1;
+  }
 
   return (
     <div>
@@ -24,44 +27,7 @@ export default async function AdminCommerciauxPage() {
           </a>
         )}
       </div>
-      <Card className="p-0">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-ink-900/5 text-left text-ink-900/50">
-              <th className="p-3">Photo</th>
-              <th className="p-3">Nom</th>
-              <th className="p-3">Boutique</th>
-              <th className="p-3">Téléphone</th>
-              <th className="p-3">Statut</th>
-              <th className="p-3">Inscrit le</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((c) => (
-              <tr key={c.id} className="border-b border-ink-900/5 last:border-0">
-                <td className="p-3">
-                  <div className="h-9 w-9 overflow-hidden rounded-full bg-beige-100">
-                    {c.photo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.photo_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-xs text-ink-900/30">
-                        {c.prenom?.[0]}{c.nom?.[0]}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="p-3">{c.prenom} {c.nom}</td>
-                <td className="p-3">{c.nom_boutique ? <span className="rounded-full bg-beige-100 px-2 py-0.5 text-xs">🏪 {c.nom_boutique}</span> : "—"}</td>
-                <td className="p-3">{c.telephone}</td>
-                <td className="p-3">{c.statut}</td>
-                <td className="p-3">{formatDate(c.created_at)}</td>
-              </tr>
-            ))}
-            {list.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-ink-900/40">Aucun commercial inscrit.</td></tr>}
-          </tbody>
-        </table>
-      </Card>
+      <CommerciauxFiltres commerciaux={list} performanceParId={performanceParId} />
     </div>
   );
 }

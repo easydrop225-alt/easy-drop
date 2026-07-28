@@ -57,7 +57,12 @@ export async function reapprovisionnerStock(inventoryId: string, productId: stri
 
   const { error } = await supabase
     .from("inventory")
-    .update({ quantite_disponible: nouvelleQuantite, stock_total_recu: nouveauTotalRecu })
+    .update({
+      quantite_disponible: nouvelleQuantite,
+      stock_total_recu: nouveauTotalRecu,
+      dernier_ajout_quantite: quantiteAjoutee,
+      dernier_ajout_le: new Date().toISOString(),
+    })
     .eq("id", inventoryId);
 
   if (error) return { error: error.message };

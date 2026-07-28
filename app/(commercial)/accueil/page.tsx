@@ -50,8 +50,9 @@ export default async function AccueilCommercialPage() {
   return (
     <div className="space-y-8">
       {/* Bannière d'accueil — texte modifiable par l'admin dans Paramètres. */}
-      <div className="overflow-hidden rounded-2xl bg-ink-900 p-6 text-beige-50">
-        <p className="max-w-xs text-lg font-semibold leading-snug">{accueilTexte}</p>
+      <div className="flex items-center gap-4 overflow-hidden rounded-2xl bg-ink-900 p-6 text-beige-50">
+        <Image src="/icons/icon-512.png" alt="Easy Drop" width={72} height={72} className="shrink-0 rounded-2xl" />
+        <p className="text-lg font-semibold leading-snug">{accueilTexte}</p>
       </div>
 
       {/* Accès rapides */}

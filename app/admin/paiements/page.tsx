@@ -1,9 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card } from "@/components/ui/card";
 import { dateIlYA3Mois } from "@/lib/utils";
 import type { Payment, Profile, Profit } from "@/types/database";
-import { PaiementEnAttenteCard } from "./paiement-en-attente-card";
-import { HistoriqueVersementsGroupe } from "./historique-groupe";
+import { FiltreCommercialPaiements } from "./filtre-commercial-paiements";
 
 interface CommercialDu {
   commercial: Profile;
@@ -56,30 +54,7 @@ export default async function AdminPaiementsPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Paiements des gains</h1>
-
-      <div>
-        <h2 className="mb-3 text-lg font-medium">Paiements en attente</h2>
-        <div className="space-y-3">
-          {commerciauxDus.map((c) => (
-            <PaiementEnAttenteCard
-              key={c.commercial.id}
-              commercial={c.commercial}
-              montantDu={c.montantDu}
-              dateDebut={c.dateDebut}
-              dateFin={c.dateFin}
-            />
-          ))}
-          {commerciauxDus.length === 0 && (
-            <Card><p className="text-sm text-ink-900/50">Aucun versement en attente pour l'instant.</p></Card>
-          )}
-        </div>
-      </div>
-
-      <div>
-        <h2 className="mb-1 text-lg font-medium">Historique des versements</h2>
-        <p className="mb-3 text-xs text-ink-900/40">Affichage des 3 derniers mois.</p>
-        <HistoriqueVersementsGroupe payments={list} />
-      </div>
+      <FiltreCommercialPaiements commerciauxDus={commerciauxDus} payments={list} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { HeaderAdmin } from "@/components/shared/header";
 import { createClient } from "@/lib/supabase/server";
 import { SonNouvelleCommande } from "@/components/shared/son-nouvelle-commande";
+import { PushNotificationSetup } from "@/components/shared/push-notification-setup";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -26,6 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen bg-beige-50">
       {user?.id && <SonNouvelleCommande adminId={user.id} />}
+      {user?.id && <PushNotificationSetup />}
       <HeaderAdmin
         counts={{
           commerciauxRecents: commerciauxRecents ?? 0,
