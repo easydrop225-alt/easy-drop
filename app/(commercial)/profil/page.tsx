@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { AvatarUploader } from "@/components/produits/avatar-uploader";
 import { TelephoneForm } from "./telephone-form";
 import { BoutiqueForm } from "./boutique-form";
+import { LogoutButton } from "@/components/shared/logout-button";
 import type { Profile } from "@/types/database";
 
 export default async function ProfilPage() {
@@ -32,6 +33,7 @@ export default async function ProfilPage() {
       >
         💬 Contacter le service client (WhatsApp)
       </a>
+      <div className="flex justify-center md:hidden"><LogoutButton /></div>
     </div>
   );
 }
