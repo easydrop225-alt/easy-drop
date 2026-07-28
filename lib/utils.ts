@@ -16,3 +16,16 @@ export function formatDate(date: string | Date): string {
     year: "numeric",
   }).format(new Date(date));
 }
+
+/**
+ * Date ISO d'il y a 3 mois — utilisée pour limiter les historiques affichés
+ * (commandes, gains, versements) à une fenêtre récente, pour des raisons de
+ * performance à mesure que le volume de données grandit. Les rapports
+ * annuels (page Rapports) ne sont volontairement PAS concernés par cette
+ * limite : ils continuent d'utiliser l'historique complet.
+ */
+export function dateIlYA3Mois(): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 3);
+  return d.toISOString();
+}
