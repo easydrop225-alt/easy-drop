@@ -6,6 +6,7 @@ export const inscriptionSchema = z.object({
   telephone: z.string().regex(/^\+225\d{10}$/, "Format attendu : +225XXXXXXXXXX"),
   email: z.string().email().optional().or(z.literal("")),
   motDePasse: z.string().min(8, "8 caractères minimum"),
+  nomBoutique: z.string().min(2, "Le nom de la boutique est requis").max(100),
 });
 export type InscriptionInput = z.infer<typeof inscriptionSchema>;
 

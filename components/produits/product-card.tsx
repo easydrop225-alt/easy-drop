@@ -17,7 +17,7 @@ export function ProductCard({ product, imageUrl, prixFournisseur, href }: Produc
       <div className="aspect-square w-full bg-beige-100">
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt={product.nom} className="h-full w-full object-cover" />
+          <img src={imageUrl} alt={product.nom} loading="lazy" decoding="async" className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-ink-900/30">
             Photo à venir

@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatFCFA } from "@/lib/utils";
 import { FiltreDate, correspondAuFiltre, type FiltreDateValeur } from "./filtre-date";
 import type { Order, Profile, OrderItem, Product } from "@/types/database";
 
 export type OrderComplete = Order & {
-  profiles: Pick<Profile, "nom" | "prenom" | "telephone">;
+  profiles: Pick<Profile, "nom" | "prenom" | "telephone" | "nom_boutique">;
   order_items: (OrderItem & { products: Product })[];
 };
 
@@ -26,11 +26,11 @@ export function CommandesGroupeesAdmin({
   const filtrees = useMemo(() => orders.filter((o) => correspondAuFiltre(o.created_at, filtre)), [orders, filtre]);
 
   const groupes = useMemo(() => {
-    const map = new Map<string, { nom: string; telephone: string; commandes: OrderComplete[] }>();
+    const map = new Map<string, { nom: string; telephone: string; nomBoutique: string | null; commandes: OrderComplete[] }>();
     for (const o of filtrees) {
       const cle = o.commercial_id;
       const nom = `${o.profiles?.prenom ?? "?"} ${o.profiles?.nom ?? ""}`.trim();
-      if (!map.has(cle)) map.set(cle, { nom, telephone: o.profiles?.telephone ?? "", commandes: [] });
+      if (!map.has(cle)) map.set(cle, { nom, telephone: o.profiles?.telephone ?? "", nomBoutique: o.profiles?.nom_boutique ?? null, commandes: [] });
       map.get(cle)!.commandes.push(o);
     }
     return Array.from(map.entries()).sort((a, b) => b[1].commandes.length - a[1].commandes.length);
@@ -50,7 +50,10 @@ export function CommandesGroupeesAdmin({
               onClick={() => setGroupeOuvert((s) => ({ ...s, [commercialId]: !ouvert }))}
               className="mb-2 flex w-full items-center justify-between rounded-xl bg-beige-100 px-4 py-2 text-left"
             >
-              <span className="font-medium">{groupe.nom} <span className="font-normal text-ink-900/50">— {groupe.telephone}</span></span>
+              <span className="font-medium">
+                {groupe.nom} <span className="font-normal text-ink-900/50">— {groupe.telephone}</span>
+                {groupe.nomBoutique && <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-xs font-normal text-ink-900/60">🏪 {groupe.nomBoutique}</span>}
+              </span>
               <span className="text-sm text-ink-900/50">{groupe.commandes.length} commande(s) {ouvert ? "▲" : "▼"}</span>
             </button>
 
@@ -66,7 +69,7 @@ export function CommandesGroupeesAdmin({
                         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-beige-100">
                           {image ? (
                             // eslint-disable-next-line @next/next/no-img-element
-                            <img src={image} alt="" className="h-full w-full object-cover" />
+                            <img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                           ) : (
                             <div className="flex h-full w-full items-center justify-center text-[10px] text-ink-900/30">Photo</div>
                           )}
@@ -99,6 +102,12 @@ export function CommandesGroupeesAdmin({
                           <div>
                             <p className="text-ink-900/50">Date</p>
                             <p>{formatDate(order.created_at)} à {new Date(order.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p>
+                          </div>
+                          <div>
+                            <p className="text-ink-900/50">Prix total</p>
+                            <p className="font-medium">
+                              {formatFCFA(order.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0) + order.frais_livraison)}
+                            </p>
                           </div>
                           <div>
                             <p className="text-ink-900/50">Statut</p>

@@ -42,7 +42,7 @@ export default async function AdminCommerciauxPage() {
                   <div className="h-9 w-9 overflow-hidden rounded-full bg-beige-100">
                     {c.photo_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.photo_url} alt="" className="h-full w-full object-cover" />
+                      <img src={c.photo_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center text-xs text-ink-900/30">
                         {c.prenom?.[0]}{c.nom?.[0]}

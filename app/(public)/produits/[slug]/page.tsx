@@ -32,7 +32,7 @@ export default async function ProduitPublicPage({
         <div className="aspect-square rounded-2xl bg-beige-100">
           {images[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={images[0].url} alt={(product as Product).nom} className="h-full w-full rounded-2xl object-cover" />
+            <img src={images[0].url} alt={(product as Product).nom} loading="lazy" decoding="async" className="h-full w-full rounded-2xl object-cover" />
           ) : (
             <div className="flex h-full items-center justify-center text-ink-900/30">Photo à venir</div>
           )}

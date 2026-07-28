@@ -15,7 +15,11 @@ const STATUTS: { value: OrderStatut; label: string }[] = [
   { value: "relance", label: "🟠 À relancer" },
 ];
 
-const MOTIFS = ["Client absent", "Adresse incorrecte", "Téléphone injoignable", "Refus colis", "Erreur commande", "Autre"];
+// Le motif/note est disponible pour les 3 statuts "de résolution" :
+// livrée avec succès, annulée, et à relancer.
+const STATUTS_AVEC_MOTIF: OrderStatut[] = ["livree", "annulee", "relance"];
+
+const MOTIFS = ["Client absent", "Adresse incorrecte", "Téléphone injoignable", "Refus colis", "Erreur commande", "Livraison confirmée par le client", "Autre"];
 
 export function StatutForm({
   orderId,
@@ -28,6 +32,7 @@ export function StatutForm({
 }) {
   const [statut, setStatut] = useState<OrderStatut>(statutActuel);
   const [motif, setMotif] = useState("");
+  const [motifAutre, setMotifAutre] = useState("");
   const [dateRelance, setDateRelance] = useState(dateRelanceActuelle ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -38,11 +43,12 @@ export function StatutForm({
       setError("Merci de préciser une date de relance.");
       return;
     }
+    const motifFinal = motif === "Autre" ? motifAutre : motif;
     startTransition(async () => {
       const res = await changerStatutCommande(
         orderId,
         statut,
-        statut === "annulee" ? motif : undefined,
+        STATUTS_AVEC_MOTIF.includes(statut) ? (motifFinal || undefined) : undefined,
         statut === "relance" ? dateRelance : undefined
       );
       if (res?.error) setError(res.error);
@@ -59,15 +65,26 @@ export function StatutForm({
         {STATUTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
       </select>
 
-      {statut === "annulee" && (
-        <select
-          value={motif}
-          onChange={(e) => setMotif(e.target.value)}
-          className="h-10 w-full rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
-        >
-          <option value="">Choisir un motif</option>
-          {MOTIFS.map((m) => <option key={m} value={m}>{m}</option>)}
-        </select>
+      {STATUTS_AVEC_MOTIF.includes(statut) && (
+        <div className="space-y-2">
+          <select
+            value={motif}
+            onChange={(e) => setMotif(e.target.value)}
+            className="h-10 w-full rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
+          >
+            <option value="">Choisir un motif / une note (facultatif)</option>
+            {MOTIFS.map((m) => <option key={m} value={m}>{m}</option>)}
+          </select>
+          {motif === "Autre" && (
+            <textarea
+              value={motifAutre}
+              onChange={(e) => setMotifAutre(e.target.value)}
+              rows={2}
+              placeholder="Précise ici..."
+              className="w-full rounded-xl border border-ink-900/10 p-3 text-sm"
+            />
+          )}
+        </div>
       )}
 
       {statut === "relance" && (

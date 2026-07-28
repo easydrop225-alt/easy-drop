@@ -11,6 +11,7 @@ export async function inscrireCommercial(_prevState: unknown, formData: FormData
     telephone: formData.get("telephone"),
     email: formData.get("email") || "",
     motDePasse: formData.get("motDePasse"),
+    nomBoutique: formData.get("nomBoutique"),
   };
 
   const parsed = inscriptionSchema.safeParse(raw);
@@ -19,7 +20,7 @@ export async function inscrireCommercial(_prevState: unknown, formData: FormData
   }
 
   const supabase = await createClient();
-  const { nom, prenom, telephone, email, motDePasse } = parsed.data;
+  const { nom, prenom, telephone, email, motDePasse, nomBoutique } = parsed.data;
 
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: email || `${telephone.replace("+", "")}@easydrop.local`,
@@ -37,6 +38,7 @@ export async function inscrireCommercial(_prevState: unknown, formData: FormData
     prenom,
     telephone,
     email: email || null,
+    nom_boutique: nomBoutique,
     statut: "valide",
   });
 

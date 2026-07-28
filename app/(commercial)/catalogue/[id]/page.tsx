@@ -46,7 +46,7 @@ export default async function MediasProduitPage({
               <div key={img.id} className="space-y-2">
                 <div className="aspect-square overflow-hidden rounded-xl bg-beige-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} alt="" className="h-full w-full object-cover" />
+                  <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
                 </div>
                 <a href={img.url} download target="_blank" rel="noreferrer">
                   <Button size="sm" variant="secondary" className="w-full">Télécharger</Button>

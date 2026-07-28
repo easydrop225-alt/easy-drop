@@ -9,17 +9,22 @@ import { formatFCFA } from "@/lib/utils";
 import { fourchetteFraisParDefaut } from "@/lib/calculs/calcul-livraison";
 import { calculBeneficeLigne, estDansFourchette } from "@/lib/calculs/calcul-benefice";
 import { COMMUNES_ABIDJAN, tarifPourCommune } from "@/lib/data/communes-abidjan";
-import type { Product, ZoneLivraison } from "@/types/database";
+import type { Product, ProductVariant, Inventory, ZoneLivraison } from "@/types/database";
+
+type VariantAvecStock = ProductVariant & { inventory: Inventory[] };
 
 export function NouvelleCommandeForm({
   products,
+  variants,
   produitPreselectionne,
 }: {
   products: Product[];
+  variants: VariantAvecStock[];
   produitPreselectionne?: string;
 }) {
   const [state, formAction, pending] = useActionState(creerCommande, undefined as { error?: string } | undefined);
   const [productId, setProductId] = useState(produitPreselectionne ?? products[0]?.id ?? "");
+  const [productVariantId, setProductVariantId] = useState("");
   const [quantite, setQuantite] = useState(1);
   const [prixVenteUnitaire, setPrixVenteUnitaire] = useState(0);
   const [zone, setZone] = useState<ZoneLivraison>("abidjan");
@@ -28,6 +33,19 @@ export function NouvelleCommandeForm({
   const [livraisonModifieeManuellement, setLivraisonModifieeManuellement] = useState(false);
 
   const produit = useMemo(() => products.find((p) => p.id === productId), [products, productId]);
+  const variantesDuProduit = useMemo(() => variants.filter((v) => v.product_id === productId), [variants, productId]);
+  const varianteSelectionnee = useMemo(
+    () => variantesDuProduit.find((v) => v.id === productVariantId),
+    [variantesDuProduit, productVariantId]
+  );
+  const stockDisponible = varianteSelectionnee?.inventory?.[0]?.quantite_disponible;
+
+  // Dès que le produit change, on sélectionne automatiquement sa première
+  // variante disponible (s'il en a) pour que le stock soit toujours suivi.
+  useEffect(() => {
+    const premiereDispo = variantesDuProduit.find((v) => (v.inventory?.[0]?.quantite_disponible ?? 0) > 0) ?? variantesDuProduit[0];
+    setProductVariantId(premiereDispo?.id ?? "");
+  }, [productId, variantesDuProduit]);
 
   // Pré-remplit une suggestion de frais de livraison quand la zone change,
   // sauf si le commercial a déjà personnalisé le montant lui-même.
@@ -74,6 +92,34 @@ export function NouvelleCommandeForm({
               ))}
             </select>
           </div>
+          {variantesDuProduit.length > 0 && (
+            <div>
+              <Label htmlFor="productVariantId">Variante (couleur / taille)</Label>
+              <select
+                id="productVariantId"
+                name="productVariantId"
+                value={productVariantId}
+                onChange={(e) => setProductVariantId(e.target.value)}
+                className="h-10 w-full rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
+                required
+              >
+                {variantesDuProduit.map((v) => {
+                  const stock = v.inventory?.[0]?.quantite_disponible ?? 0;
+                  const label = [v.couleur, v.taille].filter(Boolean).join(" / ") || "Standard";
+                  return (
+                    <option key={v.id} value={v.id} disabled={stock <= 0}>
+                      {label} — {stock > 0 ? `${stock} en stock` : "Rupture de stock"}
+                    </option>
+                  );
+                })}
+              </select>
+              {stockDisponible != null && quantite > stockDisponible && (
+                <p className="mt-1 text-xs text-red-600">
+                  Attention : seulement {stockDisponible} en stock pour cette variante.
+                </p>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label htmlFor="quantite">Quantité</Label>

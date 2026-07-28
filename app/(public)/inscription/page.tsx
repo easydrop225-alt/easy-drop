@@ -12,7 +12,7 @@ export default function InscriptionPage() {
     <main className="mx-auto max-w-md px-6 py-16">
       <h1 className="mb-2 text-2xl font-semibold">Devenir commercial</h1>
       <p className="mb-8 text-sm text-ink-900/60">
-        Ton compte sera activé après validation par l'administration.
+        Crée ton compte pour accéder immédiatement au catalogue et commencer à vendre.
       </p>
       <form action={formAction} className="space-y-4">
         <div>
@@ -22,6 +22,10 @@ export default function InscriptionPage() {
         <div>
           <Label htmlFor="nom">Nom</Label>
           <Input id="nom" name="nom" required />
+        </div>
+        <div>
+          <Label htmlFor="nomBoutique">Nom de ta boutique</Label>
+          <Input id="nomBoutique" name="nomBoutique" placeholder="Ex : Chez Yannick Shop" required />
         </div>
         <div>
           <Label htmlFor="telephone">Téléphone (format +225XXXXXXXXXX)</Label>

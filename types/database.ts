@@ -26,6 +26,8 @@ export interface Profile {
   valide_par: string | null;
   photo_url: string | null;
   telephone_modifie_le: string | null;
+  nom_boutique: string | null;
+  nom_boutique_modifie_le: string | null;
   created_at: string;
 }
 

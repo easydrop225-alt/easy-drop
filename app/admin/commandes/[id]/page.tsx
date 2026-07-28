@@ -22,12 +22,12 @@ export default async function DetailCommandeAdminPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: order } = await supabase.from("orders").select("*, profiles(nom, prenom, telephone)").eq("id", id).single();
+  const { data: order } = await supabase.from("orders").select("*, profiles(nom, prenom, telephone, nom_boutique)").eq("id", id).single();
   if (!order) notFound();
 
   const { data: items } = await supabase.from("order_items").select("*, products(*)").eq("order_id", id);
   const itemList = ((items ?? []) as (OrderItem & { products: Product })[]);
-  const o = order as Order & { profiles: Pick<Profile, "nom" | "prenom" | "telephone"> };
+  const o = order as Order & { profiles: Pick<Profile, "nom" | "prenom" | "telephone" | "nom_boutique"> };
 
   const prixVente = itemList.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0);
   const prixFournisseur = itemList.reduce((a, i) => a + i.prix_fournisseur_unitaire * i.quantite, 0);
@@ -41,6 +41,7 @@ export default async function DetailCommandeAdminPage({
           <h1 className="text-2xl font-semibold">{o.numero_commande}</h1>
           <p className="text-sm text-ink-900/60">
             Enregistrée le {formatDate(o.created_at)} à {formatHeure(o.created_at)} par {o.profiles?.prenom} {o.profiles?.nom}
+            {o.profiles?.nom_boutique && <> — 🏪 {o.profiles.nom_boutique}</>}
           </p>
           {o.date_livraison_prevue && (
             <p className="text-sm text-ink-900/60">

@@ -36,9 +36,10 @@ export function OrderTimeline({
 
   if (statut === "livree") {
     return (
-      <p className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">
-        🟢 Commande livrée avec succès ✓
-      </p>
+      <div className="rounded-xl bg-emerald-50 p-3 text-sm text-emerald-700">
+        <p>🟢 Commande livrée avec succès ✓</p>
+        {motif && <p className="mt-1 text-xs">Note : {motif}</p>}
+      </div>
     );
   }
 
@@ -56,6 +57,7 @@ export function OrderTimeline({
     <div className="rounded-xl bg-orange-50 p-3 text-sm text-orange-700">
       <p>🟠 À relancer.</p>
       {dateRelance && <p className="mt-1 text-xs">Nouvelle date : {formatDate(dateRelance)}</p>}
+      {motif && <p className="mt-1 text-xs">Note : {motif}</p>}
     </div>
   );
 }

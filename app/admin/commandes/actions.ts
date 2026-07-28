@@ -15,7 +15,7 @@ export async function changerStatutCommande(
     .from("orders")
     .update({
       statut,
-      motif_annulation: statut === "annulee" ? (motif ?? null) : null,
+      motif_annulation: motif ?? null,
       date_relance: statut === "relance" ? (dateRelance ?? null) : null,
     })
     .eq("id", orderId);
