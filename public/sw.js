@@ -14,7 +14,7 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(donnees.titre || "Easy Drop", {
       body: donnees.message || "",
       icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      badge: "/icons/badge-monochrome.png",
       data: { lien: donnees.lien || "/admin/dashboard" },
     })
   );
