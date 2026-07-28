@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { formatFCFA } from "@/lib/utils";
 import type { Product } from "@/types/database";
 
@@ -14,10 +15,15 @@ export function ProductCard({ product, imageUrl, prixFournisseur, href }: Produc
       href={href}
       className="group block overflow-hidden rounded-2xl border border-ink-900/5 bg-white transition hover:shadow-md"
     >
-      <div className="aspect-square w-full bg-beige-100">
+      <div className="relative aspect-square w-full bg-beige-100">
         {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt={product.nom} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+          <Image
+            src={imageUrl}
+            alt={product.nom}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover"
+          />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-ink-900/30">
             Photo à venir

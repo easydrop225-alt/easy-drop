@@ -43,5 +43,5 @@ export async function connecter(_prevState: unknown, formData: FormData) {
     redirect("/admin/dashboard");
   }
 
-  redirect("/dashboard");
+  redirect("/accueil");
 }

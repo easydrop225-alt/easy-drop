@@ -23,7 +23,7 @@ export async function validerCommercial(commercialId: string) {
     type: "compte_valide",
     titre: "Ton compte a été validé",
     message: "Tu peux maintenant accéder au catalogue et créer des commandes.",
-    lien: "/dashboard",
+    lien: "/accueil",
   });
 
   revalidatePath("/admin/commerciaux/validation");

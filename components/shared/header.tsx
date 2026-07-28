@@ -4,11 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, Bell, User } from "lucide-react";
+import { Menu, X, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "./logout-button";
 
 const NAV_COMMERCIAL = [
+  { href: "/accueil", label: "Accueil" },
   { href: "/dashboard", label: "Dashboard" },
   { href: "/catalogue", label: "Catalogue" },
   { href: "/commandes", label: "Mes commandes" },
@@ -26,7 +27,7 @@ export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNo
   return (
     <header className="border-b border-ink-900/5 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold">
+        <Link href="/accueil" className="flex items-center gap-2 text-lg font-semibold">
           <Image src="/icons/icon-192.png" alt="Easy Drop" width={28} height={28} className="rounded-lg" />
           <span className="hidden sm:inline">Easy Drop</span>
         </Link>
@@ -48,9 +49,9 @@ export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNo
           ))}
         </nav>
 
-        {/* Barre du haut simplifiée sur mobile : cloche de notifications + profil,
-            à la place du menu hamburger (remplacé par la barre de navigation
-            du bas — voir BottomNavCommercial). */}
+        {/* Barre du haut simplifiée sur mobile : juste la cloche de
+            notifications (le profil est accessible depuis la barre de
+            navigation du bas — voir BottomNavCommercial). */}
         <div className="flex items-center gap-4 md:hidden">
           <Link href="/notifications" className="relative text-ink-900/70">
             <Bell size={22} />
@@ -59,9 +60,6 @@ export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNo
                 {notificationsNonLues}
               </span>
             )}
-          </Link>
-          <Link href="/profil" className="text-ink-900/70">
-            <User size={22} />
           </Link>
         </div>
 

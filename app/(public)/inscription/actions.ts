@@ -46,5 +46,5 @@ export async function inscrireCommercial(_prevState: unknown, formData: FormData
     return { error: profileError.message };
   }
 
-  redirect("/dashboard");
+  redirect("/accueil");
 }
