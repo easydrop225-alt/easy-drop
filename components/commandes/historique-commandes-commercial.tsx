@@ -8,19 +8,37 @@ import { formatDate } from "@/lib/utils";
 import { FiltreDate, correspondAuFiltre, type FiltreDateValeur } from "./filtre-date";
 import type { Order } from "@/types/database";
 
-function MotifTexte({ order }: { order: Order }) {
-  if (order.statut === "annulee" || order.statut === "livree") {
-    return order.motif_annulation ? <>{order.motif_annulation}</> : null;
-  }
-  if (order.statut === "relance") {
-    return (
-      <>
-        {order.date_relance && `À relancer le ${formatDate(order.date_relance)}`}
-        {order.motif_annulation && ` — ${order.motif_annulation}`}
-      </>
-    );
-  }
-  return null;
+/** Statut + (pour "à relancer") la date juste à côté du badge, et pour
+ * annulée/livrée le motif juste en dessous — sans dupliquer le texte du badge. */
+function ColonneStatut({ order }: { order: Order }) {
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <StatutBadge statut={order.statut} />
+        {order.statut === "relance" && order.date_relance && (
+          <span className="text-xs font-medium text-orange-700">{formatDate(order.date_relance)}</span>
+        )}
+      </div>
+      {(order.statut === "annulee" || order.statut === "livree") && order.motif_annulation && (
+        <p className="mt-0.5 text-xs text-ink-900/40">{order.motif_annulation}</p>
+      )}
+    </div>
+  );
+}
+
+/** Date d'enregistrement (discrète, italique) + date prévue de livraison
+ * (mise en avant) dans la même cellule — la date de relance remplace la
+ * date prévue quand la commande est "à relancer". */
+function ColonneDate({ order }: { order: Order }) {
+  const dateAMettreEnAvant = order.statut === "relance" && order.date_relance ? order.date_relance : order.date_livraison_prevue;
+  return (
+    <div className="whitespace-nowrap">
+      <p className="text-[11px] italic text-ink-900/40">
+        {formatDate(order.created_at)} · {new Date(order.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+      </p>
+      {dateAMettreEnAvant && <p className="text-xs font-semibold">{formatDate(dateAMettreEnAvant)}</p>}
+    </div>
+  );
 }
 
 export function HistoriqueCommandesCommercial({ orders }: { orders: Order[] }) {
@@ -43,7 +61,7 @@ export function HistoriqueCommandesCommercial({ orders }: { orders: Order[] }) {
                 <StatutBadge statut={order.statut} />
               </div>
               <p className="text-xs text-ink-900/60">{order.client_nom} · {order.client_commune}</p>
-              <p className="text-[11px] text-ink-900/40">{formatDate(order.created_at)}</p>
+              <ColonneDate order={order} />
             </Card>
           </Link>
         ))}
@@ -52,7 +70,8 @@ export function HistoriqueCommandesCommercial({ orders }: { orders: Order[] }) {
         )}
       </div>
 
-      {/* Vue bureau : tableau compact — 4 colonnes seulement. */}
+      {/* Vue bureau : tableau compact — 4 colonnes, statut et motif regroupés
+          dans la même cellule (pas de colonne séparée qui casse la mise en page). */}
       <Card className="hidden p-0 md:block">
         <table className="w-full text-sm">
           <thead>
@@ -73,11 +92,8 @@ export function HistoriqueCommandesCommercial({ orders }: { orders: Order[] }) {
                   <p>{order.client_nom}</p>
                   <p className="text-xs text-ink-900/50">{order.client_commune} — {order.client_adresse}</p>
                 </td>
-                <td className="p-2 whitespace-nowrap">{formatDate(order.created_at)}</td>
-                <td className="p-2">
-                  <StatutBadge statut={order.statut} />
-                  <p className="mt-0.5 text-xs text-ink-900/40"><MotifTexte order={order} /></p>
-                </td>
+                <td className="p-2"><ColonneDate order={order} /></td>
+                <td className="p-2"><ColonneStatut order={order} /></td>
               </tr>
             ))}
             {filtrees.length === 0 && (

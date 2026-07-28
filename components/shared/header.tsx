@@ -28,7 +28,7 @@ export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNo
     <header className="border-b border-ink-900/5 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/accueil" className="flex items-center gap-2 text-lg font-semibold">
-          <Image src="/icons/icon-192.png" alt="Easy Drop" width={28} height={28} className="rounded-lg" />
+          <Image src="/icons/icon-192.png" alt="Easy Drop" width={36} height={36} className="rounded-lg" />
           <span className="hidden sm:inline">Easy Drop</span>
         </Link>
 
@@ -95,7 +95,7 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
     <header className="border-b border-ink-900/5 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
         <Link href="/admin/dashboard" className="flex items-center gap-2 text-lg font-semibold">
-          <Image src="/icons/icon-192.png" alt="Easy Drop" width={28} height={28} className="rounded-lg" />
+          <Image src="/icons/icon-192.png" alt="Easy Drop" width={36} height={36} className="rounded-lg" />
           <span className="hidden sm:inline">Easy Drop — Admin</span>
         </Link>
         <nav className="hidden flex-wrap gap-1 text-sm lg:flex">

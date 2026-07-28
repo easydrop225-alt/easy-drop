@@ -14,6 +14,8 @@ export type OrderComplete = Order & {
   order_items: (OrderItem & { products: Product; product_variants: ProductVariant | null })[];
 };
 
+type Onglet = "nouvelles" | "annulees" | "livrees" | "relance" | "toutes";
+
 function prixTotal(order: OrderComplete): number {
   return order.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0) + order.frais_livraison;
 }
@@ -24,10 +26,6 @@ function labelVariante(item: OrderComplete["order_items"][number]): string {
   return variante ? `(${variante})` : "";
 }
 
-/** Récapitulatif complet des articles — pensé pour préparer le colis sans
- * avoir besoin d'ouvrir le détail de la commande : produit, variante et
- * quantité pour CHAQUE ligne (une commande peut contenir plusieurs
- * variantes différentes). */
 function RecapitulatifArticles({ order }: { order: OrderComplete }) {
   return (
     <ul className="space-y-0.5">
@@ -41,6 +39,39 @@ function RecapitulatifArticles({ order }: { order: OrderComplete }) {
   );
 }
 
+/** Colonne Date : date/heure d'enregistrement (discrète) + date prévue pour
+ * la livraison (mise en avant) — la date de relance remplace la date
+ * prévue quand la commande est "à relancer". */
+function ColonneDate({ order }: { order: OrderComplete }) {
+  const dateAMettreEnAvant = order.statut === "relance" && order.date_relance ? order.date_relance : order.date_livraison_prevue;
+  return (
+    <div className="whitespace-nowrap">
+      <p className="text-[11px] italic text-ink-900/40">
+        {formatDate(order.created_at)} · {new Date(order.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+      </p>
+      {dateAMettreEnAvant && <p className="text-xs font-semibold">{formatDate(dateAMettreEnAvant)}</p>}
+    </div>
+  );
+}
+
+/** Statut + (pour "à relancer") la date juste à côté, et pour
+ * annulée/livrée le motif juste en dessous — sans dupliquer le texte du badge. */
+function ColonneStatut({ order }: { order: OrderComplete }) {
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <StatutBadge statut={order.statut} />
+        {order.statut === "relance" && order.date_relance && (
+          <span className="text-xs font-medium text-orange-700">{formatDate(order.date_relance)}</span>
+        )}
+      </div>
+      {(order.statut === "annulee" || order.statut === "livree") && order.motif_annulation && (
+        <p className="mt-0.5 text-xs text-ink-900/40">{order.motif_annulation}</p>
+      )}
+    </div>
+  );
+}
+
 export function CommandesGroupeesAdmin({
   orders,
   imageParProduit,
@@ -50,14 +81,25 @@ export function CommandesGroupeesAdmin({
 }) {
   const [filtre, setFiltre] = useState<FiltreDateValeur>({ annee: new Date().getFullYear(), mois: null, jour: null });
   const [groupeOuvert, setGroupeOuvert] = useState<Record<string, boolean>>({});
-  const [ongletActif, setOngletActif] = useState<"nouvelles" | "toutes">("toutes");
+  const [ongletActif, setOngletActif] = useState<Onglet>("toutes");
 
   const dates = useMemo(() => orders.map((o) => o.created_at), [orders]);
-  const nombreNouvelles = useMemo(() => orders.filter((o) => o.statut === "confirmation").length, [orders]);
+  const compteParStatut = useMemo(() => ({
+    nouvelles: orders.filter((o) => o.statut === "confirmation").length,
+    annulees: orders.filter((o) => o.statut === "annulee").length,
+    livrees: orders.filter((o) => o.statut === "livree").length,
+    relance: orders.filter((o) => o.statut === "relance").length,
+  }), [orders]);
 
   const filtrees = useMemo(() => {
     const parDate = orders.filter((o) => correspondAuFiltre(o.created_at, filtre));
-    return ongletActif === "nouvelles" ? parDate.filter((o) => o.statut === "confirmation") : parDate;
+    switch (ongletActif) {
+      case "nouvelles": return parDate.filter((o) => o.statut === "confirmation");
+      case "annulees": return parDate.filter((o) => o.statut === "annulee");
+      case "livrees": return parDate.filter((o) => o.statut === "livree");
+      case "relance": return parDate.filter((o) => o.statut === "relance");
+      default: return parDate;
+    }
   }, [orders, filtre, ongletActif]);
 
   const groupes = useMemo(() => {
@@ -71,21 +113,26 @@ export function CommandesGroupeesAdmin({
     return Array.from(map.entries()).sort((a, b) => b[1].commandes.length - a[1].commandes.length);
   }, [filtrees]);
 
+  const onglets: { valeur: Onglet; label: string; compte?: number }[] = [
+    { valeur: "nouvelles", label: "🟡 Nouvelles", compte: compteParStatut.nouvelles },
+    { valeur: "relance", label: "🟠 À relancer", compte: compteParStatut.relance },
+    { valeur: "livrees", label: "🟢 Livrées", compte: compteParStatut.livrees },
+    { valeur: "annulees", label: "🔴 Annulées", compte: compteParStatut.annulees },
+    { valeur: "toutes", label: "Toutes les commandes" },
+  ];
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => setOngletActif("nouvelles")}
-          className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${ongletActif === "nouvelles" ? "bg-terracotta-500 text-white" : "bg-white text-ink-900/60 hover:bg-beige-100"}`}
-        >
-          🟡 Nouvelles commandes {nombreNouvelles > 0 && `(${nombreNouvelles})`}
-        </button>
-        <button
-          onClick={() => setOngletActif("toutes")}
-          className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${ongletActif === "toutes" ? "bg-terracotta-500 text-white" : "bg-white text-ink-900/60 hover:bg-beige-100"}`}
-        >
-          Toutes les commandes
-        </button>
+        {onglets.map((o) => (
+          <button
+            key={o.valeur}
+            onClick={() => setOngletActif(o.valeur)}
+            className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${ongletActif === o.valeur ? "bg-terracotta-500 text-white" : "bg-white text-ink-900/60 hover:bg-beige-100"}`}
+          >
+            {o.label} {!!o.compte && o.compte > 0 && `(${o.compte})`}
+          </button>
+        ))}
       </div>
 
       <FiltreDate dates={dates} valeur={filtre} onChange={setFiltre} />
@@ -123,14 +170,26 @@ export function CommandesGroupeesAdmin({
                         <div className="text-xs text-ink-900/70">
                           <RecapitulatifArticles order={order} />
                         </div>
-                        <p className="text-[11px] text-ink-900/40">{formatDate(order.created_at)}</p>
+                        <ColonneDate order={order} />
                       </Link>
-                      <StatutRapideSelect orderId={order.id} statutActuel={order.statut} />
+                      <div className="flex items-center justify-between gap-2">
+                        <StatutRapideSelect orderId={order.id} statutActuel={order.statut} />
+                        <Link
+                          href={`/admin/commandes/${order.id}/bon`}
+                          target="_blank"
+                          onClick={(e) => e.stopPropagation()}
+                          className="shrink-0 rounded-lg border border-ink-900/10 px-2 py-1 text-xs hover:bg-beige-100"
+                        >
+                          🖨️ Bon
+                        </Link>
+                      </div>
                     </Card>
                   ))}
                 </div>
 
-                {/* Vue bureau : tableau — client (nom + contact), articles détaillés (produit + variante + quantité), adresse complète, prix total (livraison incluse), statut modifiable directement. */}
+                {/* Vue bureau : tableau — client (nom + contact), articles détaillés
+                    (produit + variante + quantité), adresse complète, prix total
+                    (livraison incluse), dates, statut modifiable directement, impression. */}
                 <Card className="hidden p-0 md:block">
                   <table className="w-full text-sm">
                     <thead>
@@ -142,6 +201,7 @@ export function CommandesGroupeesAdmin({
                         <th className="p-2">Prix total</th>
                         <th className="p-2">Date</th>
                         <th className="p-2">Statut</th>
+                        <th className="p-2"></th>
                       </tr>
                     </thead>
                     <tbody>
@@ -170,17 +230,26 @@ export function CommandesGroupeesAdmin({
                                 </div>
                               </div>
                             </td>
-                            <td className="p-2 max-w-[220px] text-xs">
+                            <td className="p-2 max-w-[200px] text-xs">
                               {order.client_adresse}, {order.client_commune}
                               {order.zone === "hors_abidjan" && order.ville_expedition && (
                                 <p className="text-ink-900/40">Expédition → {order.ville_expedition} ({order.gare ?? "gare non précisée"})</p>
                               )}
                             </td>
                             <td className="p-2 whitespace-nowrap font-medium">{formatFCFA(prixTotal(order))}</td>
-                            <td className="p-2 whitespace-nowrap">{formatDate(order.created_at)}</td>
+                            <td className="p-2"><ColonneDate order={order} /></td>
                             <td className="p-2">
-                              <div className="mb-1"><StatutBadge statut={order.statut} /></div>
-                              <StatutRapideSelect orderId={order.id} statutActuel={order.statut} />
+                              <ColonneStatut order={order} />
+                              <div className="mt-1"><StatutRapideSelect orderId={order.id} statutActuel={order.statut} /></div>
+                            </td>
+                            <td className="p-2">
+                              <Link
+                                href={`/admin/commandes/${order.id}/bon`}
+                                target="_blank"
+                                className="whitespace-nowrap rounded-lg border border-ink-900/10 px-2 py-1 text-xs hover:bg-beige-100"
+                              >
+                                🖨️ Bon
+                              </Link>
                             </td>
                           </tr>
                         );
