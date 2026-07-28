@@ -1,6 +1,7 @@
 import { HeaderCommercial } from "@/components/shared/header";
 import { BottomNavCommercial } from "@/components/shared/bottom-nav-commercial";
 import { createClient } from "@/lib/supabase/server";
+import { PushNotificationSetup } from "@/components/shared/push-notification-setup";
 
 export default async function CommercialLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -14,6 +15,7 @@ export default async function CommercialLayout({ children }: { children: React.R
 
   return (
     <div className="min-h-screen bg-beige-50">
+      {user?.id && <PushNotificationSetup />}
       <HeaderCommercial notificationsNonLues={notificationsNonLues ?? 0} />
       <div className="mx-auto max-w-6xl px-6 py-8 pb-24 md:pb-8">{children}</div>
       <BottomNavCommercial />
