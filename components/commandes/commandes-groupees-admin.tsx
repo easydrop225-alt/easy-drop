@@ -6,6 +6,8 @@ import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { StatutRapideSelect } from "./statut-rapide-select";
 import { formatDate, formatFCFA } from "@/lib/utils";
+import { exporterCSV } from "@/lib/export-csv";
+import { Button } from "@/components/ui/button";
 import { FiltreDate, correspondAuFiltre, type FiltreDateValeur } from "./filtre-date";
 import type { Order, Profile, OrderItem, Product, ProductVariant } from "@/types/database";
 
@@ -121,18 +123,43 @@ export function CommandesGroupeesAdmin({
     { valeur: "toutes", label: "Toutes les commandes" },
   ];
 
+  function exporter() {
+    const lignes = filtrees.map((o) => [
+      o.numero_commande,
+      formatDate(o.created_at),
+      `${o.profiles?.prenom ?? ""} ${o.profiles?.nom ?? ""}`.trim(),
+      o.profiles?.nom_boutique ?? "",
+      o.client_nom,
+      o.client_telephone,
+      o.client_adresse,
+      o.client_commune,
+      o.order_items.map((i) => `${i.quantite}x ${i.products?.nom ?? ""}`).join(", "),
+      prixTotal(o),
+      o.statut,
+    ]);
+    exporterCSV("easydrop-commandes", [
+      "Référence", "Date", "Commercial", "Boutique", "Client", "Téléphone client",
+      "Adresse", "Commune", "Articles", "Prix total", "Statut",
+    ], lignes);
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {onglets.map((o) => (
-          <button
-            key={o.valeur}
-            onClick={() => setOngletActif(o.valeur)}
-            className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${ongletActif === o.valeur ? "bg-terracotta-500 text-white" : "bg-white text-ink-900/60 hover:bg-beige-100"}`}
-          >
-            {o.label} {!!o.compte && o.compte > 0 && `(${o.compte})`}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {onglets.map((o) => (
+            <button
+              key={o.valeur}
+              onClick={() => setOngletActif(o.valeur)}
+              className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${ongletActif === o.valeur ? "bg-terracotta-500 text-white" : "bg-white text-ink-900/60 hover:bg-beige-100"}`}
+            >
+              {o.label} {!!o.compte && o.compte > 0 && `(${o.compte})`}
+            </button>
+          ))}
+        </div>
+        <Button size="sm" variant="secondary" onClick={exporter}>
+          📊 Exporter CSV
+        </Button>
       </div>
 
       <FiltreDate dates={dates} valeur={filtre} onChange={setFiltre} />

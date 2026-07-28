@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Menu, X, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "./logout-button";
+import { RechercheGlobale } from "./recherche-globale";
 
 const NAV_COMMERCIAL = [
   { href: "/accueil", label: "Accueil" },
@@ -87,6 +88,7 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
     { href: "/admin/commerciaux", label: "Commerciaux", badge: counts?.commerciauxRecents },
     { href: "/admin/paiements", label: "Paiements" },
     { href: "/admin/rapports", label: "Rapports" },
+    { href: "/admin/journal", label: "Journal" },
     { href: "/admin/notifications", label: "Notifications" },
     { href: "/admin/parametres", label: "Paramètres" },
   ];
@@ -120,6 +122,7 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
           ))}
         </nav>
         <div className="flex items-center gap-3">
+          <RechercheGlobale />
           <div className="hidden lg:block"><LogoutButton /></div>
           <button
             onClick={() => setMenuOuvert(!menuOuvert)}

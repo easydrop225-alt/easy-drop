@@ -28,6 +28,7 @@ export interface Profile {
   telephone_modifie_le: string | null;
   nom_boutique: string | null;
   nom_boutique_modifie_le: string | null;
+  onboarding_termine: boolean;
   created_at: string;
 }
 
