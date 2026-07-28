@@ -6,7 +6,7 @@ export default async function AdminCommandesPage() {
   const supabase = await createClient();
   const { data: orders } = await supabase
     .from("orders")
-    .select("*, profiles(nom, prenom, telephone, nom_boutique), order_items(*, products(*))")
+    .select("*, profiles(nom, prenom, telephone, nom_boutique), order_items(*, products(*), product_variants(*))")
     .order("created_at", { ascending: false });
 
   const list = (orders ?? []) as OrderComplete[];
