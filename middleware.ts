@@ -35,7 +35,14 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isCommercialRoute = path.startsWith("/dashboard") || path.startsWith("/commandes") || path.startsWith("/gains");
+  const isCommercialRoute =
+    path.startsWith("/accueil") ||
+    path.startsWith("/dashboard") ||
+    path.startsWith("/commandes") ||
+    path.startsWith("/gains") ||
+    path.startsWith("/catalogue") ||
+    path.startsWith("/profil") ||
+    path.startsWith("/notifications");
   const isAdminRoute = path.startsWith("/admin");
 
   if (!user && (isCommercialRoute || isAdminRoute)) {
@@ -63,9 +70,13 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/accueil/:path*",
     "/dashboard/:path*",
     "/commandes/:path*",
     "/gains/:path*",
+    "/catalogue/:path*",
+    "/profil/:path*",
+    "/notifications/:path*",
     "/admin/:path*",
   ],
 };
