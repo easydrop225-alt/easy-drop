@@ -159,6 +159,16 @@ export interface Setting {
   description: string | null;
 }
 
+export interface Formation {
+  id: string;
+  titre: string;
+  description: string | null;
+  video_url: string;
+  ordre: number;
+  actif: boolean;
+  created_at: string;
+}
+
 /**
  * Type générique minimal attendu par @supabase/ssr.
  * Les requêtes typées précises se font via les interfaces ci-dessus

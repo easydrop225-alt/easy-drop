@@ -89,6 +89,7 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
     { href: "/admin/paiements", label: "Paiements" },
     { href: "/admin/rapports", label: "Rapports" },
     { href: "/admin/journal", label: "Journal" },
+    { href: "/admin/formations", label: "Formations" },
     { href: "/admin/notifications", label: "Notifications" },
     { href: "/admin/parametres", label: "Paramètres" },
   ];
