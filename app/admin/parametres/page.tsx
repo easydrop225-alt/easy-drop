@@ -32,6 +32,7 @@ export default async function ParametresPage() {
         fraisAbidjan={get("frais_livraison_abidjan") as { min: number; max: number } | undefined}
         fraisHorsAbidjan={get("frais_livraison_hors_abidjan") as { min: number; max: number } | undefined}
         whatsapp={get("whatsapp_numero") as string | undefined}
+        whatsappCommunaute={get("whatsapp_communaute_lien") as string | undefined}
         horaires={get("horaires") as string | undefined}
       />
       <Card>

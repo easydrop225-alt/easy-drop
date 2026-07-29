@@ -21,6 +21,7 @@ export async function sauvegarderParametres(_prevState: unknown, formData: FormD
     { cle: "frais_livraison_abidjan", valeur: { min: Number(formData.get("fraisAbidjanMin")), max: Number(formData.get("fraisAbidjanMax")) } },
     { cle: "frais_livraison_hors_abidjan", valeur: { min: Number(formData.get("fraisHorsAbidjanMin")), max: Number(formData.get("fraisHorsAbidjanMax")) } },
     { cle: "whatsapp_numero", valeur: String(formData.get("whatsapp") ?? "") },
+    { cle: "whatsapp_communaute_lien", valeur: String(formData.get("whatsappCommunaute") ?? "") },
     { cle: "horaires", valeur: String(formData.get("horaires") ?? "") },
   ];
 

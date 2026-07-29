@@ -5,7 +5,7 @@ import { BadgesPerformance } from "@/components/produits/badges-performance";
 import { TelephoneForm } from "./telephone-form";
 import { BoutiqueForm } from "./boutique-form";
 import { LogoutButton } from "@/components/shared/logout-button";
-import type { Profile } from "@/types/database";
+import type { Profile, Setting } from "@/types/database";
 
 export default async function ProfilPage() {
   const supabase = await createClient();
@@ -20,6 +20,9 @@ export default async function ProfilPage() {
     .eq("statut", "livree");
 
   const { data: rangDuMois } = await supabase.rpc("mon_rang_du_mois");
+
+  const { data: settingsData } = await supabase.from("settings").select("*").eq("cle", "whatsapp_communaute_lien").maybeSingle();
+  const lienCommunaute = (settingsData as Setting | null)?.valeur as string | undefined;
 
   return (
     <div className="mx-auto max-w-md space-y-4">
@@ -41,6 +44,25 @@ export default async function ProfilPage() {
         <p><span className="text-ink-900/50">Email : </span>{p?.email ?? "—"}</p>
         <p><span className="text-ink-900/50">Statut : </span>{p?.statut}</p>
       </Card>
+
+      <a
+        href="/formation"
+        className="flex items-center justify-center gap-2 rounded-xl bg-terracotta-500 px-4 py-3 text-sm font-medium text-white hover:bg-terracotta-600"
+      >
+        🎓 Espace formation
+      </a>
+
+      {lienCommunaute && (
+        <a
+          href={lienCommunaute}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-medium text-white hover:opacity-90"
+        >
+          📢 Rejoindre la communauté Easy Drop
+        </a>
+      )}
+
       <a
         href="https://wa.me/2250143086228"
         target="_blank"

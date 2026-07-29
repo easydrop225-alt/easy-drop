@@ -10,11 +10,13 @@ export function ParametresForm({
   fraisAbidjan,
   fraisHorsAbidjan,
   whatsapp,
+  whatsappCommunaute,
   horaires,
 }: {
   fraisAbidjan?: { min: number; max: number };
   fraisHorsAbidjan?: { min: number; max: number };
   whatsapp?: string;
+  whatsappCommunaute?: string;
   horaires?: string;
 }) {
   const [state, formAction, pending] = useActionState(sauvegarderParametres, undefined as { error?: string } | undefined);
@@ -38,6 +40,11 @@ export function ParametresForm({
       <Card className="space-y-3">
         <h2 className="font-medium">Coordonnées</h2>
         <div><Label htmlFor="whatsapp">Numéro WhatsApp</Label><Input id="whatsapp" name="whatsapp" defaultValue={whatsapp ?? ""} /></div>
+        <div>
+          <Label htmlFor="whatsappCommunaute">Lien du groupe WhatsApp "Communauté Easy Drop"</Label>
+          <Input id="whatsappCommunaute" name="whatsappCommunaute" placeholder="https://chat.whatsapp.com/..." defaultValue={whatsappCommunaute ?? ""} />
+          <p className="mt-1 text-xs text-ink-900/50">Visible par les commerciaux via un bouton dans leur profil.</p>
+        </div>
         <div><Label htmlFor="horaires">Horaires</Label><Input id="horaires" name="horaires" defaultValue={horaires ?? ""} /></div>
       </Card>
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
