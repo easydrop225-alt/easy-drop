@@ -39,7 +39,7 @@ function FormulaireInscription() {
       </div>
       <div>
         <Label htmlFor="codeParrainage">Code de parrainage (facultatif)</Label>
-        <Input id="codeParrainage" name="codeParrainage" defaultValue={codeParraine} placeholder="Ex : YAO4821" />
+        <Input id="codeParrainage" name="codeParrainage" defaultValue={codeParraine} placeholder="Ex : JEA7901 (facultatif)" />
         <p className="mt-1 text-xs text-ink-900/50">
           Si quelqu'un t'a invité, indique son code ici. Cette information ne pourra plus être modifiée ensuite.
         </p>

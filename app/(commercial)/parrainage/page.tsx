@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
 import { formatFCFA, formatDate } from "@/lib/utils";
-import { niveauPourVentes, prochainNiveau, calculerBonusParrainage, premierJourDuMois } from "@/lib/parrainage";
+import { niveauPourVentes, prochainNiveau, calculerBonusParrainage, premierJourDuMois, GRILLE_PARRAINAGE } from "@/lib/parrainage";
 import { CopierLienBouton } from "./copier-lien-bouton";
 import type { Profile, VersementParrainage } from "@/types/database";
 
@@ -58,6 +58,16 @@ export default async function ParrainagePage() {
             <input readOnly value={lienParrainage} className="flex-1 rounded-lg border border-ink-900/10 bg-beige-50 px-2 py-1.5 text-xs" />
             <CopierLienBouton lien={lienParrainage} />
           </div>
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(
+              `Salut ! Rejoins Easy Drop, la plateforme qui permet de vendre des produits sans acheter de stock — inscription gratuite avec mon lien : ${lienParrainage}`
+            )}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-3 py-2 text-xs font-medium text-white hover:opacity-90"
+          >
+            📲 Partager mon lien sur WhatsApp
+          </a>
         </div>
       </Card>
 
@@ -87,6 +97,36 @@ export default async function ParrainagePage() {
           <p className="text-xs text-emerald-600">🏆 Niveau maximum atteint !</p>
         )}
       </Card>
+
+      <details className="group rounded-2xl border border-ink-900/5 bg-white p-4">
+        <summary className="cursor-pointer text-sm font-medium text-terracotta-600 group-open:mb-3">
+          📊 Consulter tous les niveaux et leurs bénéfices
+        </summary>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-ink-900/5 text-left text-ink-900/50">
+              <th className="p-2">Niveau</th>
+              <th className="p-2">Ventes personnelles requises</th>
+              <th className="p-2">Valeur du point</th>
+            </tr>
+          </thead>
+          <tbody>
+            {GRILLE_PARRAINAGE.map((palier) => (
+              <tr
+                key={palier.niveau}
+                className={`border-b border-ink-900/5 last:border-0 ${palier.niveau === niveau ? "bg-terracotta-50 font-medium" : ""}`}
+              >
+                <td className="p-2">{palier.niveau} {palier.niveau === niveau && "← toi"}</td>
+                <td className="p-2">{palier.max ? `${palier.min} à ${palier.max}` : `${palier.min}+`}</td>
+                <td className="p-2">{formatFCFA(palier.valeurPoint)} / point</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="mt-2 text-xs text-ink-900/40">
+          Le niveau est recalculé chaque mois selon tes propres ventes livrées — plus tu vends personnellement, plus tes points de parrainage valent cher.
+        </p>
+      </details>
 
       <div>
         <h2 className="mb-2 text-sm font-medium text-ink-900/60">Mes filleuls ({filleulsList.length})</h2>

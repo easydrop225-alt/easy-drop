@@ -3,6 +3,7 @@ import { Card, CardTitle, CardValue } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { PeriodChart } from "@/components/rapports/period-chart";
 import { formatFCFA } from "@/lib/utils";
+import { calculerBonusParrainage, premierJourDuMois } from "@/lib/parrainage";
 import type { PointJournalier } from "@/lib/stats/aggregate";
 import type { Order, OrderItem } from "@/types/database";
 
@@ -61,6 +62,17 @@ export default async function DashboardCommercialPage() {
 
   const dernieresCommandes = list.slice(0, 10);
 
+  // Parrainage — points du mois et valeur du point selon le niveau actuel.
+  const debutMois = premierJourDuMois(new Date());
+  const { data: pointsCeMois } = await supabase
+    .from("points_parrainage")
+    .select("id")
+    .eq("parrain_id", user?.id ?? "")
+    .gte("created_at", debutMois);
+  const ventesPersonnellesCeMois = list.filter((o) => o.statut === "livree" && o.created_at >= debutMois).length;
+  const nombrePointsParrainage = pointsCeMois?.length ?? 0;
+  const { niveau, valeurPoint, montant: bonusParrainageEstime } = calculerBonusParrainage(nombrePointsParrainage, ventesPersonnellesCeMois);
+
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Mon dashboard</h1>
@@ -91,6 +103,25 @@ export default async function DashboardCommercialPage() {
             <CardValue>{tauxReussite}%</CardValue>
           </Card>
         </div>
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-lg font-medium">🤝 Mon parrainage ce mois</h2>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+          <Card>
+            <CardTitle>Points de parrainage</CardTitle>
+            <CardValue>{nombrePointsParrainage}</CardValue>
+          </Card>
+          <Card>
+            <CardTitle>Valeur du point (Niveau {niveau})</CardTitle>
+            <CardValue>{formatFCFA(valeurPoint)}</CardValue>
+          </Card>
+          <Card>
+            <CardTitle>Bonus de parrainage estimé</CardTitle>
+            <CardValue className="text-terracotta-600">{formatFCFA(bonusParrainageEstime)}</CardValue>
+          </Card>
+        </div>
+        <a href="/parrainage" className="mt-2 inline-block text-sm text-terracotta-600 underline">Voir tous les détails du parrainage →</a>
       </div>
 
       <PeriodChart

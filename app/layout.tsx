@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { InstallPrompt } from "@/components/shared/install-prompt";
 
@@ -33,7 +34,9 @@ export default function RootLayout({
     <html lang="fr">
       <body>
         {children}
-        <InstallPrompt />
+        <Suspense fallback={null}>
+          <InstallPrompt />
+        </Suspense>
       </body>
     </html>
   );

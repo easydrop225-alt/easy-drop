@@ -71,19 +71,19 @@ export default async function ProfilPage() {
       )}
 
       <a
-        href="/a-propos"
-        className="flex items-center justify-center gap-2 rounded-xl border border-ink-900/10 px-4 py-3 text-sm font-medium text-ink-900/70 hover:bg-beige-100"
-      >
-        ℹ️ À propos d'Easy Drop
-      </a>
-
-      <a
         href="https://wa.me/2250143086228"
         target="_blank"
         rel="noreferrer"
         className="flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white hover:bg-emerald-700"
       >
         💬 Contacter le service client (WhatsApp)
+      </a>
+
+      <a
+        href="/a-propos"
+        className="flex items-center justify-center gap-2 rounded-xl bg-gray-500 px-4 py-3 text-sm font-medium text-white hover:bg-gray-600"
+      >
+        ℹ️ À propos d'Easy Drop
       </a>
       <div className="flex justify-center md:hidden"><LogoutButton /></div>
     </div>
