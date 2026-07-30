@@ -1,39 +1,39 @@
-/**
- * Calcul du bénéfice commercial — voir 01_CAHIER_DES_CHARGES.md §9.
- * Bénéfice = Prix vendu - Prix fournisseur - Frais de livraison
- *
- * Note : les frais de livraison sont déjà affectés au niveau de la commande
- * (une seule fois), tandis que le prix vendu/fournisseur est par ligne.
- * Cette fonction calcule le bénéfice d'une ligne de commande (hors livraison),
- * qui correspond à la colonne générée `benefice_ligne` en base de données.
- */
-export function calculBeneficeLigne(
-  prixVenteUnitaire: number,
-  prixFournisseurUnitaire: number,
-  quantite: number
-): number {
-  return (prixVenteUnitaire - prixFournisseurUnitaire) * quantite;
-}
-
-/**
- * Bénéfice total d'une commande = somme des bénéfices de ligne moins les
- * frais de livraison (les frais de livraison réduisent le bénéfice net
- * du commercial s'ils sont à sa charge — à ajuster selon la politique
- * commerciale finale définie dans les paramètres).
- */
-export function calculBeneficeCommande(
-  beneficesLigne: number[],
-  fraisLivraison: number
-): number {
-  const totalLignes = beneficesLigne.reduce((acc, b) => acc + b, 0);
-  return totalLignes - fraisLivraison;
-}
-
-export function estDansFourchette(
-  prixVente: number,
-  prixMin: number | null,
-  prixMax: number | null
-): boolean {
-  if (prixMin == null || prixMax == null) return true;
-  return prixVente >= prixMin && prixVente <= prixMax;
+{
+  "name": "easy-drop-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
+    "@supabase/ssr": "^0.5.2",
+    "@supabase/supabase-js": "^2.47.0",
+    "@tanstack/react-query": "^5.62.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "lucide-react": "^0.469.0",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-hook-form": "^7.54.0",
+    "recharts": "^2.15.0",
+    "tailwind-merge": "^2.5.5",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.0"
+  }
 }

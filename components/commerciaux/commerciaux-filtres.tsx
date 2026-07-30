@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatDate, formatFCFA } from "@/lib/utils";
+import { exporterCSV } from "@/lib/export-csv";
+import { Button } from "@/components/ui/button";
 import type { Profile } from "@/types/database";
 
 type Tri = "recents" | "performance" | "alphabetique" | "ancien_recent" | "recent_ancien" | "parrainage";
@@ -66,25 +68,54 @@ export function CommerciauxFiltres({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <Input
-          value={recherche}
-          onChange={(e) => setRecherche(e.target.value)}
-          placeholder="Rechercher (nom, boutique, téléphone)..."
-          className="max-w-xs"
-        />
-        <select
-          value={tri}
-          onChange={(e) => setTri(e.target.value as Tri)}
-          className="h-10 rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            placeholder="Rechercher (nom, boutique, téléphone)..."
+            className="max-w-xs"
+          />
+          <select
+            value={tri}
+            onChange={(e) => setTri(e.target.value as Tri)}
+            className="h-10 rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
+          >
+            <option value="recents">Tous les commerciaux</option>
+            <option value="performance">Par performance</option>
+            <option value="parrainage">Par bonus de parrainage (ce mois)</option>
+            <option value="alphabetique">Par ordre alphabétique</option>
+            <option value="ancien_recent">Par ancienneté (plus ancien → plus récent)</option>
+            <option value="recent_ancien">Par ancienneté (plus récent → plus ancien)</option>
+          </select>
+        </div>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={() => {
+            const lignes = listeFiltree.map((c) => {
+              const parr = parrainageParId[c.id];
+              return [
+                `${c.prenom} ${c.nom}`,
+                c.nom_boutique ?? "",
+                c.telephone,
+                c.code_parrainage ?? "",
+                parr?.nomParrain ?? "",
+                parr?.filleuls ?? 0,
+                parr?.filleulsActifs ?? 0,
+                parr?.points ?? 0,
+                parr?.niveau ?? "",
+                parr?.bonusEstime ?? 0,
+              ];
+            });
+            exporterCSV("easydrop-parrainage", [
+              "Commercial", "Boutique", "Téléphone", "Mon code", "Parrainé par",
+              "Filleuls", "Filleuls actifs (ce mois)", "Points (ce mois)", "Niveau", "Bonus estimé (ce mois)",
+            ], lignes);
+          }}
         >
-          <option value="recents">Tous les commerciaux</option>
-          <option value="performance">Par performance</option>
-          <option value="parrainage">Par bonus de parrainage (ce mois)</option>
-          <option value="alphabetique">Par ordre alphabétique</option>
-          <option value="ancien_recent">Par ancienneté (plus ancien → plus récent)</option>
-          <option value="recent_ancien">Par ancienneté (plus récent → plus ancien)</option>
-        </select>
+          📊 Exporter le parrainage (CSV)
+        </Button>
       </div>
 
       <Card className="p-0">
