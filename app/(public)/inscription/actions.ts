@@ -22,6 +22,16 @@ export async function inscrireCommercial(_prevState: unknown, formData: FormData
   const supabase = await createClient();
   const { nom, prenom, telephone, email, motDePasse, nomBoutique } = parsed.data;
 
+  const codeParrainageSaisi = String(formData.get("codeParrainage") ?? "").trim();
+  let parrainId: string | null = null;
+  if (codeParrainageSaisi) {
+    const { data: idTrouve } = await supabase.rpc("resoudre_code_parrainage", { p_code: codeParrainageSaisi });
+    if (!idTrouve) {
+      return { error: "Ce code de parrainage n'existe pas. Vérifie l'orthographe ou laisse le champ vide." };
+    }
+    parrainId = idTrouve as string;
+  }
+
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email: email || `${telephone.replace("+", "")}@easydrop.local`,
     password: motDePasse,
@@ -39,6 +49,7 @@ export async function inscrireCommercial(_prevState: unknown, formData: FormData
     telephone,
     email: email || null,
     nom_boutique: nomBoutique,
+    parrain_id: parrainId,
     statut: "valide",
   });
 

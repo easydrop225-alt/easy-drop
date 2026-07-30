@@ -29,6 +29,12 @@ export default async function DetailCommandeAdminPage({
   const itemList = ((items ?? []) as (OrderItem & { products: Product })[]);
   const o = order as Order & { profiles: Pick<Profile, "nom" | "prenom" | "telephone" | "nom_boutique"> };
 
+  const { data: pointParrainage } = await supabase
+    .from("points_parrainage")
+    .select("*, profiles:parrain_id(prenom, nom, nom_boutique, code_parrainage)")
+    .eq("order_id", id)
+    .maybeSingle();
+
   const prixVente = itemList.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0);
   const prixFournisseur = itemList.reduce((a, i) => a + i.prix_fournisseur_unitaire * i.quantite, 0);
   const prixTotal = prixVente + o.frais_livraison;
@@ -51,6 +57,21 @@ export default async function DetailCommandeAdminPage({
         </div>
         <StatutBadge statut={o.statut} />
       </div>
+
+      {pointParrainage && (
+        <Card className="bg-beige-100">
+          <h2 className="mb-2 font-medium">🤝 Parrainage</h2>
+          <p className="text-sm text-ink-900/70">
+            Cette vente a généré <strong>1 point</strong> pour le parrain :{" "}
+            {pointParrainage.profiles?.prenom} {pointParrainage.profiles?.nom}
+            {pointParrainage.profiles?.nom_boutique && <> (🏪 {pointParrainage.profiles.nom_boutique})</>}
+            {" "}— code <span className="font-mono">{pointParrainage.profiles?.code_parrainage}</span>.
+          </p>
+          <p className="mt-1 text-xs text-ink-900/50">
+            La valeur exacte du point dépend des ventes personnelles du parrain sur l'ensemble du mois — voir l'onglet Paiements &gt; Parrainage pour le montant final.
+          </p>
+        </Card>
+      )}
 
       <Card>
         <h2 className="mb-3 font-medium">Changer le statut</h2>

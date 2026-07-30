@@ -46,6 +46,13 @@ export default async function ProfilPage() {
       </Card>
 
       <a
+        href="/parrainage"
+        className="flex items-center justify-center gap-2 rounded-xl bg-terracotta-500 px-4 py-3 text-sm font-medium text-white hover:bg-terracotta-600"
+      >
+        🤝 Mon Parrainage
+      </a>
+
+      <a
         href="/formation"
         className="flex items-center justify-center gap-2 rounded-xl bg-terracotta-500 px-4 py-3 text-sm font-medium text-white hover:bg-terracotta-600"
       >
@@ -62,6 +69,13 @@ export default async function ProfilPage() {
           📢 Rejoindre la communauté Easy Drop
         </a>
       )}
+
+      <a
+        href="/a-propos"
+        className="flex items-center justify-center gap-2 rounded-xl border border-ink-900/10 px-4 py-3 text-sm font-medium text-ink-900/70 hover:bg-beige-100"
+      >
+        ℹ️ À propos d'Easy Drop
+      </a>
 
       <a
         href="https://wa.me/2250143086228"

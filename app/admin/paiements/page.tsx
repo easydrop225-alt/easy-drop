@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { dateIlYA3Mois } from "@/lib/utils";
 import type { Payment, Profile, Profit } from "@/types/database";
 import { FiltreCommercialPaiements } from "./filtre-commercial-paiements";
+import { ParrainageSection } from "./parrainage-section";
 
 interface CommercialDu {
   commercial: Profile;
@@ -55,6 +56,9 @@ export default async function AdminPaiementsPage() {
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Paiements des gains</h1>
       <FiltreCommercialPaiements commerciauxDus={commerciauxDus} payments={list} />
+      <div className="border-t border-ink-900/10 pt-6">
+        <ParrainageSection />
+      </div>
     </div>
   );
 }
