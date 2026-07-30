@@ -54,7 +54,9 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/catalogue") ||
     path.startsWith("/profil") ||
     path.startsWith("/notifications") ||
-    path.startsWith("/formation");
+    path.startsWith("/formation") ||
+    path.startsWith("/parrainage") ||
+    path.startsWith("/a-propos");
   const isAdminRoute = path.startsWith("/admin");
 
   if (verificationReseauEchouee) {
@@ -100,6 +102,8 @@ export const config = {
     "/profil/:path*",
     "/notifications/:path*",
     "/formation/:path*",
+    "/parrainage/:path*",
+    "/a-propos/:path*",
     "/admin/:path*",
   ],
 };

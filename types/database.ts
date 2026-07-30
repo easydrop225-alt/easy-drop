@@ -29,6 +29,26 @@ export interface Profile {
   nom_boutique: string | null;
   nom_boutique_modifie_le: string | null;
   onboarding_termine: boolean;
+  code_parrainage: string | null;
+  parrain_id: string | null;
+  created_at: string;
+}
+
+export interface PointParrainage {
+  id: string;
+  order_id: string;
+  filleul_id: string;
+  parrain_id: string;
+  created_at: string;
+}
+
+export interface VersementParrainage {
+  id: string;
+  parrain_id: string;
+  mois: string;
+  montant: number;
+  mode: string;
+  reference_paiement: string | null;
   created_at: string;
 }
 

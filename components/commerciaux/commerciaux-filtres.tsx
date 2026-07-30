@@ -3,17 +3,28 @@
 import { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatFCFA } from "@/lib/utils";
 import type { Profile } from "@/types/database";
 
-type Tri = "recents" | "performance" | "alphabetique" | "ancien_recent" | "recent_ancien";
+type Tri = "recents" | "performance" | "alphabetique" | "ancien_recent" | "recent_ancien" | "parrainage";
+
+interface InfosParrainage {
+  nomParrain: string | null;
+  filleuls: number;
+  filleulsActifs: number;
+  points: number;
+  niveau: string;
+  bonusEstime: number;
+}
 
 export function CommerciauxFiltres({
   commerciaux,
   performanceParId,
+  parrainageParId,
 }: {
   commerciaux: Profile[];
   performanceParId: Record<string, number>;
+  parrainageParId: Record<string, InfosParrainage>;
 }) {
   const [recherche, setRecherche] = useState("");
   const [tri, setTri] = useState<Tri>("recents");
@@ -35,6 +46,9 @@ export function CommerciauxFiltres({
       case "performance":
         liste.sort((a, b) => (performanceParId[b.id] ?? 0) - (performanceParId[a.id] ?? 0));
         break;
+      case "parrainage":
+        liste.sort((a, b) => (parrainageParId[b.id]?.bonusEstime ?? 0) - (parrainageParId[a.id]?.bonusEstime ?? 0));
+        break;
       case "alphabetique":
         liste.sort((a, b) => `${a.prenom} ${a.nom}`.localeCompare(`${b.prenom} ${b.nom}`));
         break;
@@ -48,7 +62,7 @@ export function CommerciauxFiltres({
         break;
     }
     return liste;
-  }, [commerciaux, recherche, tri]);
+  }, [commerciaux, recherche, tri, performanceParId, parrainageParId]);
 
   return (
     <div className="space-y-4">
@@ -66,6 +80,7 @@ export function CommerciauxFiltres({
         >
           <option value="recents">Tous les commerciaux</option>
           <option value="performance">Par performance</option>
+          <option value="parrainage">Par bonus de parrainage (ce mois)</option>
           <option value="alphabetique">Par ordre alphabétique</option>
           <option value="ancien_recent">Par ancienneté (plus ancien → plus récent)</option>
           <option value="recent_ancien">Par ancienneté (plus récent → plus ancien)</option>
@@ -81,35 +96,48 @@ export function CommerciauxFiltres({
               <th className="p-3">Boutique</th>
               <th className="p-3">Téléphone</th>
               {tri === "performance" && <th className="p-3">Commandes livrées</th>}
+              <th className="p-3">Parrainage (ce mois)</th>
               <th className="p-3">Statut</th>
               <th className="p-3">Inscrit le</th>
             </tr>
           </thead>
           <tbody>
-            {listeFiltree.map((c) => (
-              <tr key={c.id} className="border-b border-ink-900/5 last:border-0">
-                <td className="p-3">
-                  <div className="h-9 w-9 overflow-hidden rounded-full bg-beige-100">
-                    {c.photo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.photo_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-xs text-ink-900/30">
-                        {c.prenom?.[0]}{c.nom?.[0]}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="p-3">{c.prenom} {c.nom}</td>
-                <td className="p-3">{c.nom_boutique ? <span className="rounded-full bg-beige-100 px-2 py-0.5 text-xs">🏪 {c.nom_boutique}</span> : "—"}</td>
-                <td className="p-3">{c.telephone}</td>
-                {tri === "performance" && <td className="p-3 font-medium">{performanceParId[c.id] ?? 0}</td>}
-                <td className="p-3">{c.statut}</td>
-                <td className="p-3">{formatDate(c.created_at)}</td>
-              </tr>
-            ))}
+            {listeFiltree.map((c) => {
+              const parr = parrainageParId[c.id];
+              return (
+                <tr key={c.id} className="border-b border-ink-900/5 last:border-0">
+                  <td className="p-3">
+                    <div className="h-9 w-9 overflow-hidden rounded-full bg-beige-100">
+                      {c.photo_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={c.photo_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs text-ink-900/30">
+                          {c.prenom?.[0]}{c.nom?.[0]}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-3">{c.prenom} {c.nom}</td>
+                  <td className="p-3">{c.nom_boutique ? <span className="rounded-full bg-beige-100 px-2 py-0.5 text-xs">🏪 {c.nom_boutique}</span> : "—"}</td>
+                  <td className="p-3">{c.telephone}</td>
+                  {tri === "performance" && <td className="p-3 font-medium">{performanceParId[c.id] ?? 0}</td>}
+                  <td className="p-3 text-xs">
+                    {parr ? (
+                      <>
+                        <p>{parr.filleuls} filleul(s) — {parr.filleulsActifs} actif(s)</p>
+                        <p className="text-ink-900/50">{parr.points} pts · {parr.niveau} · <span className="font-medium text-terracotta-600">{formatFCFA(parr.bonusEstime)}</span></p>
+                        {parr.nomParrain && <p className="mt-0.5 text-ink-900/40">Parrainé par {parr.nomParrain}</p>}
+                      </>
+                    ) : "—"}
+                  </td>
+                  <td className="p-3">{c.statut}</td>
+                  <td className="p-3">{formatDate(c.created_at)}</td>
+                </tr>
+              );
+            })}
             {listeFiltree.length === 0 && (
-              <tr><td colSpan={tri === "performance" ? 7 : 6} className="p-6 text-center text-ink-900/40">Aucun commercial trouvé.</td></tr>
+              <tr><td colSpan={tri === "performance" ? 8 : 7} className="p-6 text-center text-ink-900/40">Aucun commercial trouvé.</td></tr>
             )}
           </tbody>
         </table>
