@@ -113,15 +113,15 @@ export default async function DashboardAdminPage() {
       <div>
         <h2 className="mb-3 text-lg font-medium">À faire aujourd'hui</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <a href="/admin/commandes" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-white p-4 hover:shadow-md">
+          <a href="/admin/commandes" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-surface p-4 hover:shadow-md">
             <span className="text-sm">🟡 Nouvelles commandes à traiter</span>
             <span className="text-xl font-semibold">{nouvellesCommandes}</span>
           </a>
-          <a href="/admin/paiements" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-white p-4 hover:shadow-md">
+          <a href="/admin/paiements" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-surface p-4 hover:shadow-md">
             <span className="text-sm">💰 Commerciaux à payer</span>
             <span className="text-xl font-semibold">{commerciauxAPayer}</span>
           </a>
-          <a href="/admin/stocks" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-white p-4 hover:shadow-md">
+          <a href="/admin/stocks" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-surface p-4 hover:shadow-md">
             <span className="text-sm">📦 Stocks presque épuisés</span>
             <span className="text-xl font-semibold">{stockFaible}</span>
           </a>

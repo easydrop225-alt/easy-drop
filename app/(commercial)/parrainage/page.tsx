@@ -98,7 +98,7 @@ export default async function ParrainagePage() {
         )}
       </Card>
 
-      <details className="group rounded-2xl border border-ink-900/5 bg-white p-4">
+      <details className="group rounded-2xl border border-ink-900/5 bg-surface p-4">
         <summary className="cursor-pointer text-sm font-medium text-terracotta-600 group-open:mb-3">
           📊 Consulter tous les niveaux et leurs bénéfices
         </summary>

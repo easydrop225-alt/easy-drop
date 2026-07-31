@@ -60,7 +60,7 @@ export function StatutForm({
       <select
         value={statut}
         onChange={(e) => setStatut(e.target.value as OrderStatut)}
-        className="h-10 w-full rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
+        className="h-10 w-full rounded-xl border border-ink-900/10 bg-surface px-3 text-sm"
       >
         {STATUTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
       </select>
@@ -70,7 +70,7 @@ export function StatutForm({
           <select
             value={motif}
             onChange={(e) => setMotif(e.target.value)}
-            className="h-10 w-full rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
+            className="h-10 w-full rounded-xl border border-ink-900/10 bg-surface px-3 text-sm"
           >
             <option value="">Choisir un motif / une note (facultatif)</option>
             {MOTIFS.map((m) => <option key={m} value={m}>{m}</option>)}

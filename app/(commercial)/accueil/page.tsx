@@ -57,19 +57,19 @@ export default async function AccueilCommercialPage() {
 
       {/* Accès rapides */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <a href="/catalogue" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-white p-4 text-center hover:shadow-md">
+        <a href="/catalogue" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
           <ShoppingBag className="text-terracotta-500" />
           <span className="text-xs font-medium">Produits disponibles</span>
         </a>
-        <a href="/commandes" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-white p-4 text-center hover:shadow-md">
+        <a href="/commandes" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
           <ClipboardList className="text-terracotta-500" />
           <span className="text-xs font-medium">Mes commandes</span>
         </a>
-        <a href="/gains" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-white p-4 text-center hover:shadow-md">
+        <a href="/gains" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
           <Wallet className="text-terracotta-500" />
           <span className="text-xs font-medium">Mes gains</span>
         </a>
-        <a href="/profil" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-white p-4 text-center hover:shadow-md">
+        <a href="/profil" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
           <Headset className="text-terracotta-500" />
           <span className="text-xs font-medium">Support 24/7</span>
         </a>
@@ -96,7 +96,7 @@ export default async function AccueilCommercialPage() {
               <a
                 key={p.id}
                 href={`/catalogue/${p.id}`}
-                className="w-36 shrink-0 overflow-hidden rounded-2xl border border-ink-900/5 bg-white transition hover:shadow-md"
+                className="w-36 shrink-0 overflow-hidden rounded-2xl border border-ink-900/5 bg-surface transition hover:shadow-md"
               >
                 <div className="relative aspect-square bg-beige-100">
                   {imageParProduit.get(p.id) ? (

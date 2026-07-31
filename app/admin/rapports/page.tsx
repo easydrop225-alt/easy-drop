@@ -79,15 +79,15 @@ export default async function RapportsPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-ink-900/5 bg-white p-4">
+        <div className="rounded-2xl border border-ink-900/5 bg-surface p-4">
           <p className="text-sm text-ink-900/50">Chiffre d'affaires (commandes livrées)</p>
           <p className="mt-1 text-2xl font-semibold">{formatFCFA(caTotal)}</p>
         </div>
-        <div className="rounded-2xl border border-ink-900/5 bg-white p-4">
+        <div className="rounded-2xl border border-ink-900/5 bg-surface p-4">
           <p className="text-sm text-ink-900/50">Livraisons réussies (total)</p>
           <p className="mt-1 text-2xl font-semibold">{livraisonsTotal}</p>
         </div>
-        <div className="rounded-2xl border border-ink-900/5 bg-white p-4">
+        <div className="rounded-2xl border border-ink-900/5 bg-surface p-4">
           <p className="text-sm text-ink-900/50">Commandes reçues (total)</p>
           <p className="mt-1 text-2xl font-semibold">{list.length}</p>
         </div>

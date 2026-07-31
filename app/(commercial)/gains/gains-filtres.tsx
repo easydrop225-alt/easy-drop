@@ -34,7 +34,7 @@ export function GainsFiltres({
       <select
         value={vue}
         onChange={(e) => setVue(e.target.value as Vue)}
-        className="h-10 w-full max-w-xs rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
+        className="h-10 w-full max-w-xs rounded-xl border border-ink-900/10 bg-surface px-3 text-sm"
       >
         <option value="ventes">💰 Gains sur mes ventes</option>
         <option value="parrainage">🤝 Gains de parrainage</option>

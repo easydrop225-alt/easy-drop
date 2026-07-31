@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { journaliserConnexion } from "@/lib/data/journal";
 
 export async function connecter(_prevState: unknown, formData: FormData) {
   const identifiant = String(formData.get("identifiant") ?? "");
@@ -26,8 +27,14 @@ export async function connecter(_prevState: unknown, formData: FormData) {
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password: motDePasse });
   if (error || !data.user) {
+    // Échec de connexion : pas encore d'utilisateur identifié, on journalise
+    // quand même l'identifiant tenté (utile pour repérer des tentatives
+    // suspectes répétées), avec user_id à null.
+    await journaliserConnexion("connexion_echouee", null, { identifiant });
     return { error: "Identifiants incorrects." };
   }
+
+  await journaliserConnexion("connexion_reussie", data.user.id);
 
   const { data: profile } = await supabase
     .from("profiles")

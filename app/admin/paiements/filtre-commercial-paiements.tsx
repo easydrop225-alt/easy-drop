@@ -43,7 +43,7 @@ export function FiltreCommercialPaiements({
         <select
           value={commercialId}
           onChange={(e) => setCommercialId(e.target.value)}
-          className="h-10 w-full max-w-xs rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
+          className="h-10 w-full max-w-xs rounded-xl border border-ink-900/10 bg-surface px-3 text-sm"
         >
           <option value="tous">Tous les commerciaux</option>
           {optionsCommerciaux.map(([id, nom]) => <option key={id} value={id}>{nom}</option>)}

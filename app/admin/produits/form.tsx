@@ -28,7 +28,7 @@ export function ProduitForm({
         <div><Label htmlFor="nom">Nom du produit</Label><Input id="nom" name="nom" defaultValue={produit?.nom} required /></div>
         <div>
           <Label htmlFor="categoryId">Catégorie</Label>
-          <select id="categoryId" name="categoryId" defaultValue={produit?.category_id ?? ""} className="h-10 w-full rounded-xl border border-ink-900/10 bg-white px-3 text-sm">
+          <select id="categoryId" name="categoryId" defaultValue={produit?.category_id ?? ""} className="h-10 w-full rounded-xl border border-ink-900/10 bg-surface px-3 text-sm">
             {categories.map((c) => <option key={c.id} value={c.id}>{c.nom}</option>)}
           </select>
         </div>

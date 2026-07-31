@@ -96,7 +96,7 @@ export function PaiementEnAttenteCard({
                 id={`mode-${commercial.id}`}
                 value={mode}
                 onChange={(e) => setMode(e.target.value as "wave" | "orange_money" | "especes")}
-                className="h-10 w-full rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
+                className="h-10 w-full rounded-xl border border-ink-900/10 bg-surface px-3 text-sm"
               >
                 <option value="wave">Wave</option>
                 <option value="orange_money">Orange Money</option>
