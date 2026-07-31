@@ -40,7 +40,7 @@ export function FiltreDate({
       <select
         value={valeur.annee}
         onChange={(e) => onChange({ annee: Number(e.target.value), mois: valeur.mois, jour: null })}
-        className="h-9 rounded-lg border border-ink-900/10 bg-white px-2 text-sm"
+        className="h-9 rounded-lg border border-ink-900/10 bg-surface px-2 text-sm"
       >
         {anneesDisponibles.map((a) => <option key={a} value={a}>{a}</option>)}
       </select>
@@ -48,7 +48,7 @@ export function FiltreDate({
       <select
         value={valeur.mois ?? ""}
         onChange={(e) => onChange({ annee: valeur.annee, mois: e.target.value === "" ? null : Number(e.target.value), jour: null })}
-        className="h-9 rounded-lg border border-ink-900/10 bg-white px-2 text-sm"
+        className="h-9 rounded-lg border border-ink-900/10 bg-surface px-2 text-sm"
       >
         <option value="">Tous les mois</option>
         {MOIS_LABELS.map((m, i) => <option key={m} value={i}>{m}</option>)}
@@ -58,7 +58,7 @@ export function FiltreDate({
         value={valeur.jour ?? ""}
         onChange={(e) => onChange({ ...valeur, jour: e.target.value === "" ? null : Number(e.target.value) })}
         disabled={valeur.mois == null}
-        className="h-9 rounded-lg border border-ink-900/10 bg-white px-2 text-sm disabled:opacity-40"
+        className="h-9 rounded-lg border border-ink-900/10 bg-surface px-2 text-sm disabled:opacity-40"
       >
         <option value="">Tous les jours</option>
         {Array.from({ length: joursDansLeMois }, (_, i) => i + 1).map((j) => <option key={j} value={j}>{j}</option>)}

@@ -15,7 +15,7 @@ export function ProductCard({ product, imageUrl, prixFournisseur, href }: Produc
     <Link
       href={href}
       prefetch
-      className="group block overflow-hidden rounded-2xl border border-ink-900/5 bg-white transition hover:shadow-md"
+      className="group block overflow-hidden rounded-2xl border border-ink-900/5 bg-surface transition hover:shadow-md"
     >
       <div className="relative aspect-square w-full bg-beige-100">
         {imageUrl ? (

@@ -21,7 +21,7 @@ export function CategoryGrid({
         <a
           key={cat.id}
           href={`${hrefPrefix}/${cat.slug}`}
-          className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-white p-6 text-center transition hover:shadow-md"
+          className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-6 text-center transition hover:shadow-md"
         >
           <span className="text-4xl">{cat.icone}</span>
           <span className="font-medium">{cat.nom}</span>

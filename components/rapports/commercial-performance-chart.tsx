@@ -52,7 +52,7 @@ export function CommercialPerformanceChart({
               key={o.value}
               onClick={() => setPeriode(o.value)}
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
-                periode === o.value ? "bg-white shadow-sm" : "text-ink-900/50 hover:text-ink-900"
+                periode === o.value ? "bg-surface shadow-sm" : "text-ink-900/50 hover:text-ink-900"
               }`}
             >
               {o.label}
@@ -66,7 +66,7 @@ export function CommercialPerformanceChart({
       ) : (
         <ResponsiveContainer width="100%" height={Math.max(280, data.length * 36)}>
           <BarChart data={data} layout="vertical" margin={{ left: 24 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1A181610" />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--color-ink-900) / 0.06)" />
             <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
             <YAxis type="category" dataKey="nom" tick={{ fontSize: 11 }} width={120} />
             <Tooltip />

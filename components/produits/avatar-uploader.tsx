@@ -49,7 +49,7 @@ export function AvatarUploader({ userId, photoUrl }: { userId: string; photoUrl:
         )}
       </div>
       <div>
-        <label className="cursor-pointer rounded-xl border border-ink-900/10 bg-white px-3 py-1.5 text-sm hover:bg-beige-100">
+        <label className="cursor-pointer rounded-xl border border-ink-900/10 bg-surface px-3 py-1.5 text-sm hover:bg-beige-100">
           {uploading ? "Envoi..." : "Changer la photo"}
           <input
             type="file"

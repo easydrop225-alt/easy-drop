@@ -151,7 +151,7 @@ export function CommandesGroupeesAdmin({
             <button
               key={o.valeur}
               onClick={() => setOngletActif(o.valeur)}
-              className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${ongletActif === o.valeur ? "bg-terracotta-500 text-white" : "bg-white text-ink-900/60 hover:bg-beige-100"}`}
+              className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${ongletActif === o.valeur ? "bg-terracotta-500 text-white" : "bg-surface text-ink-900/60 hover:bg-beige-100"}`}
             >
               {o.label} {!!o.compte && o.compte > 0 && `(${o.compte})`}
             </button>
@@ -176,7 +176,7 @@ export function CommandesGroupeesAdmin({
             >
               <span className="font-medium">
                 {groupe.nom} <span className="font-normal text-ink-900/50">— {groupe.telephone}</span>
-                {groupe.nomBoutique && <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-xs font-normal text-ink-900/60">🏪 {groupe.nomBoutique}</span>}
+                {groupe.nomBoutique && <span className="ml-2 rounded-full bg-surface px-2 py-0.5 text-xs font-normal text-ink-900/60">🏪 {groupe.nomBoutique}</span>}
               </span>
               <span className="text-sm text-ink-900/50">{groupe.commandes.length} commande(s) {ouvert ? "▲" : "▼"}</span>
             </button>

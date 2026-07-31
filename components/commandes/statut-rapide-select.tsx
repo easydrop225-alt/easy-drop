@@ -49,7 +49,7 @@ export function StatutRapideSelect({ orderId, statutActuel }: { orderId: string;
         value={statutActuel}
         onChange={(e) => handleChange(e.target.value as OrderStatut)}
         disabled={pending}
-        className="h-8 rounded-lg border border-ink-900/10 bg-white px-2 text-xs"
+        className="h-8 rounded-lg border border-ink-900/10 bg-surface px-2 text-xs"
       >
         {STATUTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
       </select>

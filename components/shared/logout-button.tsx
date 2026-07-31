@@ -3,12 +3,16 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LogOut } from "lucide-react";
+import { journaliserDeconnexionAction } from "@/app/(public)/connexion/actions-deconnexion";
 
 export function LogoutButton() {
   const router = useRouter();
   const supabase = createClient();
 
   async function handleLogout() {
+    // Journalisé côté serveur AVANT la déconnexion effective, sinon la
+    // session ne serait plus valide pour identifier qui se déconnecte.
+    await journaliserDeconnexionAction();
     await supabase.auth.signOut();
     router.push("/connexion");
     router.refresh();

@@ -53,7 +53,7 @@ export function RechercheGlobale() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink-900/50 p-4 pt-24" onClick={() => setOuvert(false)}>
-      <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-lg rounded-2xl bg-surface shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2 border-b border-ink-900/5 p-3">
           <Search size={18} className="text-ink-900/40" />
           <input

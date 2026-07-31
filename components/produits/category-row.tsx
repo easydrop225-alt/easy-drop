@@ -19,7 +19,7 @@ export function CategoryRow({
         <a
           key={cat.id}
           href={`${hrefPrefix}/${cat.slug}`}
-          className="flex w-20 shrink-0 flex-col items-center gap-1.5 rounded-2xl border border-ink-900/5 bg-white p-3 text-center transition hover:shadow-md"
+          className="flex w-20 shrink-0 flex-col items-center gap-1.5 rounded-2xl border border-ink-900/5 bg-surface p-3 text-center transition hover:shadow-md"
         >
           <span className="text-2xl">{cat.icone}</span>
           <span className="text-xs font-medium leading-tight">{cat.nom}</span>

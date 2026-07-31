@@ -79,7 +79,7 @@ export function CommerciauxFiltres({
           <select
             value={tri}
             onChange={(e) => setTri(e.target.value as Tri)}
-            className="h-10 rounded-xl border border-ink-900/10 bg-white px-3 text-sm"
+            className="h-10 rounded-xl border border-ink-900/10 bg-surface px-3 text-sm"
           >
             <option value="recents">Tous les commerciaux</option>
             <option value="performance">Par performance</option>

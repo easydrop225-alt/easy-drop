@@ -48,7 +48,7 @@ export function SonNotificationUploader({ sonActuelUrl }: { sonActuelUrl: string
           Ton navigateur ne supporte pas la lecture audio.
         </audio>
       )}
-      <label className="inline-block cursor-pointer rounded-xl border border-ink-900/10 bg-white px-3 py-1.5 text-sm hover:bg-beige-100">
+      <label className="inline-block cursor-pointer rounded-xl border border-ink-900/10 bg-surface px-3 py-1.5 text-sm hover:bg-beige-100">
         {uploading ? "Envoi..." : url ? "Remplacer le son" : "Choisir un fichier son (MP3/WAV)"}
         <input
           type="file"

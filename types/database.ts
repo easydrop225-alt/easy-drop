@@ -89,6 +89,7 @@ export interface ProductVariant {
 export interface Media {
   id: string;
   product_id: string;
+  product_variant_id: string | null;
   type: "image" | "video";
   url: string;
   ordre: number;

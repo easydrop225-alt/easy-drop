@@ -26,7 +26,7 @@ export function BottomNavCommercial() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-ink-900/5 bg-white px-1 py-1.5 md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-ink-900/5 bg-surface px-1 py-1.5 md:hidden">
       <NavItem item={ITEM_ACCUEIL} actif={isActive(pathname, ITEM_ACCUEIL.href)} />
       <NavItem item={ITEM_DASHBOARD} actif={isActive(pathname, ITEM_DASHBOARD.href)} />
       <NavItem item={ITEM_CATALOGUE} actif={isActive(pathname, ITEM_CATALOGUE.href)} />

@@ -23,7 +23,7 @@ export function PeriodChart({
   unite = "nombre",
   defaultGranularite = "mois",
   color = "#C25E3F",
-  color2 = "#1A1816",
+  color2 = "rgb(var(--color-ink-900))",
 }: {
   title: string;
   data: PointJournalier[];
@@ -68,7 +68,7 @@ export function PeriodChart({
               key={o.value}
               onClick={() => setGranularite(o.value)}
               className={`rounded-md px-2.5 py-1 text-xs font-medium transition ${
-                granularite === o.value ? "bg-white shadow-sm" : "text-ink-900/50 hover:text-ink-900"
+                granularite === o.value ? "bg-surface shadow-sm" : "text-ink-900/50 hover:text-ink-900"
               }`}
             >
               {o.label}
@@ -90,7 +90,7 @@ export function PeriodChart({
           <ResponsiveContainer width="100%" height={280}>
             {type === "bar" ? (
               <BarChart data={pointsFusionnes}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1A181610" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--color-ink-900) / 0.06)" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v: number) => format(v)} />
@@ -98,7 +98,7 @@ export function PeriodChart({
               </BarChart>
             ) : (
               <LineChart data={pointsFusionnes}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1A181610" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgb(var(--color-ink-900) / 0.06)" />
                 <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip formatter={(v: number) => format(v)} />

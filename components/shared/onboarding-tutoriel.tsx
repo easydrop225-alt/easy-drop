@@ -46,7 +46,7 @@ export function OnboardingTutoriel() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-900/60 p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6">
+      <div className="w-full max-w-sm rounded-2xl bg-surface p-6">
         <div className="mb-4 flex gap-1">
           {ETAPES.map((_, i) => (
             <div key={i} className={`h-1 flex-1 rounded-full ${i <= etape ? "bg-terracotta-500" : "bg-beige-100"}`} />

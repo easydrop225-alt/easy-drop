@@ -53,7 +53,7 @@ export function RecuExpeditionUploader({
           <img src={url} alt="Reçu d'expédition" className="w-full object-cover" />
         </div>
       )}
-      <label className="inline-block cursor-pointer rounded-xl border border-ink-900/10 bg-white px-3 py-1.5 text-sm hover:bg-beige-100">
+      <label className="inline-block cursor-pointer rounded-xl border border-ink-900/10 bg-surface px-3 py-1.5 text-sm hover:bg-beige-100">
         {uploading ? "Envoi..." : url ? "Remplacer la photo du reçu" : "Ajouter la photo du reçu"}
         <input
           type="file"

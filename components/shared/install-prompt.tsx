@@ -89,7 +89,7 @@ export function InstallPrompt() {
   if (!visible || dejaInstalle) return null;
 
   return (
-    <div className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border border-ink-900/10 bg-white p-4 shadow-lg">
+    <div className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border border-ink-900/10 bg-surface p-4 shadow-lg">
       <button onClick={fermer} className="absolute right-3 top-3 text-ink-900/40 hover:text-ink-900">
         <X size={18} />
       </button>

@@ -8,6 +8,7 @@ import { Menu, X, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "./logout-button";
 import { RechercheGlobale } from "./recherche-globale";
+import { ThemeToggle } from "./theme-toggle";
 
 const NAV_COMMERCIAL = [
   { href: "/accueil", label: "Accueil" },
@@ -26,7 +27,7 @@ export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNo
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-ink-900/5 bg-white print:hidden">
+    <header className="border-b border-ink-900/5 bg-surface print:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/accueil" className="flex items-center gap-2 text-lg font-semibold">
           <Image src="/icons/icon-192.png" alt="Easy Drop" width={36} height={36} className="rounded-lg" />
@@ -54,6 +55,7 @@ export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNo
             notifications (le profil est accessible depuis la barre de
             navigation du bas — voir BottomNavCommercial). */}
         <div className="flex items-center gap-4 md:hidden">
+          <ThemeToggle />
           <Link href="/notifications" className="relative text-ink-900/70">
             <Bell size={22} />
             {notificationsNonLues > 0 && (
@@ -64,7 +66,10 @@ export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNo
           </Link>
         </div>
 
-        <div className="hidden md:block"><LogoutButton /></div>
+        <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
+          <LogoutButton />
+        </div>
       </div>
     </header>
   );
@@ -95,7 +100,7 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
   ];
 
   return (
-    <header className="border-b border-ink-900/5 bg-white print:hidden">
+    <header className="border-b border-ink-900/5 bg-surface print:hidden">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
         <Link href="/admin/dashboard" className="flex items-center gap-2 text-lg font-semibold">
           <Image src="/icons/icon-192.png" alt="Easy Drop" width={36} height={36} className="rounded-lg" />
@@ -124,7 +129,10 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
         </nav>
         <div className="flex items-center gap-3">
           <RechercheGlobale />
-          <div className="hidden lg:block"><LogoutButton /></div>
+          <div className="hidden items-center gap-2 lg:flex">
+            <ThemeToggle />
+            <LogoutButton />
+          </div>
           <button
             onClick={() => setMenuOuvert(!menuOuvert)}
             className="rounded-lg p-2 hover:bg-beige-100 lg:hidden"
@@ -157,7 +165,10 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
               )}
             </Link>
           ))}
-          <div className="mt-2 border-t border-ink-900/5 pt-2"><LogoutButton /></div>
+          <div className="mt-2 flex items-center justify-between border-t border-ink-900/5 pt-2">
+            <LogoutButton />
+            <ThemeToggle />
+          </div>
         </nav>
       )}
     </header>
