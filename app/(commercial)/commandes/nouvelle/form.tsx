@@ -241,12 +241,14 @@ export function NouvelleCommandeForm({
     (a, ligne) => a + lignesPourProduit(ligne).reduce((x, l) => x + l.quantite, 0),
     0
   );
-  // En mode "prix total", chaque produit reçoit une part du prix total
-  // proportionnelle à sa quantité (même logique qu'avant pour un seul
-  // produit, désormais étendue à plusieurs produits différents). La somme
-  // des parts reconstitue exactement le prix total saisi.
+  // En mode "prix total", le commercial saisit UN seul montant qui couvre
+  // déjà les produits ET la livraison (comme le client le paierait en une
+  // fois). On en déduit d'abord la part "produits" (montant saisi moins la
+  // livraison, déjà connue selon la zone/commune choisie), puis on répartit
+  // cette part entre les produits au prorata des quantités.
+  const prixProduitsSeuls = Math.max(0, prixTotalCommande - prixLivraison);
   const prixVenteUnitaireMoyenGlobal =
-    modeTarification === "total" && quantiteTotalePanierBrute > 0 ? prixTotalCommande / quantiteTotalePanierBrute : 0;
+    modeTarification === "total" && quantiteTotalePanierBrute > 0 ? prixProduitsSeuls / quantiteTotalePanierBrute : 0;
 
   const produitsJson = useMemo(
     () =>
@@ -261,14 +263,14 @@ export function NouvelleCommandeForm({
   );
 
   const quantiteTotalePanier = quantiteTotalePanierBrute;
-  const prixVenteTotalPanier = modeTarification === "total" ? prixTotalCommande : panier.reduce((a, l) => a + l.prixVente, 0);
+  const prixVenteTotalPanier = modeTarification === "total" ? prixProduitsSeuls : panier.reduce((a, l) => a + l.prixVente, 0);
   const beneficeTotalPanier = panier.reduce((a, ligne) => {
     const produit = products.find((p) => p.id === ligne.productId);
     const qte = lignesPourProduit(ligne).reduce((x, l) => x + l.quantite, 0);
     const prixVente = modeTarification === "total" ? prixVenteUnitaireMoyenGlobal * qte : ligne.prixVente;
     return a + (produit ? prixVente - qte * produit.prix_fournisseur : 0);
   }, 0);
-  const prixTotalAvecLivraison = prixVenteTotalPanier + prixLivraison;
+  const prixTotalAvecLivraison = modeTarification === "total" ? prixTotalCommande : prixVenteTotalPanier + prixLivraison;
 
   function handleCommuneChange(valeur: string) {
     setCommune(valeur);
@@ -615,30 +617,44 @@ export function NouvelleCommandeForm({
           <span className="text-ink-900/60">Nombre total de pièces</span>
           <span>{quantiteTotalePanier}</span>
         </div>
+
         {modeTarification === "total" ? (
-          <div className="py-1">
-            <Label htmlFor="prixTotalCommandeInput">Prix de vente total (tous produits confondus, FCFA)</Label>
-            <Input
-              id="prixTotalCommandeInput"
-              type="number"
-              min={0}
-              value={prixTotalCommande || ""}
-              onChange={(e) => setPrixTotalCommande(Number(e.target.value))}
-            />
-            <p className="mt-1 text-xs text-ink-900/50">
-              Réparti automatiquement entre les {panier.length || "..."} produit(s) au prorata des quantités.
-            </p>
-          </div>
+          <>
+            <div className="flex justify-between text-sm">
+              <span className="text-ink-900/60">Prix de la livraison ({zone === "abidjan" ? "selon la commune" : "hors Abidjan"})</span>
+              <span>{formatFCFA(prixLivraison)}</span>
+            </div>
+            <div className="py-1">
+              <Label htmlFor="prixTotalCommandeInput">Prix total de la commande (produits + livraison, FCFA)</Label>
+              <Input
+                id="prixTotalCommandeInput"
+                type="number"
+                min={0}
+                value={prixTotalCommande || ""}
+                onChange={(e) => setPrixTotalCommande(Number(e.target.value))}
+              />
+              <p className="mt-1 text-xs text-ink-900/50">
+                C&apos;est le montant total que le client paie, livraison comprise. La part "produits" est calculée automatiquement en retirant la livraison ci-dessus, puis répartie entre les {panier.length || "..."} produit(s) au prorata des quantités.
+              </p>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-ink-900/60">→ Part produits (calculée)</span>
+              <span>{formatFCFA(prixVenteTotalPanier)}</span>
+            </div>
+          </>
         ) : (
-          <div className="flex justify-between text-sm">
-            <span className="text-ink-900/60">Prix de vente (tous produits)</span>
-            <span>{formatFCFA(prixVenteTotalPanier)}</span>
-          </div>
+          <>
+            <div className="flex justify-between text-sm">
+              <span className="text-ink-900/60">Prix de vente (tous produits)</span>
+              <span>{formatFCFA(prixVenteTotalPanier)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-ink-900/60">Prix de la livraison</span>
+              <span>{formatFCFA(prixLivraison)}</span>
+            </div>
+          </>
         )}
-        <div className="flex justify-between text-sm">
-          <span className="text-ink-900/60">Prix de la livraison</span>
-          <span>{formatFCFA(prixLivraison)}</span>
-        </div>
+
         <div className="flex justify-between border-t border-ink-900/10 pt-2 font-medium">
           <span>Prix total (payé par le client)</span>
           <span>{formatFCFA(prixTotalAvecLivraison)}</span>
@@ -652,7 +668,7 @@ export function NouvelleCommandeForm({
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <Button
         type="submit"
-        disabled={pending || panier.length === 0 || (modeTarification === "total" && prixTotalCommande <= 0)}
+        disabled={pending || panier.length === 0 || (modeTarification === "total" && prixProduitsSeuls <= 0)}
         className="w-full"
         size="lg"
       >
@@ -662,8 +678,10 @@ export function NouvelleCommandeForm({
             ? "Enregistrer (envoi dès la reconnexion)"
             : panier.length === 0
               ? "Ajoute au moins un produit"
-              : modeTarification === "total" && prixTotalCommande <= 0
-                ? "Renseigne le prix total"
+              : modeTarification === "total" && prixProduitsSeuls <= 0
+                ? prixTotalCommande <= 0
+                  ? "Renseigne le prix total"
+                  : "Le prix total doit dépasser la livraison"
                 : "Valider la commande"}
       </Button>
     </form>

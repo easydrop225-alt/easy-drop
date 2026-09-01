@@ -1,9 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
-import { formatFCFA } from "@/lib/utils";
 import { FavoriBouton } from "./favori-bouton";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/types/database";
+
+// Format compact pour les cartes produit — l'unité "F" (au lieu de "FCFA")
+// et l'absence de répétition sur les intervalles évitent le débordement du
+// texte hors de la carte, surtout sur les écrans de commercial les plus
+// étroits, où "15 000 FCFA – 20 000 FCFA" ne rentre pas sur une ligne.
+function formatCompact(montant: number): string {
+  return new Intl.NumberFormat("fr-FR").format(Math.round(montant)) + " F";
+}
 
 interface ProductCardProps {
   product: Pick<Product, "id" | "nom" | "slug" | "prix_min_conseille" | "prix_max_conseille"> & {
@@ -39,7 +46,7 @@ export function ProductCard({ product, imageUrl, prixFournisseur, href, disponib
   // volontairement plus aucune information (prix, variantes) à afficher.
   if (!actif) {
     return (
-      <div className="overflow-hidden rounded-2xl border border-ink-900/5 bg-surface opacity-40 grayscale">
+      <div className="overflow-hidden rounded-2xl border border-ink-900/5 bg-surface opacity-75 grayscale">
         <div className="relative aspect-square w-full bg-beige-100">
           {imageUrl ? (
             <Image
@@ -52,6 +59,9 @@ export function ProductCard({ product, imageUrl, prixFournisseur, href, disponib
           ) : (
             <div className="flex h-full w-full items-center justify-center text-ink-900/30">Photo à venir</div>
           )}
+        </div>
+        <div className="p-4">
+          <h3 className="truncate text-sm font-medium text-ink-900/70">{product.nom}</h3>
         </div>
       </div>
     );
@@ -90,22 +100,22 @@ export function ProductCard({ product, imageUrl, prixFournisseur, href, disponib
             </div>
           )}
         </div>
-        <div className="p-4">
-          <h3 className="truncate font-medium">{product.nom}</h3>
+        <div className="p-3">
+          <h3 className="truncate text-sm font-medium">{product.nom}</h3>
           {prixFournisseur != null && (
-            <p className="mt-1 whitespace-nowrap text-xs text-ink-900/50 sm:text-sm">
-              Fournisseur : <span className="font-medium text-ink-900/70">{formatFCFA(prixFournisseur)}</span>
+            <p className="mt-1 truncate text-[11px] text-ink-900/50">
+              Fourn. : <span className="font-medium text-ink-900/70">{formatCompact(prixFournisseur)}</span>
             </p>
           )}
           {product.prix_min_conseille && product.prix_max_conseille && (
-            <p className="mt-0.5 whitespace-nowrap text-xs text-terracotta-600 sm:text-sm">
-              Revente : <span className="font-semibold">{formatFCFA(product.prix_min_conseille)}–{formatFCFA(product.prix_max_conseille)}</span>
+            <p className="mt-0.5 truncate text-[11px] text-terracotta-600">
+              Revente : <span className="font-semibold">{formatCompact(product.prix_min_conseille)}–{formatCompact(product.prix_max_conseille)}</span>
             </p>
           )}
-          {variantes && <p className="mt-1 truncate text-xs text-ink-900/40">{variantes}</p>}
+          {variantes && <p className="mt-1 truncate text-[10px] text-ink-900/40">{variantes}</p>}
         </div>
       </Link>
-      <div className="px-4 pb-4">
+      <div className="px-3 pb-3">
         <Link href={href} prefetch>
           <Button size="sm" variant="secondary" className="w-full">Voir le produit</Button>
         </Link>
