@@ -16,8 +16,11 @@ export async function demanderReinitialisation(_prevState: unknown, formData: Fo
   // renvoie toujours le même message de succès : ça évite qu'une personne
   // malveillante devine quels emails sont inscrits sur la plateforme en
   // testant des adresses au hasard.
+  // Le lien passe d'abord par /auth/callback, qui échange le code contre une
+  // vraie session (nécessaire pour que la page de formulaire suivante
+  // puisse ensuite changer le mot de passe — voir app/auth/callback/route.ts).
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${siteUrl}/reinitialiser-mot-de-passe`,
+    redirectTo: `${siteUrl}/auth/callback?next=/reinitialiser-mot-de-passe`,
   });
 
   return { succes: true };

@@ -1,23 +1,27 @@
 "use client";
 
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { demanderReinitialisation } from "./actions";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-export default function MotDePasseOubliePage() {
+function FormulaireMotDePasseOublie() {
   const [state, formAction, pending] = useActionState(
     demanderReinitialisation,
     undefined as { error?: string; succes?: boolean } | undefined
   );
+  const searchParams = useSearchParams();
+  const lienInvalide = searchParams.get("erreur") === "lien_invalide";
 
   return (
-    <main className="mx-auto max-w-md px-6 py-16">
-      <h1 className="mb-2 text-2xl font-semibold">Mot de passe oublié</h1>
-      <p className="mb-8 text-sm text-ink-900/60">
-        Indique l&apos;adresse email associée à ton compte : un lien pour choisir un nouveau mot de passe te sera envoyé.
-      </p>
+    <>
+      {lienInvalide && !state?.succes && (
+        <Card className="mb-4 bg-amber-50 text-sm text-amber-800">
+          Ce lien a expiré ou a déjà été utilisé. Demande-en un nouveau ci-dessous.
+        </Card>
+      )}
 
       {state?.succes ? (
         <Card className="bg-beige-100">
@@ -47,6 +51,20 @@ export default function MotDePasseOubliePage() {
           Pas d&apos;adresse email enregistrée sur ton compte ? Contacte l&apos;administrateur Easy Drop directement (bouton WhatsApp dans l&apos;app) pour qu&apos;il réinitialise ton mot de passe.
         </p>
       </div>
+    </>
+  );
+}
+
+export default function MotDePasseOubliePage() {
+  return (
+    <main className="mx-auto max-w-md px-6 py-16">
+      <h1 className="mb-2 text-2xl font-semibold">Mot de passe oublié</h1>
+      <p className="mb-8 text-sm text-ink-900/60">
+        Indique l&apos;adresse email associée à ton compte : un lien pour choisir un nouveau mot de passe te sera envoyé.
+      </p>
+      <Suspense fallback={<p className="text-sm text-ink-900/40">Chargement...</p>}>
+        <FormulaireMotDePasseOublie />
+      </Suspense>
     </main>
   );
 }

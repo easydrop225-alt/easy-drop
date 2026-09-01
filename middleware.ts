@@ -26,6 +26,7 @@ const ROUTES_PUBLIQUES = [
   "/produits",
   "/mot-de-passe-oublie",
   "/reinitialiser-mot-de-passe",
+  "/auth/callback",
 ];
 
 function estRoutePublique(pathname: string) {
