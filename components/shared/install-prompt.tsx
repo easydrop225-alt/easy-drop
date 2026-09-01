@@ -90,7 +90,7 @@ export function InstallPrompt() {
 
   return (
     <div className="fixed inset-x-4 bottom-4 z-50 mx-auto max-w-md rounded-2xl border border-ink-900/10 bg-surface p-4 shadow-lg">
-      <button onClick={fermer} className="absolute right-3 top-3 text-ink-900/40 hover:text-ink-900">
+      <button onClick={fermer} className="absolute right-3 top-3 text-ink-900/40 hover:text-ink-900" aria-label="Fermer">
         <X size={18} />
       </button>
       {estIOS ? (

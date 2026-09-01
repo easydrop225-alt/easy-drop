@@ -63,7 +63,7 @@ export function RechercheGlobale() {
             placeholder="Rechercher une commande, un produit, un commercial..."
             className="flex-1 border-none text-sm outline-none"
           />
-          <button onClick={() => setOuvert(false)}><X size={18} className="text-ink-900/40" /></button>
+          <button onClick={() => setOuvert(false)} aria-label="Fermer la recherche"><X size={18} className="text-ink-900/40" /></button>
         </div>
         <div className="max-h-80 overflow-y-auto p-2">
           {pending && <p className="p-3 text-sm text-ink-900/40">Recherche...</p>}
