@@ -31,9 +31,6 @@ export function CatalogueRecherche({
   const [disponibiliteSeulement, setDisponibiliteSeulement] = useState(false);
   const [prixMax, setPrixMax] = useState("");
 
-  const filtreActif =
-    recherche.trim() !== "" || categorieId !== "toutes" || disponibiliteSeulement || prixMax !== "";
-
   const resultats = useMemo(() => {
     const termeRecherche = recherche.trim().toLowerCase();
     const plafondPrix = prixMax !== "" ? Number(prixMax) : null;
@@ -84,37 +81,35 @@ export function CatalogueRecherche({
         </label>
       </div>
 
-      {filtreActif && (
-        <div className="mt-6">
-          <p className="mb-3 text-sm text-ink-900/50">
-            {resultats.length} produit{resultats.length !== 1 ? "s" : ""} trouvé{resultats.length !== 1 ? "s" : ""}
-          </p>
-          {resultats.length === 0 ? (
-            <p className="text-sm text-ink-900/50">Aucun produit ne correspond à cette recherche.</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {resultats.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={{
-                    id: p.id,
-                    nom: p.nom,
-                    slug: p.slug,
-                    prix_min_conseille: p.prixMinConseille,
-                    prix_max_conseille: p.prixMaxConseille,
-                    couleurs: p.couleurs,
-                    tailles: p.tailles,
-                  }}
-                  prixFournisseur={p.prixFournisseur}
-                  imageUrl={p.imageUrl}
-                  href={`/catalogue/${p.id}`}
-                  disponible={p.disponible}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <div className="mt-6">
+        <p className="mb-3 text-sm text-ink-900/50">
+          {resultats.length} produit{resultats.length !== 1 ? "s" : ""}
+        </p>
+        {resultats.length === 0 ? (
+          <p className="text-sm text-ink-900/50">Aucun produit ne correspond à cette recherche.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+            {resultats.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={{
+                  id: p.id,
+                  nom: p.nom,
+                  slug: p.slug,
+                  prix_min_conseille: p.prixMinConseille,
+                  prix_max_conseille: p.prixMaxConseille,
+                  couleurs: p.couleurs,
+                  tailles: p.tailles,
+                }}
+                prixFournisseur={p.prixFournisseur}
+                imageUrl={p.imageUrl}
+                href={`/catalogue/${p.id}`}
+                disponible={p.disponible}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

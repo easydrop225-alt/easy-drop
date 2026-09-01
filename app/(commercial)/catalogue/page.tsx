@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
-import { CategoryGrid } from "@/components/produits/category-grid";
 import { CatalogueRecherche, type ProduitPourRecherche } from "@/components/produits/catalogue-recherche";
-import type { Category, Product, ProductVariant, Inventory, Media } from "@/types/database";
+import type { Product, ProductVariant, Inventory, Media } from "@/types/database";
 
 export default async function CatalogueCommercialPage() {
   const supabase = await createClient();
@@ -10,12 +9,6 @@ export default async function CatalogueCommercialPage() {
 
   const list = (products ?? []) as Product[];
   const productIds = list.map((p) => p.id);
-
-  const compteParCategorie = new Map<string, number>();
-  for (const p of list) {
-    if (!p.category_id) continue;
-    compteParCategorie.set(p.category_id, (compteParCategorie.get(p.category_id) ?? 0) + 1);
-  }
 
   const { data: variants } = productIds.length
     ? await supabase.from("product_variants").select("*, inventory(*)").in("product_id", productIds)
@@ -62,14 +55,6 @@ export default async function CatalogueCommercialPage() {
         produits={produitsPourRecherche}
         categories={(categories ?? []).map((c) => ({ id: c.id, nom: c.nom }))}
       />
-      <div className="mt-8">
-        <h2 className="mb-4 text-sm font-medium text-ink-900/50">Ou parcourir par catégorie</h2>
-        <CategoryGrid
-          categories={(categories ?? []) as Category[]}
-          compteParCategorie={compteParCategorie}
-          hrefPrefix="/catalogue/categorie"
-        />
-      </div>
     </div>
   );
 }
