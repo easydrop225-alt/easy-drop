@@ -52,7 +52,12 @@ export default async function AccueilCommercialPage() {
       {/* Bannière d'accueil — texte modifiable par l'admin dans Paramètres. */}
       <div className="flex items-center gap-4 overflow-hidden rounded-2xl bg-ink-900 p-6 text-beige-50">
         <Image src="/icons/icon-512.png" alt="Easy Drop" width={72} height={72} className="shrink-0 rounded-2xl" />
-        <p className="text-lg font-semibold leading-snug">{accueilTexte}</p>
+        <div>
+          <p className="text-lg font-semibold leading-snug">{accueilTexte}</p>
+          <a href="/dashboard" className="mt-2 inline-block text-sm font-medium text-terracotta-400 underline">
+            Voir mon tableau de bord complet →
+          </a>
+        </div>
       </div>
 
       {/* Accès rapides */}
