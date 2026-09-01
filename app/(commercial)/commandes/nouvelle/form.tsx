@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { creerCommande } from "../actions";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -362,8 +363,7 @@ export function NouvelleCommandeForm({
                   <div className="flex items-center gap-3">
                     <div className="relative h-12 w-12 shrink-0">
                       {photo ? (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={photo} alt="" className="h-12 w-12 rounded-lg object-cover" />
+                        <Image src={photo} alt="" fill sizes="48px" className="rounded-lg object-cover" />
                       ) : (
                         <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-beige-100 text-ink-900/30">
                           <span className="text-lg">📦</span>
@@ -434,8 +434,9 @@ export function NouvelleCommandeForm({
                       <div key={v.id} className="flex items-center justify-between gap-3 p-3">
                         <div className="flex items-center gap-3">
                           {photo && (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={photo} alt={label} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                            <div className="relative h-10 w-10 shrink-0">
+                              <Image src={photo} alt={label} fill sizes="40px" className="rounded-lg object-cover" />
+                            </div>
                           )}
                           <div>
                             <p className="text-sm font-medium">{label}</p>

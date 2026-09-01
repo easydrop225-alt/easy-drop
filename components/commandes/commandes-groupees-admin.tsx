@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { StatutRapideSelect } from "./statut-rapide-select";
@@ -246,10 +247,9 @@ export function CommandesGroupeesAdmin({
                             </td>
                             <td className="p-2">
                               <div className="flex items-start gap-2">
-                                <div className="h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-beige-100">
+                                <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-lg bg-beige-100">
                                   {image ? (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img src={image} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                                    <Image src={image} alt="" fill sizes="32px" className="object-cover" />
                                   ) : null}
                                 </div>
                                 <div className="text-xs">

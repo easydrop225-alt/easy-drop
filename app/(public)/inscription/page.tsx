@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Suspense, useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { inscrireCommercial } from "./actions";
@@ -68,8 +69,7 @@ export default function InscriptionPage() {
   return (
     <main className="mx-auto max-w-md px-6 py-16">
       <div className="mb-8 flex flex-col items-center text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-easy-drop.png" alt="Easy Drop" className="mb-4 h-16 w-16 rounded-2xl object-contain" />
+        <Image src="/logo-easy-drop.png" alt="Easy Drop" width={64} height={64} className="mb-4 h-16 w-16 rounded-2xl object-contain" />
         <h1 className="text-2xl font-semibold">S&apos;inscrire sur Easy Drop</h1>
         <p className="mt-2 text-sm text-ink-900/60">
           Crée ton compte pour accéder immédiatement au catalogue et commencer à vendre — sans stock, sans avance de frais.

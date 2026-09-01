@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { formatDate, formatFCFA } from "@/lib/utils";
@@ -140,10 +141,9 @@ export function CommerciauxFiltres({
               return (
                 <tr key={c.id} className="border-b border-ink-900/5 last:border-0">
                   <td className="p-3">
-                    <div className="h-9 w-9 overflow-hidden rounded-full bg-beige-100">
+                    <div className="relative h-9 w-9 overflow-hidden rounded-full bg-beige-100">
                       {c.photo_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={c.photo_url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                        <Image src={c.photo_url} alt="" fill sizes="36px" className="object-cover" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-xs text-ink-900/30">
                           {c.prenom?.[0]}{c.nom?.[0]}

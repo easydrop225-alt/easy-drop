@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 
 export function AvatarUploader({ userId, photoUrl }: { userId: string; photoUrl: string | null }) {
@@ -40,10 +41,9 @@ export function AvatarUploader({ userId, photoUrl }: { userId: string; photoUrl:
 
   return (
     <div className="flex items-center gap-4">
-      <div className="h-16 w-16 overflow-hidden rounded-full bg-beige-100">
+      <div className="relative h-16 w-16 overflow-hidden rounded-full bg-beige-100">
         {url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt="Photo de profil" className="h-full w-full object-cover" />
+          <Image src={url} alt="Photo de profil" fill sizes="64px" className="object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-ink-900/30">Photo</div>
         )}

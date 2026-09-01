@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useActionState } from "react";
 import { connecter } from "./actions";
 import { Input, Label } from "@/components/ui/input";
@@ -12,8 +13,7 @@ export default function ConnexionPage() {
   return (
     <main className="mx-auto max-w-md px-6 py-16">
       <div className="mb-8 flex flex-col items-center text-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo-easy-drop.png" alt="Easy Drop" className="mb-4 h-16 w-16 rounded-2xl object-contain" />
+        <Image src="/logo-easy-drop.png" alt="Easy Drop" width={64} height={64} className="mb-4 h-16 w-16 rounded-2xl object-contain" />
         <h1 className="text-2xl font-semibold">Connexion</h1>
       </div>
       <form action={formAction} className="space-y-4">

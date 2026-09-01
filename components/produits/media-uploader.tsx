@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -169,8 +170,7 @@ export function MediaUploader({ productId }: { productId: string }) {
               const variante = variants.find((v) => v.id === img.product_variant_id);
               return (
                 <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl bg-beige-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} alt="" className="h-full w-full object-cover" />
+                  <Image src={img.url} alt="" fill sizes="(max-width: 640px) 33vw, 25vw" className="object-cover" />
                   {variante && (
                     <span className="absolute bottom-1 left-1 rounded-full bg-surface/90 px-2 py-0.5 text-[10px] font-medium">
                       {labelVariante(variante)}

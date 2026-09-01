@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import type { Product, Media } from "@/types/database";
 
 export default async function ProduitPublicPage({
@@ -29,10 +30,9 @@ export default async function ProduitPublicPage({
   return (
     <main className="mx-auto max-w-4xl px-6 py-12">
       <div className="grid gap-8 md:grid-cols-2">
-        <div className="aspect-square rounded-2xl bg-beige-100">
+        <div className="relative aspect-square rounded-2xl bg-beige-100">
           {images[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={images[0].url} alt={(product as Product).nom} loading="lazy" decoding="async" className="h-full w-full rounded-2xl object-cover" />
+            <Image src={images[0].url} alt={(product as Product).nom} fill sizes="(max-width: 768px) 100vw, 50vw" className="rounded-2xl object-cover" />
           ) : (
             <div className="flex h-full items-center justify-center text-ink-900/30">Photo à venir</div>
           )}

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatFCFA } from "@/lib/utils";
@@ -46,9 +47,8 @@ export default async function MediasProduitPage({
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {images.map((img) => (
               <div key={img.id} className="space-y-2">
-                <div className="aspect-square overflow-hidden rounded-xl bg-beige-100">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-beige-100">
+                  <Image src={img.url} alt="" fill sizes="(max-width: 640px) 50vw, 33vw" className="object-cover" />
                 </div>
                 <a href={img.url} download target="_blank" rel="noreferrer">
                   <Button size="sm" variant="secondary" className="w-full">Télécharger</Button>
