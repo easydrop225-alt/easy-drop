@@ -53,3 +53,13 @@ body {
 .dark .border-ink-900\/20 {
   border-color: #8A8178;
 }
+
+/* Bandeau d'information défilant sur l'accueil commercial (texte dupliqué
+   deux fois dans le HTML pour une boucle continue et sans à-coup). */
+@keyframes bandeau-defilant {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-bandeau-defilant {
+  animation: bandeau-defilant 14s linear infinite;
+}

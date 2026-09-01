@@ -286,7 +286,7 @@ export function NouvelleCommandeForm({
   }, [zone, livraisonModifieeManuellement]);
 
   return (
-    <form ref={formRef} action={formAction} onSubmit={surSoumission} className="space-y-6 pb-20 md:pb-0">
+    <form ref={formRef} action={formAction} onSubmit={surSoumission} className="space-y-6">
       <input type="hidden" name="produitsJson" value={JSON.stringify(produitsJson)} />
       <input type="hidden" name="modeLivraison" value="normal" />
 
@@ -502,7 +502,7 @@ export function NouvelleCommandeForm({
               type="button"
               disabled={stagingQuantiteTotale === 0 || (modeTarification === "parProduit" && stagingPrixVente <= 0)}
               onClick={ajouterAuPanier}
-              className="fixed inset-x-4 bottom-20 z-30 rounded-full bg-green-600 py-3.5 text-center font-medium text-white shadow-lg transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40 md:sticky md:inset-x-auto md:bottom-4 md:w-full"
+              className="w-full rounded-xl bg-green-600 py-3 text-center font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
               + Ajouter ce produit à la commande
             </button>

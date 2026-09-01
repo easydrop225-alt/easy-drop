@@ -61,10 +61,12 @@ export default async function AccueilCommercialPage() {
 
   return (
     <div className="space-y-8">
-      {/* Bannière d'accueil — texte modifiable par l'admin dans Paramètres. */}
-      <div className="flex items-center gap-4 overflow-hidden rounded-2xl bg-ink-900 p-6 text-beige-50">
-        <Image src="/icons/icon-512.png" alt="Easy Drop" width={72} height={72} className="shrink-0 rounded-2xl" />
-        <p className="text-lg font-semibold leading-snug">{accueilTexte}</p>
+      {/* Bandeau d'information défilant — texte modifiable par l'admin dans Paramètres. */}
+      <div className="overflow-hidden rounded-2xl bg-ink-900 py-3.5 text-beige-50">
+        <div className="flex w-max animate-bandeau-defilant gap-16 whitespace-nowrap">
+          <span className="text-sm font-semibold">{accueilTexte}</span>
+          <span className="text-sm font-semibold">{accueilTexte}</span>
+        </div>
       </div>
 
       {/* Accès rapides */}

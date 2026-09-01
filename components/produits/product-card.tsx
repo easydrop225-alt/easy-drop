@@ -93,12 +93,12 @@ export function ProductCard({ product, imageUrl, prixFournisseur, href, disponib
         <div className="p-4">
           <h3 className="truncate font-medium">{product.nom}</h3>
           {prixFournisseur != null && (
-            <p className="mt-1 whitespace-nowrap text-sm text-ink-900/50">
+            <p className="mt-1 whitespace-nowrap text-xs text-ink-900/50 sm:text-sm">
               Fournisseur : <span className="font-medium text-ink-900/70">{formatFCFA(prixFournisseur)}</span>
             </p>
           )}
           {product.prix_min_conseille && product.prix_max_conseille && (
-            <p className="mt-0.5 whitespace-nowrap text-sm text-terracotta-600">
+            <p className="mt-0.5 whitespace-nowrap text-xs text-terracotta-600 sm:text-sm">
               Revente : <span className="font-semibold">{formatFCFA(product.prix_min_conseille)}–{formatFCFA(product.prix_max_conseille)}</span>
             </p>
           )}
