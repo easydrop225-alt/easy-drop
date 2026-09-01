@@ -2,6 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { CatalogueRecherche, type ProduitPourRecherche } from "@/components/produits/catalogue-recherche";
 import type { Product, ProductVariant, Inventory, Media } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Catalogue" };
+
+
 const TRENTE_JOURS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export default async function CatalogueCommercialPage() {

@@ -4,6 +4,11 @@ import type { Payment, Profile, Profit } from "@/types/database";
 import { FiltreCommercialPaiements } from "./filtre-commercial-paiements";
 import { ParrainageSection } from "./parrainage-section";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Paiements" };
+
+
 interface CommercialDu {
   commercial: Profile;
   montantDu: number;

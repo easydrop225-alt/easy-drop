@@ -4,6 +4,11 @@ import { cn } from "@/lib/utils";
 import { AjouterStockInline } from "@/components/produits/ajouter-stock-inline";
 import type { ProductVariant, Inventory as InventoryType, Product } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Stocks" };
+
+
 type InventoryRow = InventoryType & { product_variants: (ProductVariant & { products: Product }) };
 
 export default async function StocksPage() {

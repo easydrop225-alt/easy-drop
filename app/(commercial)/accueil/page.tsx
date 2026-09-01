@@ -4,6 +4,11 @@ import { formatFCFA } from "@/lib/utils";
 import { ShoppingBag, ClipboardList, Wallet, LayoutGrid } from "lucide-react";
 import type { Product, Media, Setting, Order, OrderItem } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Accueil" };
+
+
 export default async function AccueilCommercialPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

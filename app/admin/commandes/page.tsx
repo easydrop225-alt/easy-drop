@@ -2,6 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { CommandesGroupeesAdmin, type OrderComplete } from "@/components/commandes/commandes-groupees-admin";
 import type { Media } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Commandes" };
+
+
 const TAILLE_PAGE = 100;
 
 export default async function AdminCommandesPage({

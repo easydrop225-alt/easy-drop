@@ -12,6 +12,11 @@ import { calculerBonusParrainage, premierJourDuMois } from "@/lib/parrainage";
 import type { PointJournalier } from "@/lib/stats/aggregate";
 import type { Order, OrderItem } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Mon dashboard" };
+
+
 export default async function DashboardCommercialPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

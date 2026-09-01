@@ -107,12 +107,54 @@ export function VariantesManager({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
+  const [couleursGroupees, setCouleursGroupees] = useState("");
+  const [taillesGroupees, setTaillesGroupees] = useState("");
+  const [stockGroupe, setStockGroupe] = useState(0);
+  const [pendingGroupe, startTransitionGroupe] = useTransition();
+  const [resultatGroupe, setResultatGroupe] = useState<string | null>(null);
+
   function handleAjouter() {
     setError(null);
     startTransition(async () => {
       const res = await ajouterVariante(productId, couleur, taille, stock);
       if (res?.error) setError(res.error);
       else { setCouleur(""); setTaille(""); setStock(0); }
+    });
+  }
+
+  function handleGenererCombinaisons() {
+    const couleursListe = couleursGroupees.split(",").map((c) => c.trim()).filter(Boolean);
+    const taillesListe = taillesGroupees.split(",").map((t) => t.trim()).filter(Boolean);
+
+    // Toutes les combinaisons couleur × taille ; si une seule des deux
+    // listes est remplie, une variante par valeur de cette liste seule.
+    const combinaisons: { couleur: string; taille: string }[] =
+      couleursListe.length > 0 && taillesListe.length > 0
+        ? couleursListe.flatMap((c) => taillesListe.map((t) => ({ couleur: c, taille: t })))
+        : couleursListe.length > 0
+          ? couleursListe.map((c) => ({ couleur: c, taille: "" }))
+          : taillesListe.map((t) => ({ couleur: "", taille: t }));
+
+    if (combinaisons.length === 0) {
+      setResultatGroupe("Indique au moins une couleur ou une taille.");
+      return;
+    }
+
+    setResultatGroupe(null);
+    startTransitionGroupe(async () => {
+      const resultats = await Promise.all(
+        combinaisons.map((c) => ajouterVariante(productId, c.couleur, c.taille, stockGroupe))
+      );
+      const echecs = resultats.filter((r) => r?.error).length;
+      const reussies = combinaisons.length - echecs;
+      setResultatGroupe(
+        echecs === 0
+          ? `${reussies} variante${reussies > 1 ? "s" : ""} créée${reussies > 1 ? "s" : ""} ✓`
+          : `${reussies} créée(s), ${echecs} échec(s) (peut-être déjà existantes)`
+      );
+      setCouleursGroupees("");
+      setTaillesGroupees("");
+      setStockGroupe(0);
     });
   }
 
@@ -129,6 +171,33 @@ export function VariantesManager({
       <div className="space-y-3">
         {variants.map((v) => <LigneVariante key={v.id} productId={productId} variant={v} />)}
         {variants.length === 0 && <p className="text-sm text-ink-900/50">Aucune variante — ajoute-en une ci-dessous.</p>}
+      </div>
+
+      <div className="space-y-2 rounded-xl bg-terracotta-50 p-3">
+        <h3 className="text-sm font-medium text-terracotta-700">Générer plusieurs variantes d&apos;un coup</h3>
+        <p className="text-xs text-ink-900/50">
+          Sépare chaque valeur par une virgule. Toutes les combinaisons couleur × taille seront créées automatiquement.
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label htmlFor="couleursGroupees" className="text-xs">Couleurs</Label>
+            <Input id="couleursGroupees" value={couleursGroupees} onChange={(e) => setCouleursGroupees(e.target.value)} placeholder="Noir, Blanc, Rouge" />
+          </div>
+          <div>
+            <Label htmlFor="taillesGroupees" className="text-xs">Tailles</Label>
+            <Input id="taillesGroupees" value={taillesGroupees} onChange={(e) => setTaillesGroupees(e.target.value)} placeholder="S, M, L" />
+          </div>
+        </div>
+        <div className="flex items-end gap-2">
+          <div>
+            <Label htmlFor="stockGroupe" className="text-xs">Stock initial (pour chaque variante créée)</Label>
+            <Input id="stockGroupe" type="number" min={0} value={stockGroupe} onChange={(e) => setStockGroupe(Number(e.target.value))} className="w-32" />
+          </div>
+          <Button type="button" size="sm" disabled={pendingGroupe} onClick={handleGenererCombinaisons}>
+            {pendingGroupe ? "Génération..." : "Générer les combinaisons"}
+          </Button>
+        </div>
+        {resultatGroupe && <p className="text-xs text-ink-900/70">{resultatGroupe}</p>}
       </div>
 
       <div className="grid grid-cols-3 gap-2 border-t border-ink-900/5 pt-4">

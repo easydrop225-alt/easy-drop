@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { StatutRapideSelect } from "./statut-rapide-select";
+import { BarreActionGroupee } from "./barre-action-groupee";
 import { formatDate, formatFCFA } from "@/lib/utils";
 import { exporterCSV } from "@/lib/export-csv";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,16 @@ export function CommandesGroupeesAdmin({
   const [filtre, setFiltre] = useState<FiltreDateValeur>({ annee: new Date().getFullYear(), mois: null, jour: null });
   const [groupeOuvert, setGroupeOuvert] = useState<Record<string, boolean>>({});
   const [ongletActif, setOngletActif] = useState<Onglet>("toutes");
+  const [selection, setSelection] = useState<Set<string>>(new Set());
+
+  function basculerSelection(orderId: string) {
+    setSelection((s) => {
+      const copie = new Set(s);
+      if (copie.has(orderId)) copie.delete(orderId);
+      else copie.add(orderId);
+      return copie;
+    });
+  }
 
   const dates = useMemo(() => orders.map((o) => o.created_at), [orders]);
   const compteParStatut = useMemo(() => ({
@@ -165,6 +176,26 @@ export function CommandesGroupeesAdmin({
 
       <FiltreDate dates={dates} valeur={filtre} onChange={setFiltre} />
 
+      {selection.size > 0 && (
+        <BarreActionGroupee
+          orderIds={Array.from(selection)}
+          onTermine={() => setSelection(new Set())}
+        />
+      )}
+
+      {filtrees.length > 0 && (
+        <label className="flex items-center gap-2 text-xs text-ink-900/50">
+          <input
+            type="checkbox"
+            checked={filtrees.every((o) => selection.has(o.id))}
+            onChange={(e) => {
+              setSelection(e.target.checked ? new Set(filtrees.map((o) => o.id)) : new Set());
+            }}
+          />
+          Tout sélectionner ({filtrees.length} commande{filtrees.length > 1 ? "s" : ""} affichée{filtrees.length > 1 ? "s" : ""})
+        </label>
+      )}
+
       {groupes.length === 0 && <p className="text-ink-900/60">Aucune commande pour cette période.</p>}
 
       {groupes.map(([commercialId, groupe]) => {
@@ -188,7 +219,15 @@ export function CommandesGroupeesAdmin({
                 <div className="space-y-2 md:hidden">
                   {groupe.commandes.map((order) => (
                     <Card key={order.id} className="space-y-2 p-3">
-                      <Link href={`/admin/commandes/${order.id}`} prefetch className="block space-y-2">
+                      <div className="flex items-start gap-2">
+                        <input
+                          type="checkbox"
+                          checked={selection.has(order.id)}
+                          onChange={() => basculerSelection(order.id)}
+                          className="mt-1 shrink-0"
+                          aria-label={`Sélectionner la commande ${order.numero_commande}`}
+                        />
+                        <Link href={`/admin/commandes/${order.id}`} prefetch className="block flex-1 space-y-2">
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-sm font-medium">{order.numero_commande}</span>
                           <span className="text-sm font-medium text-ink-900/70">{formatFCFA(prixTotal(order))}</span>
@@ -200,6 +239,7 @@ export function CommandesGroupeesAdmin({
                         </div>
                         <ColonneDate order={order} />
                       </Link>
+                      </div>
                       <div className="flex items-center justify-between gap-2">
                         <StatutRapideSelect orderId={order.id} statutActuel={order.statut} />
                         <Link
@@ -222,6 +262,7 @@ export function CommandesGroupeesAdmin({
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-ink-900/5 text-left text-ink-900/50">
+                        <th className="p-2"></th>
                         <th className="p-2">Référence</th>
                         <th className="p-2">Client</th>
                         <th className="p-2">Articles</th>
@@ -238,6 +279,14 @@ export function CommandesGroupeesAdmin({
                         const image = premierArticle ? imageParProduit[premierArticle.product_id] : undefined;
                         return (
                           <tr key={order.id} className="border-b border-ink-900/5 last:border-0 hover:bg-beige-50">
+                            <td className="p-2">
+                              <input
+                                type="checkbox"
+                                checked={selection.has(order.id)}
+                                onChange={() => basculerSelection(order.id)}
+                                aria-label={`Sélectionner la commande ${order.numero_commande}`}
+                              />
+                            </td>
                             <td className="p-2">
                               <Link href={`/admin/commandes/${order.id}`} prefetch className="font-medium">{order.numero_commande}</Link>
                             </td>

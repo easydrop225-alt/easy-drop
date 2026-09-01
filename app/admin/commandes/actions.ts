@@ -27,6 +27,33 @@ export async function changerStatutCommande(
   return { success: true };
 }
 
+/**
+ * Action groupée : applique le même statut à plusieurs commandes en une
+ * seule requête, plutôt que de forcer l'admin à les changer une par une.
+ */
+export async function changerStatutPlusieursCommandes(
+  orderIds: string[],
+  statut: OrderStatut,
+  dateRelance?: string
+) {
+  if (orderIds.length === 0) return { error: "Aucune commande sélectionnée." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      statut,
+      motif_annulation: null,
+      date_relance: statut === "relance" ? (dateRelance ?? null) : null,
+    })
+    .in("id", orderIds);
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/commandes");
+  for (const id of orderIds) revalidatePath(`/commandes/${id}`);
+  return { success: true, nombre: orderIds.length };
+}
+
 // Demande de suppression : l'admin déclenche, le commercial doit valider.
 export async function demanderSuppressionCommande(orderId: string, motif: string) {
   const supabase = await createClient();

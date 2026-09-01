@@ -3,6 +3,11 @@ import { CommerciauxFiltres } from "@/components/commerciaux/commerciaux-filtres
 import { calculerBonusParrainage, premierJourDuMois } from "@/lib/parrainage";
 import type { Profile, Order } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Commerciaux" };
+
+
 export default async function AdminCommerciauxPage() {
   const supabase = await createClient();
   const debutMois = premierJourDuMois(new Date());

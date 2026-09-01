@@ -5,6 +5,11 @@ import { niveauPourVentes, prochainNiveau, calculerBonusParrainage, premierJourD
 import { CopierLienBouton } from "./copier-lien-bouton";
 import type { Profile, VersementParrainage } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Mon parrainage" };
+
+
 export default async function ParrainagePage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

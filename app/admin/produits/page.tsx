@@ -4,6 +4,11 @@ import { formatFCFA } from "@/lib/utils";
 import type { Product, Category } from "@/types/database";
 import { SupprimerProduitButton } from "./delete-button";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Produits" };
+
+
 export default async function AdminProduitsPage() {
   const supabase = await createClient();
   const { data: products } = await supabase.from("products").select("*").order("created_at", { ascending: false });

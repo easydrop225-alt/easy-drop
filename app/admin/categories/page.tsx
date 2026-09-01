@@ -3,6 +3,11 @@ import type { Category, Product } from "@/types/database";
 import { CategorieRow } from "./categorie-row";
 import { NouvelleCategorieForm } from "./nouvelle-form";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Catégories" };
+
+
 export default async function CategoriesPage() {
   const supabase = await createClient();
   const { data: categories } = await supabase.from("categories").select("*").order("ordre");

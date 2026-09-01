@@ -3,6 +3,11 @@ import { HistoriqueCommandesCommercial } from "@/components/commandes/historique
 import { dateIlYA3Mois } from "@/lib/utils";
 import type { Order } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Mes commandes" };
+
+
 export default async function MesCommandesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

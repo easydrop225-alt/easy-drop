@@ -3,6 +3,11 @@ import { Card } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import type { Profile } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Journal d'activité" };
+
+
 interface ActivityLog {
   id: string;
   user_id: string | null;

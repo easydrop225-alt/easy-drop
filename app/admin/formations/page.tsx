@@ -3,6 +3,11 @@ import type { Formation } from "@/types/database";
 import { NouvelleFormationForm } from "./nouvelle-form";
 import { FormationRow } from "./formation-row";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Formations" };
+
+
 export default async function FormationsPage() {
   const supabase = await createClient();
   const { data: formations } = await supabase.from("formations").select("*").order("ordre");

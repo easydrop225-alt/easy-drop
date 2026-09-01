@@ -7,6 +7,11 @@ import { BoutiqueForm } from "./boutique-form";
 import { LogoutButton } from "@/components/shared/logout-button";
 import type { Profile, Setting } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Profil" };
+
+
 export default async function ProfilPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

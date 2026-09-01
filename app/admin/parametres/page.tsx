@@ -5,6 +5,11 @@ import { SonNotificationUploader } from "@/components/shared/son-notification-up
 import { AccueilCommercialForm } from "./accueil-commercial-form";
 import { Card } from "@/components/ui/card";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Paramètres" };
+
+
 export default async function ParametresPage() {
   const supabase = await createClient();
   const [{ data: settings }, { data: produits }] = await Promise.all([

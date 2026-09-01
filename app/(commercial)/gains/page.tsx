@@ -4,6 +4,11 @@ import { calculerBonusParrainage, premierJourDuMois } from "@/lib/parrainage";
 import { GainsFiltres } from "./gains-filtres";
 import type { Payment, Profit } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Mes gains" };
+
+
 export default async function MesGainsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

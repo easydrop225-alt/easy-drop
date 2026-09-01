@@ -3,6 +3,11 @@ import { Card, CardTitle, CardValue } from "@/components/ui/card";
 import { formatFCFA } from "@/lib/utils";
 import type { Order, OrderItem, Profile } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Dashboard" };
+
+
 function calculerMetriquesPeriode(
   orders: Order[],
   items: OrderItem[],

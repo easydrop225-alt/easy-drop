@@ -4,7 +4,7 @@ import "./globals.css";
 import { InstallPrompt } from "@/components/shared/install-prompt";
 
 export const metadata: Metadata = {
-  title: "Easy Drop",
+  title: { default: "Easy Drop", template: "%s · Easy Drop" },
   description: "Plateforme de dropshipping interne Easy Drop",
   manifest: "/manifest.json",
   icons: {

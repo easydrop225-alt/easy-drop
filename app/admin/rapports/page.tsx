@@ -12,6 +12,11 @@ import { formatFCFA } from "@/lib/utils";
 import type { PointJournalier } from "@/lib/stats/aggregate";
 import type { Order, OrderItem, Profile } from "@/types/database";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Rapports" };
+
+
 export default async function RapportsPage() {
   const supabase = await createClient();
 
