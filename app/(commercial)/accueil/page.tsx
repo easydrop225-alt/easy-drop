@@ -1,17 +1,23 @@
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
-import { CategoryRow } from "@/components/produits/category-row";
 import { formatFCFA } from "@/lib/utils";
 import { ShoppingBag, ClipboardList, Wallet, LayoutGrid } from "lucide-react";
-import type { Category, Product, Media, Setting } from "@/types/database";
+import type { Product, Media, Setting, Order, OrderItem } from "@/types/database";
 
 export default async function AccueilCommercialPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const [{ data: settingsData }, { data: categoriesData }, { data: produitsActifs }] = await Promise.all([
+  const debutJour = new Date(); debutJour.setHours(0, 0, 0, 0);
+
+  const [{ data: settingsData }, { data: produitsActifs }, { data: commandesJourData }] = await Promise.all([
     supabase.from("settings").select("*"),
-    supabase.from("categories").select("*").eq("actif", true).order("ordre"),
     supabase.from("products").select("*").eq("actif", true),
+    supabase
+      .from("orders")
+      .select("id, statut, order_items(benefice_ligne)")
+      .eq("commercial_id", user?.id ?? "")
+      .gte("created_at", debutJour.toISOString()),
   ]);
 
   const settings = (settingsData ?? []) as Setting[];
@@ -21,14 +27,20 @@ export default async function AccueilCommercialPage() {
   const modeVedette = (getSetting("produits_vedette_mode") as "statique" | "aleatoire" | undefined) ?? "aleatoire";
   const idsVedette = (getSetting("produits_vedette_ids") as string[] | undefined) ?? [];
 
-  const categories = (categoriesData ?? []) as Category[];
   const produits = (produitsActifs ?? []) as Product[];
 
-  const compteParCategorie = new Map<string, number>();
-  for (const p of produits) {
-    if (!p.category_id) continue;
-    compteParCategorie.set(p.category_id, (compteParCategorie.get(p.category_id) ?? 0) + 1);
-  }
+  // Résumé du jour — même principe que le dashboard, mais limité à
+  // aujourd'hui uniquement : un aperçu rapide, le détail complet restant
+  // sur /dashboard.
+  type CommandeJour = Pick<Order, "id" | "statut"> & { order_items: Pick<OrderItem, "benefice_ligne">[] };
+  const commandesJour = (commandesJourData ?? []) as CommandeJour[];
+  const commandesJourTotal = commandesJour.length;
+  const commandesJourEnCours = commandesJour.filter((o) =>
+    ["confirmation", "traitement", "livraison", "relance"].includes(o.statut)
+  ).length;
+  const beneficeJour = commandesJour
+    .filter((o) => o.statut === "livree")
+    .reduce((acc, o) => acc + o.order_items.reduce((a, i) => a + Number(i.benefice_ligne), 0), 0);
 
   let produitsVedette: Product[];
   if (modeVedette === "statique" && idsVedette.length > 0) {
@@ -75,13 +87,26 @@ export default async function AccueilCommercialPage() {
         </a>
       </div>
 
-      {/* Catégories */}
+      {/* Résumé du jour — aperçu rapide, extrait du dashboard (détail complet sur /dashboard). */}
       <div>
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-lg font-medium">Catégories</h2>
-          <a href="/catalogue" className="text-sm text-terracotta-600 underline">Voir tout</a>
+          <h2 className="text-lg font-medium">Résumé du jour</h2>
+          <a href="/dashboard" className="text-sm text-terracotta-600 underline">Voir le détail</a>
         </div>
-        <CategoryRow categories={categories} compteParCategorie={compteParCategorie} hrefPrefix="/catalogue/categorie" />
+        <div className="grid grid-cols-3 gap-3 rounded-2xl bg-ink-900 p-5 text-beige-50">
+          <div>
+            <p className="text-xs text-beige-50/60">Commandes</p>
+            <p className="text-xl font-semibold">{commandesJourTotal}</p>
+          </div>
+          <div>
+            <p className="text-xs text-beige-50/60">En cours</p>
+            <p className="text-xl font-semibold">{commandesJourEnCours}</p>
+          </div>
+          <div>
+            <p className="text-xs text-beige-50/60">Bénéfice</p>
+            <p className="text-xl font-semibold text-terracotta-400">{formatFCFA(beneficeJour)}</p>
+          </div>
+        </div>
       </div>
 
       {/* Produits populaires / vedette */}

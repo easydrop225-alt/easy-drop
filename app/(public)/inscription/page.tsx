@@ -70,7 +70,7 @@ export default function InscriptionPage() {
       <div className="mb-8 flex flex-col items-center text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo-easy-drop.png" alt="Easy Drop" className="mb-4 h-16 w-16 rounded-2xl object-contain" />
-        <h1 className="text-2xl font-semibold">Devenir commercial Easy Drop</h1>
+        <h1 className="text-2xl font-semibold">S&apos;inscrire sur Easy Drop</h1>
         <p className="mt-2 text-sm text-ink-900/60">
           Crée ton compte pour accéder immédiatement au catalogue et commencer à vendre — sans stock, sans avance de frais.
         </p>

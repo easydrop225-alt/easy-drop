@@ -2,10 +2,15 @@ import { createClient } from "@/lib/supabase/server";
 import { CatalogueRecherche, type ProduitPourRecherche } from "@/components/produits/catalogue-recherche";
 import type { Product, ProductVariant, Inventory, Media } from "@/types/database";
 
+const TRENTE_JOURS_MS = 30 * 24 * 60 * 60 * 1000;
+
 export default async function CatalogueCommercialPage() {
   const supabase = await createClient();
   const { data: categories } = await supabase.from("categories").select("*").eq("actif", true).order("ordre");
-  const { data: products } = await supabase.from("products").select("*").eq("actif", true).order("nom");
+  // On récupère TOUS les produits, actifs ou non : les produits désactivés
+  // par l'admin restent visibles (juste leur photo, grisée), plutôt que de
+  // disparaître silencieusement du catalogue.
+  const { data: products } = await supabase.from("products").select("*").order("nom");
 
   const list = (products ?? []) as Product[];
   const productIds = list.map((p) => p.id);
@@ -32,6 +37,7 @@ export default async function CatalogueCommercialPage() {
   }
 
   const categoryById = new Map((categories ?? []).map((c) => [c.id, c] as const));
+  const maintenant = Date.now();
 
   const produitsPourRecherche: ProduitPourRecherche[] = list.map((p) => ({
     id: p.id,
@@ -43,6 +49,8 @@ export default async function CatalogueCommercialPage() {
     prixMaxConseille: p.prix_max_conseille,
     imageUrl: imageParProduit.get(p.id),
     disponible: variantesParProduit.has(p.id) ? (stockParProduit.get(p.id) ?? 0) > 0 : true,
+    actif: p.actif,
+    nouveau: maintenant - new Date(p.created_at).getTime() < TRENTE_JOURS_MS,
     prixFournisseur: p.prix_fournisseur,
     couleurs: p.couleurs,
     tailles: p.tailles,

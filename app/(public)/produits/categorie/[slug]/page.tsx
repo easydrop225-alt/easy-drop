@@ -43,7 +43,7 @@ export default async function CategoriePubliquePage({
       </div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {list.map((product) => (
-          <ProductCard key={product.id} product={product} imageUrl={imageParProduit.get(product.id)} href={`/produits/${product.slug}`} />
+          <ProductCard key={product.id} product={product} imageUrl={imageParProduit.get(product.id)} href={`/produits/${product.slug}`} favoris={false} />
         ))}
         {list.length === 0 && <p className="text-ink-900/60">Aucun produit dans cette catégorie.</p>}
       </div>

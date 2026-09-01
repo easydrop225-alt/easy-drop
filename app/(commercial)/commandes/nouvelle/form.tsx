@@ -286,7 +286,7 @@ export function NouvelleCommandeForm({
   }, [zone, livraisonModifieeManuellement]);
 
   return (
-    <form ref={formRef} action={formAction} onSubmit={surSoumission} className="space-y-6">
+    <form ref={formRef} action={formAction} onSubmit={surSoumission} className="space-y-6 pb-20 md:pb-0">
       <input type="hidden" name="produitsJson" value={JSON.stringify(produitsJson)} />
       <input type="hidden" name="modeLivraison" value="normal" />
 
@@ -446,7 +446,7 @@ export function NouvelleCommandeForm({
                           type="number"
                           min={0}
                           max={stock > 0 ? stock : 0}
-                          value={quantite}
+                          value={quantite || ""}
                           disabled={stock <= 0}
                           onChange={(e) => setStagingQuantite(v.id, Number(e.target.value))}
                           className="w-20"
@@ -463,7 +463,7 @@ export function NouvelleCommandeForm({
                   id="quantiteSansVariante"
                   type="number"
                   min={0}
-                  value={stagingQuantites["sans_variante"] ?? 0}
+                  value={stagingQuantites["sans_variante"] || ""}
                   onChange={(e) => setStagingQuantite("sans_variante", Number(e.target.value))}
                 />
               </div>
@@ -476,12 +476,9 @@ export function NouvelleCommandeForm({
                   id="prixVenteInput"
                   type="number"
                   min={0}
-                  value={stagingPrixVente}
+                  value={stagingPrixVente || ""}
                   onChange={(e) => setStagingPrixVente(Number(e.target.value))}
                 />
-                <p className="mt-1 text-xs text-ink-900/50">
-                  Prix total que le client paie pour les pièces de CE produit (hors livraison, qui reste unique pour toute la commande).
-                </p>
                 {stagingQuantiteTotale > 0 && stagingPrixVente > 0 && (
                   <div className="mt-2 rounded-xl bg-terracotta-50 p-3">
                     <p className="text-xs text-terracotta-700">Bénéfice pour ce produit</p>
@@ -501,15 +498,14 @@ export function NouvelleCommandeForm({
               </p>
             )}
 
-            <Button
+            <button
               type="button"
-              variant="secondary"
-              className="w-full"
               disabled={stagingQuantiteTotale === 0 || (modeTarification === "parProduit" && stagingPrixVente <= 0)}
               onClick={ajouterAuPanier}
+              className="fixed inset-x-4 bottom-20 z-30 rounded-full bg-green-600 py-3.5 text-center font-medium text-white shadow-lg transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40 md:sticky md:inset-x-auto md:bottom-4 md:w-full"
             >
               + Ajouter ce produit à la commande
-            </Button>
+            </button>
           </div>
         )}
 
@@ -584,7 +580,7 @@ export function NouvelleCommandeForm({
               name="fraisLivraison"
               type="number"
               min={0}
-              value={prixLivraison}
+              value={prixLivraison || ""}
               onChange={(e) => { setPrixLivraison(Number(e.target.value)); setLivraisonModifieeManuellement(true); }}
               required
             />
@@ -626,7 +622,7 @@ export function NouvelleCommandeForm({
               id="prixTotalCommandeInput"
               type="number"
               min={0}
-              value={prixTotalCommande}
+              value={prixTotalCommande || ""}
               onChange={(e) => setPrixTotalCommande(Number(e.target.value))}
             />
             <p className="mt-1 text-xs text-ink-900/50">

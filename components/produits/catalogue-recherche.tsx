@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Search } from "lucide-react";
 import { ProductCard } from "./product-card";
-import { Input } from "@/components/ui/input";
 
 export interface ProduitPourRecherche {
   id: string;
@@ -14,6 +14,8 @@ export interface ProduitPourRecherche {
   prixMaxConseille: number | null;
   imageUrl?: string;
   disponible: boolean;
+  actif: boolean;
+  nouveau: boolean;
   prixFournisseur: number;
   couleurs?: string[];
   tailles?: string[];
@@ -29,48 +31,60 @@ export function CatalogueRecherche({
   const [recherche, setRecherche] = useState("");
   const [categorieId, setCategorieId] = useState("toutes");
   const [disponibiliteSeulement, setDisponibiliteSeulement] = useState(false);
-  const [prixMax, setPrixMax] = useState("");
 
   const resultats = useMemo(() => {
     const termeRecherche = recherche.trim().toLowerCase();
-    const plafondPrix = prixMax !== "" ? Number(prixMax) : null;
 
     return produits.filter((p) => {
       if (termeRecherche && !p.nom.toLowerCase().includes(termeRecherche)) return false;
       if (categorieId !== "toutes" && p.categoryId !== categorieId) return false;
-      if (disponibiliteSeulement && !p.disponible) return false;
-      if (plafondPrix != null && p.prixMinConseille != null && p.prixMinConseille > plafondPrix) return false;
+      if (disponibiliteSeulement && (!p.disponible || !p.actif)) return false;
       return true;
     });
-  }, [produits, recherche, categorieId, disponibiliteSeulement, prixMax]);
+  }, [produits, recherche, categorieId, disponibiliteSeulement]);
 
   return (
     <div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Input
+      {/* Barre de recherche — navigation supérieure du catalogue */}
+      <div className="relative">
+        <Search size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-900/30" />
+        <input
           value={recherche}
           onChange={(e) => setRecherche(e.target.value)}
-          placeholder="Rechercher un produit par nom..."
-          className="sm:max-w-xs"
+          placeholder="Rechercher un produit..."
+          className="h-11 w-full rounded-xl border border-ink-900/10 bg-surface pl-10 pr-3 text-sm"
         />
-        <select
-          value={categorieId}
-          onChange={(e) => setCategorieId(e.target.value)}
-          className="h-10 rounded-xl border border-ink-900/10 bg-surface px-3 text-sm"
-        >
-          <option value="toutes">Toutes les catégories</option>
+      </div>
+
+      {/* Catégories — pastilles défilables horizontalement */}
+      {categories.length > 0 && (
+        <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+          <button
+            onClick={() => setCategorieId("toutes")}
+            className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition ${
+              categorieId === "toutes" ? "bg-terracotta-500 text-white" : "bg-beige-100 text-ink-900/70"
+            }`}
+          >
+            Tous
+          </button>
           {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.nom}</option>
+            <button
+              key={c.id}
+              onClick={() => setCategorieId(c.id)}
+              className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                categorieId === c.id ? "bg-terracotta-500 text-white" : "bg-beige-100 text-ink-900/70"
+              }`}
+            >
+              {c.nom}
+            </button>
           ))}
-        </select>
-        <Input
-          type="number"
-          min={0}
-          value={prixMax}
-          onChange={(e) => setPrixMax(e.target.value)}
-          placeholder="Prix conseillé max"
-          className="sm:max-w-[160px]"
-        />
+        </div>
+      )}
+
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-sm text-ink-900/50">
+          {resultats.length} produit{resultats.length !== 1 ? "s" : ""} trouvé{resultats.length !== 1 ? "s" : ""}
+        </p>
         <label className="flex items-center gap-2 text-sm text-ink-900/70">
           <input
             type="checkbox"
@@ -81,10 +95,7 @@ export function CatalogueRecherche({
         </label>
       </div>
 
-      <div className="mt-6">
-        <p className="mb-3 text-sm text-ink-900/50">
-          {resultats.length} produit{resultats.length !== 1 ? "s" : ""}
-        </p>
+      <div className="mt-4">
         {resultats.length === 0 ? (
           <p className="text-sm text-ink-900/50">Aucun produit ne correspond à cette recherche.</p>
         ) : (
@@ -105,6 +116,8 @@ export function CatalogueRecherche({
                 imageUrl={p.imageUrl}
                 href={`/catalogue/${p.id}`}
                 disponible={p.disponible}
+                actif={p.actif}
+                nouveau={p.nouveau}
               />
             ))}
           </div>

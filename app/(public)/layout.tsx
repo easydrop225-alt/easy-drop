@@ -8,7 +8,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           <Link href="/" className="text-lg font-semibold">Easy Drop</Link>
           <nav className="flex gap-4 text-sm">
             <Link href="/connexion" className="text-ink-900/70 hover:text-ink-900">Connexion</Link>
-            <Link href="/inscription" className="font-medium text-terracotta-600">Devenir commercial</Link>
+            <Link href="/inscription" className="font-medium text-terracotta-600">S&apos;inscrire</Link>
           </nav>
         </div>
       </header>
