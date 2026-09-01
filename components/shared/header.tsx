@@ -84,19 +84,41 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
   const pathname = usePathname();
   const [menuOuvert, setMenuOuvert] = useState(false);
 
-  const NAV_ADMIN = [
-    { href: "/admin/dashboard", label: "Dashboard" },
-    { href: "/admin/produits", label: "Produits" },
-    { href: "/admin/categories", label: "Catégories" },
-    { href: "/admin/stocks", label: "Stocks" },
-    { href: "/admin/commandes", label: "Commandes", badge: counts?.commandesNouvelles },
-    { href: "/admin/commerciaux", label: "Commerciaux", badge: counts?.commerciauxRecents },
-    { href: "/admin/paiements", label: "Paiements" },
-    { href: "/admin/rapports", label: "Rapports" },
-    { href: "/admin/journal", label: "Journal" },
-    { href: "/admin/formations", label: "Formations" },
-    { href: "/admin/notifications", label: "Notifications" },
-    { href: "/admin/parametres", label: "Paramètres" },
+  // Regroupé par thème plutôt qu'une liste plate de 12 liens — purement
+  // visuel, aucune route ni logique ne change.
+  const GROUPES_NAV_ADMIN: { groupe: string; items: { href: string; label: string; badge?: number }[] }[] = [
+    { groupe: "", items: [{ href: "/admin/dashboard", label: "Dashboard" }] },
+    {
+      groupe: "Catalogue",
+      items: [
+        { href: "/admin/produits", label: "Produits" },
+        { href: "/admin/categories", label: "Catégories" },
+        { href: "/admin/stocks", label: "Stocks" },
+      ],
+    },
+    {
+      groupe: "Ventes",
+      items: [
+        { href: "/admin/commandes", label: "Commandes", badge: counts?.commandesNouvelles },
+        { href: "/admin/paiements", label: "Paiements" },
+        { href: "/admin/rapports", label: "Rapports" },
+      ],
+    },
+    {
+      groupe: "Équipe",
+      items: [
+        { href: "/admin/commerciaux", label: "Commerciaux", badge: counts?.commerciauxRecents },
+        { href: "/admin/formations", label: "Formations" },
+        { href: "/admin/journal", label: "Journal" },
+      ],
+    },
+    {
+      groupe: "Système",
+      items: [
+        { href: "/admin/notifications", label: "Notifications" },
+        { href: "/admin/parametres", label: "Paramètres" },
+      ],
+    },
   ];
 
   return (
@@ -106,25 +128,30 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
           <Image src="/icons/icon-192.png" alt="Easy Drop" width={36} height={36} className="rounded-lg" />
           <span className="hidden sm:inline">Easy Drop — Admin</span>
         </Link>
-        <nav className="hidden flex-wrap gap-1 text-sm lg:flex">
-          {NAV_ADMIN.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "relative rounded-lg px-3 py-1.5 transition",
-                isActive(pathname, item.href)
-                  ? "bg-terracotta-500 text-white"
-                  : "text-ink-900/70 hover:bg-beige-100 hover:text-ink-900"
-              )}
-            >
-              {item.label}
-              {!!item.badge && item.badge > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
+        <nav className="hidden flex-wrap items-center gap-1 text-sm lg:flex">
+          {GROUPES_NAV_ADMIN.map((groupe, gi) => (
+            <div key={gi} className="flex items-center gap-1">
+              {gi > 0 && <span className="mx-1.5 h-5 w-px bg-ink-900/10" aria-hidden />}
+              {groupe.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "relative rounded-lg px-3 py-1.5 transition",
+                    isActive(pathname, item.href)
+                      ? "bg-terracotta-500 text-white"
+                      : "text-ink-900/70 hover:bg-beige-100 hover:text-ink-900"
+                  )}
+                >
+                  {item.label}
+                  {!!item.badge && item.badge > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
         <div className="flex items-center gap-3">
@@ -145,25 +172,34 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
 
       {menuOuvert && (
         <nav className="flex flex-col gap-1 border-t border-ink-900/5 px-6 py-3 text-sm lg:hidden">
-          {NAV_ADMIN.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setMenuOuvert(false)}
-              className={cn(
-                "relative rounded-lg px-3 py-2 transition",
-                isActive(pathname, item.href)
-                  ? "bg-terracotta-500 text-white"
-                  : "text-ink-900/70 hover:bg-beige-100"
+          {GROUPES_NAV_ADMIN.map((groupe, gi) => (
+            <div key={gi} className={gi > 0 ? "mt-2 border-t border-ink-900/5 pt-2" : ""}>
+              {groupe.groupe && (
+                <p className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-wide text-ink-900/40">
+                  {groupe.groupe}
+                </p>
               )}
-            >
-              {item.label}
-              {!!item.badge && item.badge > 0 && (
-                <span className="ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
+              {groupe.items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMenuOuvert(false)}
+                  className={cn(
+                    "relative flex rounded-lg px-3 py-2 transition",
+                    isActive(pathname, item.href)
+                      ? "bg-terracotta-500 text-white"
+                      : "text-ink-900/70 hover:bg-beige-100"
+                  )}
+                >
+                  {item.label}
+                  {!!item.badge && item.badge > 0 && (
+                    <span className="ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white">
+                      {item.badge}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
           ))}
           <div className="mt-2 flex items-center justify-between border-t border-ink-900/5 pt-2">
             <LogoutButton />
