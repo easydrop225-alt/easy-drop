@@ -1,7 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
-import { PeriodChart } from "@/components/rapports/period-chart";
+import dynamic from "next/dynamic";
+
+// Chargé en différé : Recharts est une librairie assez lourde, pas besoin
+// de la faire attendre à l'utilisateur avant que le reste de la page
+// (chiffres, dernières commandes) ne s'affiche.
+const PeriodChart = dynamic(() => import("@/components/rapports/period-chart").then((m) => m.PeriodChart));
 import { formatFCFA, dateIlYA3Mois } from "@/lib/utils";
 import { calculerBonusParrainage, premierJourDuMois } from "@/lib/parrainage";
 import type { PointJournalier } from "@/lib/stats/aggregate";
