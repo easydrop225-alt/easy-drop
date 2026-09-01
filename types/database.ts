@@ -83,6 +83,8 @@ export interface ProductVariant {
   product_id: string;
   couleur: string | null;
   taille: string | null;
+  nom: string | null;
+  prix_fournisseur: number | null;
   stock: number;
 }
 

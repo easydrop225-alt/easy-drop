@@ -205,7 +205,9 @@ export function NouvelleCommandeForm({
 
   const stagingQuantiteTotale = stagingLignes.reduce((a, l) => a + l.quantite, 0);
   const stagingPrixUnitaireMoyen = stagingQuantiteTotale > 0 ? stagingPrixVente / stagingQuantiteTotale : 0;
-  const stagingBenefice = stagingProduit ? stagingPrixVente - stagingQuantiteTotale * stagingProduit.prix_fournisseur : 0;
+  const stagingBenefice = stagingProduit
+    ? stagingPrixVente - coutFournisseurLignes(stagingLignes, stagingProduit.prix_fournisseur)
+    : 0;
   const stagingHorsFourchette =
     stagingProduit && stagingProduit.prix_min_conseille != null && stagingProduit.prix_max_conseille != null && stagingQuantiteTotale > 0
       ? stagingPrixUnitaireMoyen < stagingProduit.prix_min_conseille || stagingPrixUnitaireMoyen > stagingProduit.prix_max_conseille
@@ -238,6 +240,20 @@ export function NouvelleCommandeForm({
     return q > 0 ? [{ productVariantId: null as string | null, quantite: q }] : [];
   }
 
+  // Certaines variantes ont leur propre prix fournisseur (ex : une taille
+  // XXL qui coûte plus cher à produire) — on l'utilise à la place du prix
+  // par défaut du produit quand il est renseigné, ligne par ligne.
+  function coutFournisseurLignes(
+    lignes: { productVariantId: string | null; quantite: number }[],
+    prixFournisseurParDefaut: number
+  ) {
+    return lignes.reduce((acc, l) => {
+      const variante = l.productVariantId ? variants.find((v) => v.id === l.productVariantId) : undefined;
+      const prix = variante?.prix_fournisseur ?? prixFournisseurParDefaut;
+      return acc + l.quantite * prix;
+    }, 0);
+  }
+
   const quantiteTotalePanierBrute = panier.reduce(
     (a, ligne) => a + lignesPourProduit(ligne).reduce((x, l) => x + l.quantite, 0),
     0
@@ -267,9 +283,10 @@ export function NouvelleCommandeForm({
   const prixVenteTotalPanier = modeTarification === "total" ? prixProduitsSeuls : panier.reduce((a, l) => a + l.prixVente, 0);
   const beneficeTotalPanier = panier.reduce((a, ligne) => {
     const produit = products.find((p) => p.id === ligne.productId);
-    const qte = lignesPourProduit(ligne).reduce((x, l) => x + l.quantite, 0);
+    const lignesDeCeProduit = lignesPourProduit(ligne);
+    const qte = lignesDeCeProduit.reduce((x, l) => x + l.quantite, 0);
     const prixVente = modeTarification === "total" ? prixVenteUnitaireMoyenGlobal * qte : ligne.prixVente;
-    return a + (produit ? prixVente - qte * produit.prix_fournisseur : 0);
+    return a + (produit ? prixVente - coutFournisseurLignes(lignesDeCeProduit, produit.prix_fournisseur) : 0);
   }, 0);
   const prixTotalAvecLivraison = modeTarification === "total" ? prixTotalCommande : prixVenteTotalPanier + prixLivraison;
 
@@ -351,7 +368,7 @@ export function NouvelleCommandeForm({
               const lignesDuProduit = lignesPourProduit(ligne);
               const qte = lignesDuProduit.reduce((x, l) => x + l.quantite, 0);
               const prixVenteLigne = modeTarification === "total" ? prixVenteUnitaireMoyenGlobal * qte : ligne.prixVente;
-              const benefice = produit ? prixVenteLigne - qte * produit.prix_fournisseur : 0;
+              const benefice = produit ? prixVenteLigne - coutFournisseurLignes(lignesDuProduit, produit.prix_fournisseur) : 0;
               // Miniature représentative de la ligne : photo de la première
               // variante choisie si elle en a une, sinon photo générale du
               // produit — avec la quantité totale affichée en badge, comme
@@ -427,7 +444,7 @@ export function NouvelleCommandeForm({
                 <div className="divide-y divide-ink-900/5 rounded-xl border border-ink-900/10">
                   {stagingVariantes.map((v) => {
                     const stock = v.inventory?.[0]?.quantite_disponible ?? 0;
-                    const label = [v.couleur, v.taille].filter(Boolean).join(" / ") || "Standard";
+                    const label = v.nom || [v.couleur, v.taille].filter(Boolean).join(" / ") || "Standard";
                     const quantite = stagingQuantites[v.id] ?? 0;
                     const photo = imageParVariante?.[v.id];
                     return (

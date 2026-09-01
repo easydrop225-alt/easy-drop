@@ -45,6 +45,14 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
     if (!prixFournisseurParId.has(p.productId)) return { error: "Un des produits sélectionnés est introuvable." };
   }
 
+  // Certaines variantes ont leur propre prix fournisseur (ex : une taille
+  // qui coûte plus cher à produire) — prioritaire sur celui du produit.
+  const variantIds = parsed.data.produits.flatMap((p) => p.lignes.map((l) => l.productVariantId)).filter((id): id is string => !!id);
+  const { data: variantsData } = variantIds.length
+    ? await supabase.from("product_variants").select("id, prix_fournisseur").in("id", variantIds)
+    : { data: [] as { id: string; prix_fournisseur: number | null }[] };
+  const prixFournisseurParVarianteId = new Map((variantsData ?? []).map((v) => [v.id, v.prix_fournisseur]));
+
   const { dateLivraison } = calculDateLivraisonPrevue();
 
   // Un seul frais de livraison pour toute la commande, quel que soit le
@@ -88,7 +96,7 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
       product_variant_id: ligne.productVariantId,
       quantite: ligne.quantite,
       prix_vente_unitaire: prixVenteUnitaire,
-      prix_fournisseur_unitaire: prixFournisseur,
+      prix_fournisseur_unitaire: (ligne.productVariantId && prixFournisseurParVarianteId.get(ligne.productVariantId)) ?? prixFournisseur,
       observation: parsed.data.observation ?? null,
     }));
   });

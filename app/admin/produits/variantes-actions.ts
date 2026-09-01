@@ -7,7 +7,8 @@ export async function ajouterVariante(
   productId: string,
   couleur: string,
   taille: string,
-  stockInitial: number
+  stockInitial: number,
+  options?: { nom?: string; imageUrl?: string; prixFournisseur?: number }
 ) {
   const supabase = await createClient();
 
@@ -17,12 +18,26 @@ export async function ajouterVariante(
       product_id: productId,
       couleur: couleur || null,
       taille: taille || null,
+      nom: options?.nom || null,
+      prix_fournisseur: options?.prixFournisseur ?? null,
       stock: stockInitial,
     })
     .select()
     .single();
 
   if (variantError) return { error: variantError.message };
+
+  // Si une image déjà téléchargée pour ce produit a été choisie pour cette
+  // variante, on la lie directement (voir migration 21 — média par
+  // variante) plutôt que d'exiger un nouvel envoi de fichier.
+  if (options?.imageUrl) {
+    await supabase
+      .from("media")
+      .update({ product_variant_id: variant.id })
+      .eq("product_id", productId)
+      .eq("url", options.imageUrl)
+      .is("product_variant_id", null);
+  }
 
   const { error: inventoryError } = await supabase.from("inventory").insert({
     product_variant_id: variant.id,

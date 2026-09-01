@@ -41,6 +41,7 @@ export default async function EditProduitPage({
       <VariantesManager
         productId={id}
         variants={(variants ?? []) as (ProductVariant & { inventory: Inventory[] })[]}
+        prixFournisseurProduit={(product as Product).prix_fournisseur}
       />
     </div>
   );
