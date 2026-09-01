@@ -130,3 +130,45 @@ export async function supprimerVariante(variantId: string, productId: string) {
   revalidatePath("/admin/stocks");
   return { success: true };
 }
+
+/**
+ * Modifie une variante existante — couleur, taille, nom, prix fournisseur
+ * et/ou photo associée. Ne touche jamais au stock (géré séparément via
+ * reapprovisionnerStock / modifierStock, pour garder l'historique clair).
+ */
+export async function modifierVariante(
+  variantId: string,
+  productId: string,
+  updates: { couleur: string; taille: string; nom: string; imageUrl: string; prixFournisseur: string }
+) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("product_variants")
+    .update({
+      couleur: updates.couleur || null,
+      taille: updates.taille || null,
+      nom: updates.nom || null,
+      prix_fournisseur: updates.prixFournisseur ? Number(updates.prixFournisseur) : null,
+    })
+    .eq("id", variantId);
+
+  if (error) return { error: error.message };
+
+  // Détache l'ancienne photo de cette variante (si elle en avait une),
+  // puis attache la nouvelle si une a été choisie — permet aussi de
+  // retirer complètement la photo en laissant le champ vide.
+  await supabase.from("media").update({ product_variant_id: null }).eq("product_variant_id", variantId);
+  if (updates.imageUrl) {
+    await supabase
+      .from("media")
+      .update({ product_variant_id: variantId })
+      .eq("product_id", productId)
+      .eq("url", updates.imageUrl)
+      .is("product_variant_id", null);
+  }
+
+  revalidatePath(`/admin/produits/${productId}/edit`);
+  revalidatePath("/admin/stocks");
+  return { success: true };
+}
