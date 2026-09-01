@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import { CategoryRow } from "@/components/produits/category-row";
 import { formatFCFA } from "@/lib/utils";
-import { ShoppingBag, ClipboardList, Wallet, Headset } from "lucide-react";
+import { ShoppingBag, ClipboardList, Wallet, LayoutGrid } from "lucide-react";
 import type { Category, Product, Media, Setting } from "@/types/database";
 
 export default async function AccueilCommercialPage() {
@@ -52,12 +52,7 @@ export default async function AccueilCommercialPage() {
       {/* Bannière d'accueil — texte modifiable par l'admin dans Paramètres. */}
       <div className="flex items-center gap-4 overflow-hidden rounded-2xl bg-ink-900 p-6 text-beige-50">
         <Image src="/icons/icon-512.png" alt="Easy Drop" width={72} height={72} className="shrink-0 rounded-2xl" />
-        <div>
-          <p className="text-lg font-semibold leading-snug">{accueilTexte}</p>
-          <a href="/dashboard" className="mt-2 inline-block text-sm font-medium text-terracotta-400 underline">
-            Voir mon tableau de bord complet →
-          </a>
-        </div>
+        <p className="text-lg font-semibold leading-snug">{accueilTexte}</p>
       </div>
 
       {/* Accès rapides */}
@@ -74,9 +69,9 @@ export default async function AccueilCommercialPage() {
           <Wallet className="text-terracotta-500" />
           <span className="text-xs font-medium">Mes gains</span>
         </a>
-        <a href="/profil" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
-          <Headset className="text-terracotta-500" />
-          <span className="text-xs font-medium">Support 24/7</span>
+        <a href="/dashboard" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
+          <LayoutGrid className="text-terracotta-500" />
+          <span className="text-xs font-medium">Dashboard</span>
         </a>
       </div>
 
