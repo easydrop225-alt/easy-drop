@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { formatDate, formatFCFA } from "@/lib/utils";
 import { exporterCSV } from "@/lib/export-csv";
 import { Button } from "@/components/ui/button";
+import { BoutonReinitialiserMotDePasse } from "./bouton-reinitialiser-mot-de-passe";
 import type { Profile } from "@/types/database";
 
 type Tri = "recents" | "performance" | "alphabetique" | "ancien_recent" | "recent_ancien" | "parrainage";
@@ -130,6 +131,7 @@ export function CommerciauxFiltres({
               <th className="p-3">Parrainage (ce mois)</th>
               <th className="p-3">Statut</th>
               <th className="p-3">Inscrit le</th>
+              <th className="p-3">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -164,11 +166,14 @@ export function CommerciauxFiltres({
                   </td>
                   <td className="p-3">{c.statut}</td>
                   <td className="p-3">{formatDate(c.created_at)}</td>
+                  <td className="p-3">
+                    <BoutonReinitialiserMotDePasse commercialId={c.id} nomComplet={`${c.prenom} ${c.nom}`} />
+                  </td>
                 </tr>
               );
             })}
             {listeFiltree.length === 0 && (
-              <tr><td colSpan={tri === "performance" ? 8 : 7} className="p-6 text-center text-ink-900/40">Aucun commercial trouvé.</td></tr>
+              <tr><td colSpan={tri === "performance" ? 9 : 8} className="p-6 text-center text-ink-900/40">Aucun commercial trouvé.</td></tr>
             )}
           </tbody>
         </table>

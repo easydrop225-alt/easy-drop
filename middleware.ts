@@ -19,7 +19,14 @@ const ROUTES_COMMERCIAL = [
 ];
 
 // Routes publiques, jamais protégées.
-const ROUTES_PUBLIQUES = ["/", "/connexion", "/inscription", "/produits"];
+const ROUTES_PUBLIQUES = [
+  "/",
+  "/connexion",
+  "/inscription",
+  "/produits",
+  "/mot-de-passe-oublie",
+  "/reinitialiser-mot-de-passe",
+];
 
 function estRoutePublique(pathname: string) {
   return ROUTES_PUBLIQUES.some(

@@ -39,3 +39,17 @@
 body {
   @apply bg-beige-50 text-ink-900 antialiased transition-colors duration-200;
 }
+
+/*
+  Les contours (border-ink-900/5, /10, /20) sont dérivés de la couleur du
+  texte à faible opacité — ça fonctionne bien en clair, mais devient trop
+  terne en sombre (le mélange reste trop proche du fond). On fixe donc,
+  uniquement en mode sombre, une couleur de contour à part entière,
+  clairement visible sur le fond sombre de l'application (validée avec
+  l'utilisateur — "Option E").
+*/
+.dark .border-ink-900\/5,
+.dark .border-ink-900\/10,
+.dark .border-ink-900\/20 {
+  border-color: #8A8178;
+}

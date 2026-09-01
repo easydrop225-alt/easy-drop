@@ -7,7 +7,14 @@ export default async function AdminCommandesPage() {
   const { data: orders } = await supabase
     .from("orders")
     .select("*, profiles(nom, prenom, telephone, nom_boutique), order_items(*, products(*), product_variants(*))")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    // Garde-fou de performance : sans plafond, cette requête chargerait un
+    // jour TOUTES les commandes de la plateforme (avec leurs produits et
+    // variantes) à chaque ouverture de cette page — de plus en plus lent à
+    // mesure que le nombre de commandes augmente. 1000 commandes les plus
+    // récentes couvrent très largement l'usage quotidien ; une vraie
+    // pagination sera nécessaire si ce chiffre devient un jour limitant.
+    .limit(1000);
 
   const list = (orders ?? []) as OrderComplete[];
 

@@ -71,19 +71,39 @@ export default async function DashboardAdminPage() {
   const debutSemaine = new Date(); debutSemaine.setDate(debutSemaine.getDate() - 7);
   const debutMois = new Date(); debutMois.setDate(1); debutMois.setHours(0, 0, 0, 0);
   const debutAnnee = new Date(); debutAnnee.setMonth(0, 1); debutAnnee.setHours(0, 0, 0, 0);
+  const isoDebutAnnee = debutAnnee.toISOString();
 
-  // Les 3 requêtes sont indépendantes : on les lance en parallèle plutôt
-  // que l'une après l'autre, pour diviser le temps d'attente réseau.
-  const [{ data: orders }, { data: items }, { data: commerciaux }, { data: inventaire }, { data: profitsEnAttente }] = await Promise.all([
-    supabase.from("orders").select("*"),
-    supabase.from("order_items").select("*"),
+  // "Cette année" est la période la plus large affichée sur cette page :
+  // pas besoin de charger l'historique complet des commandes depuis le
+  // tout début de la plateforme à chaque affichage du dashboard. On filtre
+  // sur created_at OU updated_at (une commande créée fin décembre mais
+  // livrée en janvier doit quand même compter dans les stats de l'année).
+  // order_items n'a pas de date propre : on ne récupère que les lignes des
+  // commandes déjà filtrées, plutôt que la table order_items en entier.
+  const commandesEtLignesPromise = supabase
+    .from("orders")
+    .select("*")
+    .or(`created_at.gte.${isoDebutAnnee},updated_at.gte.${isoDebutAnnee}`)
+    .then(async ({ data: ordersData }) => {
+      const ids = (ordersData ?? []).map((o) => o.id);
+      const { data: itemsData } = ids.length
+        ? await supabase.from("order_items").select("*").in("order_id", ids)
+        : { data: [] as OrderItem[] };
+      return { orders: (ordersData ?? []) as Order[], items: (itemsData ?? []) as OrderItem[] };
+    });
+
+  // Les 4 branches ci-dessous sont indépendantes : on les lance en
+  // parallèle plutôt que l'une après l'autre, pour diviser le temps
+  // d'attente réseau.
+  const [{ orders, items }, { data: commerciaux }, { data: inventaire }, { data: profitsEnAttente }] = await Promise.all([
+    commandesEtLignesPromise,
     supabase.from("profiles").select("*").eq("role", "commercial"),
     supabase.from("inventory").select("quantite_disponible, seuil_alerte"),
     supabase.from("profits").select("commercial_id, montant_benefice, statut, orders!inner(statut)").eq("statut", "en_attente").eq("orders.statut", "livree"),
   ]);
 
-  const list = (orders ?? []) as Order[];
-  const itemList = (items ?? []) as OrderItem[];
+  const list = orders;
+  const itemList = items;
   const commerciauxList = (commerciaux ?? []) as Profile[];
 
   const nouvellesCommandes = list.filter((o) => o.statut === "confirmation").length;

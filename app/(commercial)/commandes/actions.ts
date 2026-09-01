@@ -8,9 +8,7 @@ import { revalidatePath } from "next/cache";
 
 export async function creerCommande(_prevState: unknown, formData: FormData) {
   const raw = {
-    productId: formData.get("productId"),
-    lignes: JSON.parse(String(formData.get("lignesJson") ?? "[]")),
-    prixTotalVente: formData.get("prixTotalVente"),
+    produits: JSON.parse(String(formData.get("produitsJson") ?? "[]")),
     clientNom: formData.get("clientNom"),
     clientTelephone: formData.get("clientTelephone"),
     clientCommune: formData.get("clientCommune"),
@@ -32,16 +30,26 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Session expirée, merci de te reconnecter." };
 
-  const { data: product } = await supabase
+  // Les prix fournisseurs sont toujours revérifiés côté serveur (jamais
+  // fait confiance à ce que le navigateur a envoyé) — nécessaire pour que
+  // le calcul du bénéfice soit fiable même si plusieurs produits différents
+  // sont commandés en même temps.
+  const productIds = parsed.data.produits.map((p) => p.productId);
+  const { data: productsData } = await supabase
     .from("products")
-    .select("prix_fournisseur")
-    .eq("id", parsed.data.productId)
-    .single();
+    .select("id, prix_fournisseur")
+    .in("id", productIds);
 
-  if (!product) return { error: "Produit introuvable." };
+  const prixFournisseurParId = new Map((productsData ?? []).map((p) => [p.id, p.prix_fournisseur]));
+  for (const p of parsed.data.produits) {
+    if (!prixFournisseurParId.has(p.productId)) return { error: "Un des produits sélectionnés est introuvable." };
+  }
 
   const { dateLivraison } = calculDateLivraisonPrevue();
 
+  // Un seul frais de livraison pour toute la commande, quel que soit le
+  // nombre de produits différents commandés (stocké une seule fois sur la
+  // commande elle-même, jamais dupliqué par ligne de produit).
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert({
@@ -65,24 +73,27 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
     return { error: orderError?.message ?? "Erreur lors de la création de la commande." };
   }
 
-  // Le commercial saisit un seul prix total pour toute la commande (toutes
-  // variantes confondues) : on répartit ce montant à parts égales par pièce
-  // pour conserver un prix de vente unitaire par ligne (nécessaire au calcul
-  // du bénéfice et au suivi du stock par variante).
-  const quantiteTotale = parsed.data.lignes.reduce((acc, l) => acc + l.quantite, 0);
-  const prixVenteUnitaire = parsed.data.prixTotalVente / quantiteTotale;
+  // Pour chaque produit du panier, le commercial saisit un seul prix de
+  // vente pour l'ensemble de ses variantes/quantités : on répartit ce
+  // montant à parts égales par pièce, produit par produit (chaque produit
+  // ayant son propre prix fournisseur, la répartition doit rester séparée).
+  const lignesAInserer = parsed.data.produits.flatMap((p) => {
+    const quantiteProduit = p.lignes.reduce((acc, l) => acc + l.quantite, 0);
+    const prixVenteUnitaire = p.prixVente / quantiteProduit;
+    const prixFournisseur = prixFournisseurParId.get(p.productId)!;
 
-  const { error: itemsError } = await supabase.from("order_items").insert(
-    parsed.data.lignes.map((ligne) => ({
+    return p.lignes.map((ligne) => ({
       order_id: order.id,
-      product_id: parsed.data.productId,
+      product_id: p.productId,
       product_variant_id: ligne.productVariantId,
       quantite: ligne.quantite,
       prix_vente_unitaire: prixVenteUnitaire,
-      prix_fournisseur_unitaire: product.prix_fournisseur,
+      prix_fournisseur_unitaire: prixFournisseur,
       observation: parsed.data.observation ?? null,
-    }))
-  );
+    }));
+  });
+
+  const { error: itemsError } = await supabase.from("order_items").insert(lignesAInserer);
 
   if (itemsError) {
     return { error: itemsError.message };

@@ -12,15 +12,21 @@ import type { Product, ProductVariant, Inventory, ZoneLivraison } from "@/types/
 
 type VariantAvecStock = ProductVariant & { inventory: Inventory[] };
 
+interface LigneProduitPanier {
+  productId: string;
+  quantitesParVariante: Record<string, number>;
+  prixVente: number;
+}
+
 // Clé de stockage du brouillon local. Un seul brouillon à la fois (pas de
 // clé par produit) : c'est volontaire, une seule commande en cours de
 // saisie à protéger contre une coupure réseau.
 const CLE_BROUILLON = "easydrop_brouillon_commande";
 
 interface Brouillon {
-  productId: string;
-  quantitesParVariante: Record<string, number>;
-  prixTotalVente: number;
+  panier: LigneProduitPanier[];
+  modeTarification: "parProduit" | "total";
+  prixTotalCommande: number;
   zone: ZoneLivraison;
   commune: string;
   prixLivraison: number;
@@ -48,11 +54,24 @@ export function NouvelleCommandeForm({
   const [state, formAction, pending] = useActionState(creerCommande, undefined as { error?: string } | undefined);
   const formRef = useRef<HTMLFormElement>(null);
 
-  const [productId, setProductId] = useState(produitPreselectionne ?? products[0]?.id ?? "");
-  // Quantité choisie par variante (clé = id de la variante), ou quantité
-  // unique si le produit n'a aucune variante (clé "sans_variante").
-  const [quantitesParVariante, setQuantitesParVariante] = useState<Record<string, number>>({});
-  const [prixTotalVente, setPrixTotalVente] = useState(0);
+  // --- Panier : les différents produits déjà ajoutés à la commande ---
+  const [panier, setPanier] = useState<LigneProduitPanier[]>([]);
+
+  // Deux façons de fixer le prix quand plusieurs produits différents sont
+  // commandés ensemble : soit un prix propre à chaque produit (par défaut),
+  // soit un seul prix pour toute la commande, réparti automatiquement.
+  const [modeTarification, setModeTarification] = useState<"parProduit" | "total">("parProduit");
+  const [prixTotalCommande, setPrixTotalCommande] = useState(0);
+
+  // --- Zone de saisie du produit en cours d'ajout (pas encore dans le panier) ---
+  const productsDisponibles = useMemo(
+    () => products.filter((p) => !panier.some((l) => l.productId === p.id)),
+    [products, panier]
+  );
+  const [stagingProductId, setStagingProductId] = useState(produitPreselectionne ?? productsDisponibles[0]?.id ?? "");
+  const [stagingQuantites, setStagingQuantites] = useState<Record<string, number>>({});
+  const [stagingPrixVente, setStagingPrixVente] = useState(0);
+
   const [zone, setZone] = useState<ZoneLivraison>("abidjan");
   const [commune, setCommune] = useState("");
   const [prixLivraison, setPrixLivraison] = useState(fourchetteFraisParDefaut("abidjan").min);
@@ -75,9 +94,9 @@ export function NouvelleCommandeForm({
       const brut = window.localStorage.getItem(CLE_BROUILLON);
       if (!brut) return;
       const b = JSON.parse(brut) as Brouillon;
-      setProductId(b.productId || produitPreselectionne || products[0]?.id || "");
-      setQuantitesParVariante(b.quantitesParVariante ?? {});
-      setPrixTotalVente(b.prixTotalVente ?? 0);
+      setPanier(b.panier ?? []);
+      setModeTarification(b.modeTarification ?? "parProduit");
+      setPrixTotalCommande(b.prixTotalCommande ?? 0);
       setZone(b.zone ?? "abidjan");
       setCommune(b.commune ?? "");
       setPrixLivraison(b.prixLivraison ?? fourchetteFraisParDefaut("abidjan").min);
@@ -99,9 +118,9 @@ export function NouvelleCommandeForm({
   // cas de coupure réseau ou de fermeture accidentelle de la page.
   useEffect(() => {
     const brouillon: Brouillon = {
-      productId,
-      quantitesParVariante,
-      prixTotalVente,
+      panier,
+      modeTarification,
+      prixTotalCommande,
       zone,
       commune,
       prixLivraison,
@@ -119,11 +138,7 @@ export function NouvelleCommandeForm({
     } catch {
       // Stockage plein ou indisponible : tant pis, pas bloquant.
     }
-  }, [
-    productId, quantitesParVariante, prixTotalVente, zone, commune, prixLivraison,
-    livraisonModifieeManuellement, clientNom, clientTelephone, clientAdresse,
-    observation, gare, villeExpedition,
-  ]);
+  }, [panier, modeTarification, prixTotalCommande, zone, commune, prixLivraison, livraisonModifieeManuellement, clientNom, clientTelephone, clientAdresse, observation, gare, villeExpedition]);
 
   function effacerBrouillon() {
     try {
@@ -161,42 +176,98 @@ export function NouvelleCommandeForm({
       setEnvoiEnAttenteReconnexion(true);
       return;
     }
-    // En ligne : la commande part normalement, on peut nettoyer le brouillon
-    // (en cas d'erreur de validation, le formulaire reste rempli à l'écran
-    // de toute façon grâce aux champs contrôlés ci-dessus).
     effacerBrouillon();
   }
 
-  const produit = useMemo(() => products.find((p) => p.id === productId), [products, productId]);
-  const variantesDuProduit = useMemo(() => variants.filter((v) => v.product_id === productId), [variants, productId]);
+  // --- Logique de la zone "ajouter un produit" ---
+  const stagingProduit = useMemo(() => products.find((p) => p.id === stagingProductId), [products, stagingProductId]);
+  const stagingVariantes = useMemo(
+    () => variants.filter((v) => v.product_id === stagingProductId),
+    [variants, stagingProductId]
+  );
 
-  function setQuantite(cle: string, valeur: number) {
-    setQuantitesParVariante((s) => ({ ...s, [cle]: Math.max(0, valeur) }));
+  function setStagingQuantite(cle: string, valeur: number) {
+    setStagingQuantites((s) => ({ ...s, [cle]: Math.max(0, valeur) }));
   }
 
-  const lignesSelectionnees = useMemo(() => {
-    if (variantesDuProduit.length > 0) {
-      return variantesDuProduit
-        .filter((v) => (quantitesParVariante[v.id] ?? 0) > 0)
-        .map((v) => ({ productVariantId: v.id, quantite: quantitesParVariante[v.id] ?? 0 }));
+  const stagingLignes = useMemo(() => {
+    if (stagingVariantes.length > 0) {
+      return stagingVariantes
+        .filter((v) => (stagingQuantites[v.id] ?? 0) > 0)
+        .map((v) => ({ productVariantId: v.id, quantite: stagingQuantites[v.id] ?? 0 }));
     }
-    const q = quantitesParVariante["sans_variante"] ?? 0;
-    return q > 0 ? [{ productVariantId: null, quantite: q }] : [];
-  }, [variantesDuProduit, quantitesParVariante]);
+    const q = stagingQuantites["sans_variante"] ?? 0;
+    return q > 0 ? [{ productVariantId: null as string | null, quantite: q }] : [];
+  }, [stagingVariantes, stagingQuantites]);
 
-  const quantiteTotale = lignesSelectionnees.reduce((a, l) => a + l.quantite, 0);
-  const prixTotal = prixTotalVente + prixLivraison;
-  const prixVenteUnitaireMoyen = quantiteTotale > 0 ? prixTotalVente / quantiteTotale : 0;
-  // Bénéfice = Prix total - Prix livraison - Prix fournisseur = Prix de vente - Prix fournisseur.
-  const benefice = produit ? prixTotalVente - quantiteTotale * produit.prix_fournisseur : 0;
-  const horsFourchette =
-    produit && produit.prix_min_conseille != null && produit.prix_max_conseille != null && quantiteTotale > 0
-      ? prixVenteUnitaireMoyen < produit.prix_min_conseille || prixVenteUnitaireMoyen > produit.prix_max_conseille
+  const stagingQuantiteTotale = stagingLignes.reduce((a, l) => a + l.quantite, 0);
+  const stagingPrixUnitaireMoyen = stagingQuantiteTotale > 0 ? stagingPrixVente / stagingQuantiteTotale : 0;
+  const stagingBenefice = stagingProduit ? stagingPrixVente - stagingQuantiteTotale * stagingProduit.prix_fournisseur : 0;
+  const stagingHorsFourchette =
+    stagingProduit && stagingProduit.prix_min_conseille != null && stagingProduit.prix_max_conseille != null && stagingQuantiteTotale > 0
+      ? stagingPrixUnitaireMoyen < stagingProduit.prix_min_conseille || stagingPrixUnitaireMoyen > stagingProduit.prix_max_conseille
       : false;
 
-  // Dès que la commune saisie correspond exactement à une commune connue
-  // (via la liste déroulante/autocomplétion), le prix de la livraison se
-  // met à jour automatiquement selon son tarif.
+  function ajouterAuPanier() {
+    if (!stagingProductId || stagingLignes.length === 0) return;
+    if (modeTarification === "parProduit" && stagingPrixVente <= 0) return;
+    setPanier((p) => [...p, { productId: stagingProductId, quantitesParVariante: { ...stagingQuantites }, prixVente: stagingPrixVente }]);
+    // Réinitialise la zone de saisie pour le prochain produit à ajouter.
+    setStagingQuantites({});
+    setStagingPrixVente(0);
+    const prochainDisponible = products.find((p) => p.id !== stagingProductId && !panier.some((l) => l.productId === p.id));
+    setStagingProductId(prochainDisponible?.id ?? "");
+  }
+
+  function retirerDuPanier(index: number) {
+    setPanier((p) => p.filter((_, i) => i !== index));
+  }
+
+  // --- Calculs du panier complet ---
+  function lignesPourProduit(ligne: LigneProduitPanier) {
+    const variantesDuProduit = variants.filter((v) => v.product_id === ligne.productId);
+    if (variantesDuProduit.length > 0) {
+      return variantesDuProduit
+        .filter((v) => (ligne.quantitesParVariante[v.id] ?? 0) > 0)
+        .map((v) => ({ productVariantId: v.id, quantite: ligne.quantitesParVariante[v.id] ?? 0 }));
+    }
+    const q = ligne.quantitesParVariante["sans_variante"] ?? 0;
+    return q > 0 ? [{ productVariantId: null as string | null, quantite: q }] : [];
+  }
+
+  const quantiteTotalePanierBrute = panier.reduce(
+    (a, ligne) => a + lignesPourProduit(ligne).reduce((x, l) => x + l.quantite, 0),
+    0
+  );
+  // En mode "prix total", chaque produit reçoit une part du prix total
+  // proportionnelle à sa quantité (même logique qu'avant pour un seul
+  // produit, désormais étendue à plusieurs produits différents). La somme
+  // des parts reconstitue exactement le prix total saisi.
+  const prixVenteUnitaireMoyenGlobal =
+    modeTarification === "total" && quantiteTotalePanierBrute > 0 ? prixTotalCommande / quantiteTotalePanierBrute : 0;
+
+  const produitsJson = useMemo(
+    () =>
+      panier.map((ligne) => {
+        const lignes = lignesPourProduit(ligne);
+        const qteProduit = lignes.reduce((x, l) => x + l.quantite, 0);
+        const prixVente = modeTarification === "total" ? prixVenteUnitaireMoyenGlobal * qteProduit : ligne.prixVente;
+        return { productId: ligne.productId, lignes, prixVente };
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [panier, modeTarification, prixVenteUnitaireMoyenGlobal]
+  );
+
+  const quantiteTotalePanier = quantiteTotalePanierBrute;
+  const prixVenteTotalPanier = modeTarification === "total" ? prixTotalCommande : panier.reduce((a, l) => a + l.prixVente, 0);
+  const beneficeTotalPanier = panier.reduce((a, ligne) => {
+    const produit = products.find((p) => p.id === ligne.productId);
+    const qte = lignesPourProduit(ligne).reduce((x, l) => x + l.quantite, 0);
+    const prixVente = modeTarification === "total" ? prixVenteUnitaireMoyenGlobal * qte : ligne.prixVente;
+    return a + (produit ? prixVente - qte * produit.prix_fournisseur : 0);
+  }, 0);
+  const prixTotalAvecLivraison = prixVenteTotalPanier + prixLivraison;
+
   function handleCommuneChange(valeur: string) {
     setCommune(valeur);
     const tarif = tarifPourCommune(valeur);
@@ -214,9 +285,7 @@ export function NouvelleCommandeForm({
 
   return (
     <form ref={formRef} action={formAction} onSubmit={surSoumission} className="space-y-6">
-      <input type="hidden" name="lignesJson" value={JSON.stringify(lignesSelectionnees)} />
-      <input type="hidden" name="prixTotalVente" value={prixTotalVente} />
-      <input type="hidden" name="productId" value={productId} />
+      <input type="hidden" name="produitsJson" value={JSON.stringify(produitsJson)} />
       <input type="hidden" name="modeLivraison" value="normal" />
 
       {!enLigne && (
@@ -236,115 +305,201 @@ export function NouvelleCommandeForm({
       )}
 
       <Card>
-        <h2 className="mb-4 font-medium">Produit</h2>
-        <div className="space-y-3">
-          <div>
-            <Label htmlFor="productIdSelect">Produit</Label>
-            <select
-              id="productIdSelect"
-              value={productId}
-              onChange={(e) => { setProductId(e.target.value); setQuantitesParVariante({}); }}
-              className="h-10 w-full rounded-xl border border-ink-900/10 bg-surface px-3 text-sm"
-            >
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>{p.nom} — {formatFCFA(p.prix_fournisseur)}</option>
-              ))}
-            </select>
+        <h2 className="mb-3 font-medium">Mode de tarification</h2>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            disabled={panier.length > 0}
+            onClick={() => setModeTarification("parProduit")}
+            className={`rounded-xl border p-3 text-left text-sm transition ${
+              modeTarification === "parProduit" ? "border-terracotta-500 bg-terracotta-50" : "border-ink-900/10"
+            } disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            <p className="font-medium">Prix par produit</p>
+            <p className="text-xs text-ink-900/50">Un prix différent pour chaque produit ajouté.</p>
+          </button>
+          <button
+            type="button"
+            disabled={panier.length > 0}
+            onClick={() => setModeTarification("total")}
+            className={`rounded-xl border p-3 text-left text-sm transition ${
+              modeTarification === "total" ? "border-terracotta-500 bg-terracotta-50" : "border-ink-900/10"
+            } disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            <p className="font-medium">Un seul prix total</p>
+            <p className="text-xs text-ink-900/50">Un seul prix pour toute la commande, réparti automatiquement.</p>
+          </button>
+        </div>
+        {panier.length > 0 && (
+          <p className="mt-2 text-xs text-ink-900/40">
+            Vide le panier ci-dessous pour changer de mode de tarification.
+          </p>
+        )}
+      </Card>
+
+      {panier.length > 0 && (
+        <Card>
+          <h2 className="mb-3 font-medium">Produits de cette commande ({panier.length})</h2>
+          <div className="divide-y divide-ink-900/5">
+            {panier.map((ligne, index) => {
+              const produit = products.find((p) => p.id === ligne.productId);
+              const qte = lignesPourProduit(ligne).reduce((x, l) => x + l.quantite, 0);
+              const prixVenteLigne = modeTarification === "total" ? prixVenteUnitaireMoyenGlobal * qte : ligne.prixVente;
+              const benefice = produit ? prixVenteLigne - qte * produit.prix_fournisseur : 0;
+              return (
+                <div key={`${ligne.productId}-${index}`} className="flex items-center justify-between gap-3 py-2.5">
+                  <div>
+                    <p className="text-sm font-medium">{produit?.nom ?? "Produit"}</p>
+                    <p className="text-xs text-ink-900/50">
+                      {qte} pièce{qte > 1 ? "s" : ""}
+                      {modeTarification === "parProduit"
+                        ? ` · ${formatFCFA(prixVenteLigne)} · bénéfice ${formatFCFA(benefice)}`
+                        : prixTotalCommande > 0
+                          ? ` · part du prix total : ${formatFCFA(prixVenteLigne)}`
+                          : " · en attente du prix total"}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => retirerDuPanier(index)}
+                    className="shrink-0 text-xs text-red-600 underline"
+                  >
+                    Retirer
+                  </button>
+                </div>
+              );
+            })}
           </div>
+        </Card>
+      )}
 
-          {variantesDuProduit.length > 0 ? (
-            <div className="space-y-2">
-              <Label>Variantes commandées (quantité par couleur/taille)</Label>
-              <p className="text-xs text-ink-900/50">
-                Tu peux commander plusieurs variantes différentes dans la même commande : indique une quantité pour chacune de celles souhaitées.
-              </p>
-              <div className="divide-y divide-ink-900/5 rounded-xl border border-ink-900/10">
-                {variantesDuProduit.map((v) => {
-                  const stock = v.inventory?.[0]?.quantite_disponible ?? 0;
-                  const label = [v.couleur, v.taille].filter(Boolean).join(" / ") || "Standard";
-                  const quantite = quantitesParVariante[v.id] ?? 0;
-                  const photo = imageParVariante?.[v.id];
-                  return (
-                    <div key={v.id} className="flex items-center justify-between gap-3 p-3">
-                      <div className="flex items-center gap-3">
-                        {photo && (
-                          /* eslint-disable-next-line @next/next/no-img-element */
-                          <img src={photo} alt={label} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
-                        )}
-                        <div>
-                          <p className="text-sm font-medium">{label}</p>
-                          <p className={`text-xs ${stock > 0 ? "text-ink-900/50" : "text-red-600"}`}>
-                            {stock > 0 ? `${stock} en stock` : "Rupture de stock"}
-                          </p>
-                        </div>
-                      </div>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={stock > 0 ? stock : 0}
-                        value={quantite}
-                        disabled={stock <= 0}
-                        onChange={(e) => setQuantite(v.id, Number(e.target.value))}
-                        className="w-20"
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ) : (
+
+      <Card>
+        <h2 className="mb-4 font-medium">{panier.length > 0 ? "Ajouter un autre produit" : "Produit"}</h2>
+
+        {productsDisponibles.length === 0 ? (
+          <p className="text-sm text-ink-900/50">Tous les produits actifs sont déjà dans cette commande.</p>
+        ) : (
+          <div className="space-y-3">
             <div>
-              <Label htmlFor="quantiteSansVariante">Quantité</Label>
-              <Input
-                id="quantiteSansVariante"
-                type="number"
-                min={0}
-                value={quantitesParVariante["sans_variante"] ?? 0}
-                onChange={(e) => setQuantite("sans_variante", Number(e.target.value))}
-                required
-              />
+              <Label htmlFor="productIdSelect">Produit</Label>
+              <select
+                id="productIdSelect"
+                value={stagingProductId}
+                onChange={(e) => { setStagingProductId(e.target.value); setStagingQuantites({}); setStagingPrixVente(0); }}
+                className="h-10 w-full rounded-xl border border-ink-900/10 bg-surface px-3 text-sm"
+              >
+                {productsDisponibles.map((p) => (
+                  <option key={p.id} value={p.id}>{p.nom} — {formatFCFA(p.prix_fournisseur)}</option>
+                ))}
+              </select>
             </div>
-          )}
 
-          <div>
-            <Label htmlFor="prixTotalVenteInput">Prix total de la commande (FCFA, sans la livraison)</Label>
-            <Input
-              id="prixTotalVenteInput"
-              type="number"
-              min={0}
-              value={prixTotalVente}
-              onChange={(e) => setPrixTotalVente(Number(e.target.value))}
-              required
-            />
-            <p className="mt-1 text-xs text-ink-900/50">
-              Indique le prix total que le client paie pour l'ensemble des pièces/variantes de cette commande (hors livraison).
-            </p>
-            {quantiteTotale > 0 && prixTotalVente > 0 && (
-              <div className="mt-2 rounded-xl bg-terracotta-50 p-3">
-                <p className="text-xs text-terracotta-700">Bénéfice si tu valides à ce prix</p>
-                <p className="text-lg font-semibold text-terracotta-600">{formatFCFA(benefice)}</p>
+            {stagingVariantes.length > 0 ? (
+              <div className="space-y-2">
+                <Label>Variantes commandées (quantité par couleur/taille)</Label>
+                <div className="divide-y divide-ink-900/5 rounded-xl border border-ink-900/10">
+                  {stagingVariantes.map((v) => {
+                    const stock = v.inventory?.[0]?.quantite_disponible ?? 0;
+                    const label = [v.couleur, v.taille].filter(Boolean).join(" / ") || "Standard";
+                    const quantite = stagingQuantites[v.id] ?? 0;
+                    const photo = imageParVariante?.[v.id];
+                    return (
+                      <div key={v.id} className="flex items-center justify-between gap-3 p-3">
+                        <div className="flex items-center gap-3">
+                          {photo && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={photo} alt={label} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                          )}
+                          <div>
+                            <p className="text-sm font-medium">{label}</p>
+                            <p className={`text-xs ${stock > 0 ? "text-ink-900/50" : "text-red-600"}`}>
+                              {stock > 0 ? `${stock} en stock` : "Rupture de stock"}
+                            </p>
+                          </div>
+                        </div>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={stock > 0 ? stock : 0}
+                          value={quantite}
+                          disabled={stock <= 0}
+                          onChange={(e) => setStagingQuantite(v.id, Number(e.target.value))}
+                          className="w-20"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <Label htmlFor="quantiteSansVariante">Quantité</Label>
+                <Input
+                  id="quantiteSansVariante"
+                  type="number"
+                  min={0}
+                  value={stagingQuantites["sans_variante"] ?? 0}
+                  onChange={(e) => setStagingQuantite("sans_variante", Number(e.target.value))}
+                />
               </div>
             )}
-          </div>
 
-          {produit?.prix_min_conseille != null && produit?.prix_max_conseille != null && (
-            <p className={`text-xs ${horsFourchette ? "text-amber-600" : "text-ink-900/50"}`}>
-              Fourchette de Prix Conseillée : {formatFCFA(produit.prix_min_conseille)} – {formatFCFA(produit.prix_max_conseille)} (par pièce)
-            </p>
-          )}
+            {modeTarification === "parProduit" ? (
+              <div>
+                <Label htmlFor="prixVenteInput">Prix de vente pour ce produit (FCFA, sans la livraison)</Label>
+                <Input
+                  id="prixVenteInput"
+                  type="number"
+                  min={0}
+                  value={stagingPrixVente}
+                  onChange={(e) => setStagingPrixVente(Number(e.target.value))}
+                />
+                <p className="mt-1 text-xs text-ink-900/50">
+                  Prix total que le client paie pour les pièces de CE produit (hors livraison, qui reste unique pour toute la commande).
+                </p>
+                {stagingQuantiteTotale > 0 && stagingPrixVente > 0 && (
+                  <div className="mt-2 rounded-xl bg-terracotta-50 p-3">
+                    <p className="text-xs text-terracotta-700">Bénéfice pour ce produit</p>
+                    <p className="text-lg font-semibold text-terracotta-600">{formatFCFA(stagingBenefice)}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-xs text-ink-900/50">
+                Prix géré plus bas, en une seule fois pour toute la commande — pas besoin de le saisir produit par produit.
+              </p>
+            )}
 
-          <div>
-            <Label htmlFor="observation">Observation (précisions supplémentaires)</Label>
-            <textarea
-              id="observation"
-              name="observation"
-              rows={2}
-              value={observation}
-              onChange={(e) => setObservation(e.target.value)}
-              placeholder="Ex : préférence du client, remarque particulière..."
-              className="w-full rounded-xl border border-ink-900/10 p-3 text-sm"
-            />
+            {stagingProduit?.prix_min_conseille != null && stagingProduit?.prix_max_conseille != null && (
+              <p className={`text-xs ${stagingHorsFourchette ? "text-amber-600" : "text-ink-900/50"}`}>
+                Fourchette conseillée : {formatFCFA(stagingProduit.prix_min_conseille)} – {formatFCFA(stagingProduit.prix_max_conseille)} (par pièce)
+              </p>
+            )}
+
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              disabled={stagingQuantiteTotale === 0 || (modeTarification === "parProduit" && stagingPrixVente <= 0)}
+              onClick={ajouterAuPanier}
+            >
+              + Ajouter ce produit à la commande
+            </Button>
           </div>
+        )}
+
+        <div className="mt-4">
+          <Label htmlFor="observation">Observation (précisions supplémentaires)</Label>
+          <textarea
+            id="observation"
+            name="observation"
+            rows={2}
+            value={observation}
+            onChange={(e) => setObservation(e.target.value)}
+            placeholder="Ex : préférence du client, remarque particulière..."
+            className="w-full rounded-xl border border-ink-900/10 bg-surface p-3 text-sm"
+          />
         </div>
       </Card>
 
@@ -386,6 +541,9 @@ export function NouvelleCommandeForm({
 
       <Card>
         <h2 className="mb-4 font-medium">Livraison</h2>
+        <p className="mb-3 text-xs text-ink-900/50">
+          Un seul frais de livraison pour toute la commande, quel que soit le nombre de produits différents ci-dessus.
+        </p>
         <div className="space-y-3">
           <div>
             <Label htmlFor="zone">Zone</Label>
@@ -430,36 +588,63 @@ export function NouvelleCommandeForm({
 
       <Card className="space-y-2 bg-beige-100">
         <div className="flex justify-between text-sm">
-          <span className="text-ink-900/60">Nombre de pièces</span>
-          <span>{quantiteTotale}</span>
+          <span className="text-ink-900/60">Produits différents</span>
+          <span>{panier.length}</span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-ink-900/60">Prix de vente</span>
-          <span>{formatFCFA(prixTotalVente)}</span>
+          <span className="text-ink-900/60">Nombre total de pièces</span>
+          <span>{quantiteTotalePanier}</span>
         </div>
+        {modeTarification === "total" ? (
+          <div className="py-1">
+            <Label htmlFor="prixTotalCommandeInput">Prix de vente total (tous produits confondus, FCFA)</Label>
+            <Input
+              id="prixTotalCommandeInput"
+              type="number"
+              min={0}
+              value={prixTotalCommande}
+              onChange={(e) => setPrixTotalCommande(Number(e.target.value))}
+            />
+            <p className="mt-1 text-xs text-ink-900/50">
+              Réparti automatiquement entre les {panier.length || "..."} produit(s) au prorata des quantités.
+            </p>
+          </div>
+        ) : (
+          <div className="flex justify-between text-sm">
+            <span className="text-ink-900/60">Prix de vente (tous produits)</span>
+            <span>{formatFCFA(prixVenteTotalPanier)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm">
           <span className="text-ink-900/60">Prix de la livraison</span>
           <span>{formatFCFA(prixLivraison)}</span>
         </div>
         <div className="flex justify-between border-t border-ink-900/10 pt-2 font-medium">
           <span>Prix total (payé par le client)</span>
-          <span>{formatFCFA(prixTotal)}</span>
+          <span>{formatFCFA(prixTotalAvecLivraison)}</span>
         </div>
         <div className="mt-3 border-t border-ink-900/10 pt-3">
           <p className="text-sm text-ink-900/60">Bénéfice estimé pour cette commande</p>
-          <p className="text-2xl font-semibold text-terracotta-600">{formatFCFA(benefice)}</p>
+          <p className="text-2xl font-semibold text-terracotta-600">{formatFCFA(beneficeTotalPanier)}</p>
         </div>
       </Card>
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      <Button type="submit" disabled={pending || quantiteTotale === 0} className="w-full" size="lg">
+      <Button
+        type="submit"
+        disabled={pending || panier.length === 0 || (modeTarification === "total" && prixTotalCommande <= 0)}
+        className="w-full"
+        size="lg"
+      >
         {pending
           ? "Création en cours..."
           : !enLigne
             ? "Enregistrer (envoi dès la reconnexion)"
-            : quantiteTotale === 0
-              ? "Sélectionne une quantité"
-              : "Valider la commande"}
+            : panier.length === 0
+              ? "Ajoute au moins un produit"
+              : modeTarification === "total" && prixTotalCommande <= 0
+                ? "Renseigne le prix total"
+                : "Valider la commande"}
       </Button>
     </form>
   );

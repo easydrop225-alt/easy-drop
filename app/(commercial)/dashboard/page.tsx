@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { PeriodChart } from "@/components/rapports/period-chart";
-import { formatFCFA } from "@/lib/utils";
+import { formatFCFA, dateIlYA3Mois } from "@/lib/utils";
 import { calculerBonusParrainage, premierJourDuMois } from "@/lib/parrainage";
 import type { PointJournalier } from "@/lib/stats/aggregate";
 import type { Order, OrderItem } from "@/types/database";
@@ -10,17 +10,48 @@ import type { Order, OrderItem } from "@/types/database";
 export default async function DashboardCommercialPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const commercialId = user?.id ?? "";
+  const debutMois = premierJourDuMois(new Date());
 
-  const { data: ordersData } = await supabase
-    .from("orders")
-    .select("*, order_items(*)")
-    .eq("commercial_id", user?.id)
-    .order("created_at", { ascending: false });
+  // Les 3 requêtes ci-dessous sont indépendantes : on les lance en parallèle
+  // (au lieu de les enchaîner une par une) pour diviser par ~3 le temps
+  // d'attente réseau de cette page.
+  //
+  // - "resume" : juste le nécessaire (statut, dates) pour TOUT l'historique
+  //   du commercial, sans les lignes de commande (order_items) — utilisé
+  //   pour les totaux globaux (taux de réussite) et la liste des dernières
+  //   commandes. Beaucoup plus léger qu'un historique complet avec détails.
+  // - "recentesAvecLignes" : uniquement les 3 derniers mois, MAIS avec le
+  //   détail des lignes (order_items), nécessaire pour calculer les
+  //   bénéfices (aujourd'hui + graphique). Les commandes plus anciennes ne
+  //   sont plus affichées en détail nulle part dans l'app de toute façon.
+  // - "pointsCeMois" : parrainage du mois en cours.
+  const [{ data: resume }, { data: recentesAvecLignes }, { data: pointsCeMois }] = await Promise.all([
+    supabase
+      .from("orders")
+      .select("id, numero_commande, client_nom, statut, created_at, date_relance")
+      .eq("commercial_id", commercialId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("orders")
+      .select("id, statut, created_at, order_items(benefice_ligne)")
+      .eq("commercial_id", commercialId)
+      .gte("created_at", dateIlYA3Mois()),
+    supabase
+      .from("points_parrainage")
+      .select("id")
+      .eq("parrain_id", commercialId)
+      .gte("created_at", debutMois),
+  ]);
 
-  const list = ((ordersData ?? []) as (Order & { order_items: OrderItem[] | null })[]).map((o) => ({
-    ...o,
-    order_items: o.order_items ?? [],
-  }));
+  type Resume = Pick<Order, "id" | "numero_commande" | "client_nom" | "statut" | "created_at" | "date_relance">;
+  type RecenteAvecLignes = Pick<Order, "id" | "statut" | "created_at"> & { order_items: Pick<OrderItem, "benefice_ligne">[] };
+
+  const list = (resume ?? []) as Resume[];
+  const recentes = (recentesAvecLignes ?? []) as RecenteAvecLignes[];
+  const beneficeParOrderId = new Map(
+    recentes.map((o) => [o.id, o.order_items.reduce((a, i) => a + Number(i.benefice_ligne), 0)])
+  );
 
   const debutJour = new Date(); debutJour.setHours(0, 0, 0, 0);
   const debutJourStr = debutJour.toISOString().slice(0, 10);
@@ -39,23 +70,21 @@ export default async function DashboardCommercialPage() {
   const commandesNonLivreesJour = commandesJour.filter((o) => o.statut === "annulee");
   const commandesEnCoursJour = commandesJour.filter((o) => o.statut === "confirmation" || o.statut === "traitement" || o.statut === "livraison" || o.statut === "relance");
 
-  const beneficeAttendu = commandesEnCoursJour.reduce(
-    (acc, o) => acc + o.order_items.reduce((a, i) => a + Number(i.benefice_ligne), 0), 0
-  );
-  const beneficeRealiseJour = commandesLivreesJour.reduce(
-    (acc, o) => acc + o.order_items.reduce((a, i) => a + Number(i.benefice_ligne), 0), 0
-  );
+  const beneficeAttendu = commandesEnCoursJour.reduce((acc, o) => acc + (beneficeParOrderId.get(o.id) ?? 0), 0);
+  const beneficeRealiseJour = commandesLivreesJour.reduce((acc, o) => acc + (beneficeParOrderId.get(o.id) ?? 0), 0);
 
   const commandesLivreesTotal = list.filter((o) => o.statut === "livree").length;
   const commandesNonLivreesTotal = list.filter((o) => o.statut === "annulee").length;
   const resolues = commandesLivreesTotal + commandesNonLivreesTotal;
   const tauxReussite = resolues > 0 ? Math.round((commandesLivreesTotal / resolues) * 100) : 0;
 
+  // Graphique de performance : basé sur les 3 derniers mois (comme "Mes
+  // commandes"), pas sur la totalité de l'historique.
   const beneficeParJour = new Map<string, number>();
-  for (const o of list) {
+  for (const o of recentes) {
     if (o.statut !== "livree") continue;
     const jour = o.created_at.slice(0, 10);
-    const benef = o.order_items.reduce((a, i) => a + Number(i.benefice_ligne), 0);
+    const benef = beneficeParOrderId.get(o.id) ?? 0;
     beneficeParJour.set(jour, (beneficeParJour.get(jour) ?? 0) + benef);
   }
   const pointsBenefice: PointJournalier[] = Array.from(beneficeParJour.entries()).map(([date, valeur]) => ({ date, valeur }));
@@ -63,12 +92,6 @@ export default async function DashboardCommercialPage() {
   const dernieresCommandes = list.slice(0, 10);
 
   // Parrainage — points du mois et valeur du point selon le niveau actuel.
-  const debutMois = premierJourDuMois(new Date());
-  const { data: pointsCeMois } = await supabase
-    .from("points_parrainage")
-    .select("id")
-    .eq("parrain_id", user?.id ?? "")
-    .gte("created_at", debutMois);
   const ventesPersonnellesCeMois = list.filter((o) => o.statut === "livree" && o.created_at >= debutMois).length;
   const nombrePointsParrainage = pointsCeMois?.length ?? 0;
   const { niveau, valeurPoint, montant: bonusParrainageEstime } = calculerBonusParrainage(nombrePointsParrainage, ventesPersonnellesCeMois);

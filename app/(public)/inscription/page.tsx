@@ -1,15 +1,17 @@
 "use client";
 
-import { Suspense, useActionState } from "react";
+import { Suspense, useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { inscrireCommercial } from "./actions";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PasswordInput, ExigencesMotDePasse } from "@/components/ui/password-input";
 
 function FormulaireInscription() {
   const [state, formAction, pending] = useActionState(inscrireCommercial, undefined as { error?: string } | undefined);
   const searchParams = useSearchParams();
   const codeParraine = searchParams.get("ref") ?? "";
+  const [motDePasse, setMotDePasse] = useState("");
 
   return (
     <form action={formAction} className="space-y-4">
@@ -32,10 +34,20 @@ function FormulaireInscription() {
       <div>
         <Label htmlFor="email">Email (facultatif)</Label>
         <Input id="email" name="email" type="email" />
+        <p className="mt-1 text-xs text-ink-900/50">
+          Recommandé : c&apos;est ce qui permet de récupérer ton compte si tu oublies ton mot de passe.
+        </p>
       </div>
       <div>
         <Label htmlFor="motDePasse">Mot de passe</Label>
-        <Input id="motDePasse" name="motDePasse" type="password" required minLength={8} />
+        <PasswordInput
+          id="motDePasse"
+          name="motDePasse"
+          required
+          value={motDePasse}
+          onChange={(e) => setMotDePasse(e.target.value)}
+        />
+        <ExigencesMotDePasse valeur={motDePasse} />
       </div>
       <div>
         <Label htmlFor="codeParrainage">Code de parrainage (facultatif)</Label>

@@ -8,8 +8,15 @@ import type { Order, OrderItem, Profile } from "@/types/database";
 export default async function RapportsPage() {
   const supabase = await createClient();
 
+  // Les graphiques de cette page comparent des périodes (jour/semaine/mois),
+  // pas besoin de conserver l'historique complet depuis le premier jour de
+  // la plateforme en mémoire à chaque affichage — 12 mois glissants
+  // couvrent largement toutes les vues proposées ici.
+  const unAnAvant = new Date();
+  unAnAvant.setFullYear(unAnAvant.getFullYear() - 1);
+
   const [{ data: orders }, { data: profiles }] = await Promise.all([
-    supabase.from("orders").select("*, order_items(*)"),
+    supabase.from("orders").select("*, order_items(*)").gte("created_at", unAnAvant.toISOString()),
     supabase.from("profiles").select("*").eq("role", "commercial"),
   ]);
 

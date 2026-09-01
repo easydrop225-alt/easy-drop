@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { connecter } from "./actions";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export default function ConnexionPage() {
   const [state, formAction, pending] = useActionState(connecter, undefined as { error?: string } | undefined);
@@ -17,8 +18,13 @@ export default function ConnexionPage() {
           <Input id="identifiant" name="identifiant" required />
         </div>
         <div>
-          <Label htmlFor="motDePasse">Mot de passe</Label>
-          <Input id="motDePasse" name="motDePasse" type="password" required />
+          <div className="flex items-center justify-between">
+            <Label htmlFor="motDePasse">Mot de passe</Label>
+            <a href="/mot-de-passe-oublie" className="text-xs text-terracotta-600 underline">
+              Mot de passe oublié ?
+            </a>
+          </div>
+          <PasswordInput id="motDePasse" name="motDePasse" required />
         </div>
         {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
         <Button type="submit" disabled={pending} className="w-full">
