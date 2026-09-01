@@ -45,11 +45,13 @@ export function NouvelleCommandeForm({
   variants,
   produitPreselectionne,
   imageParVariante,
+  imageParProduit,
 }: {
   products: Product[];
   variants: VariantAvecStock[];
   produitPreselectionne?: string;
   imageParVariante?: Record<string, string>;
+  imageParProduit?: Record<string, string>;
 }) {
   const [state, formAction, pending] = useActionState(creerCommande, undefined as { error?: string } | undefined);
   const formRef = useRef<HTMLFormElement>(null);
@@ -343,21 +345,43 @@ export function NouvelleCommandeForm({
           <div className="divide-y divide-ink-900/5">
             {panier.map((ligne, index) => {
               const produit = products.find((p) => p.id === ligne.productId);
-              const qte = lignesPourProduit(ligne).reduce((x, l) => x + l.quantite, 0);
+              const lignesDuProduit = lignesPourProduit(ligne);
+              const qte = lignesDuProduit.reduce((x, l) => x + l.quantite, 0);
               const prixVenteLigne = modeTarification === "total" ? prixVenteUnitaireMoyenGlobal * qte : ligne.prixVente;
               const benefice = produit ? prixVenteLigne - qte * produit.prix_fournisseur : 0;
+              // Miniature représentative de la ligne : photo de la première
+              // variante choisie si elle en a une, sinon photo générale du
+              // produit — avec la quantité totale affichée en badge, comme
+              // un panier d'achat classique.
+              const premiereVarianteId = lignesDuProduit[0]?.productVariantId;
+              const photo = (premiereVarianteId && imageParVariante?.[premiereVarianteId]) || imageParProduit?.[ligne.productId];
               return (
                 <div key={`${ligne.productId}-${index}`} className="flex items-center justify-between gap-3 py-2.5">
-                  <div>
-                    <p className="text-sm font-medium">{produit?.nom ?? "Produit"}</p>
-                    <p className="text-xs text-ink-900/50">
-                      {qte} pièce{qte > 1 ? "s" : ""}
-                      {modeTarification === "parProduit"
-                        ? ` · ${formatFCFA(prixVenteLigne)} · bénéfice ${formatFCFA(benefice)}`
-                        : prixTotalCommande > 0
-                          ? ` · part du prix total : ${formatFCFA(prixVenteLigne)}`
-                          : " · en attente du prix total"}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <div className="relative h-12 w-12 shrink-0">
+                      {photo ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img src={photo} alt="" className="h-12 w-12 rounded-lg object-cover" />
+                      ) : (
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-beige-100 text-ink-900/30">
+                          <span className="text-lg">📦</span>
+                        </div>
+                      )}
+                      <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-terracotta-500 px-1 text-[11px] font-semibold text-white">
+                        {qte}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">{produit?.nom ?? "Produit"}</p>
+                      <p className="text-xs text-ink-900/50">
+                        {qte} pièce{qte > 1 ? "s" : ""}
+                        {modeTarification === "parProduit"
+                          ? ` · ${formatFCFA(prixVenteLigne)} · bénéfice ${formatFCFA(benefice)}`
+                          : prixTotalCommande > 0
+                            ? ` · part du prix total : ${formatFCFA(prixVenteLigne)}`
+                            : " · en attente du prix total"}
+                      </p>
+                    </div>
                   </div>
                   <button
                     type="button"

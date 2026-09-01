@@ -67,13 +67,20 @@ function FormulaireInscription() {
 export default function InscriptionPage() {
   return (
     <main className="mx-auto max-w-md px-6 py-16">
-      <h1 className="mb-2 text-2xl font-semibold">Devenir commercial</h1>
-      <p className="mb-8 text-sm text-ink-900/60">
-        Crée ton compte pour accéder immédiatement au catalogue et commencer à vendre.
-      </p>
+      <div className="mb-8 flex flex-col items-center text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-easy-drop.png" alt="Easy Drop" className="mb-4 h-16 w-16 rounded-2xl object-contain" />
+        <h1 className="text-2xl font-semibold">Devenir commercial Easy Drop</h1>
+        <p className="mt-2 text-sm text-ink-900/60">
+          Crée ton compte pour accéder immédiatement au catalogue et commencer à vendre — sans stock, sans avance de frais.
+        </p>
+      </div>
       <Suspense fallback={<p className="text-sm text-ink-900/40">Chargement...</p>}>
         <FormulaireInscription />
       </Suspense>
+      <p className="mt-6 text-center text-sm text-ink-900/60">
+        Déjà un compte ? <a href="/connexion" className="font-medium text-terracotta-600 underline">Se connecter</a>
+      </p>
     </main>
   );
 }

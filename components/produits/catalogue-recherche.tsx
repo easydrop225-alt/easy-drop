@@ -15,6 +15,8 @@ export interface ProduitPourRecherche {
   imageUrl?: string;
   disponible: boolean;
   prixFournisseur: number;
+  couleurs?: string[];
+  tailles?: string[];
 }
 
 export function CatalogueRecherche({
@@ -100,10 +102,13 @@ export function CatalogueRecherche({
                     slug: p.slug,
                     prix_min_conseille: p.prixMinConseille,
                     prix_max_conseille: p.prixMaxConseille,
+                    couleurs: p.couleurs,
+                    tailles: p.tailles,
                   }}
                   prixFournisseur={p.prixFournisseur}
                   imageUrl={p.imageUrl}
                   href={`/catalogue/${p.id}`}
+                  disponible={p.disponible}
                 />
               ))}
             </div>

@@ -40,6 +40,22 @@ export default async function NouvelleCommandePage({
     }
   }
 
+  // Une photo générale par produit, utilisée dans le récapitulatif du
+  // panier quand aucune variante précise n'a de photo dédiée.
+  const { data: mediaProduits } = productIds.length
+    ? await supabase
+        .from("media")
+        .select("product_id, url")
+        .in("product_id", productIds)
+        .eq("type", "image")
+        .order("ordre")
+    : { data: [] as Pick<Media, "product_id" | "url">[] };
+
+  const imageParProduit: Record<string, string> = {};
+  for (const m of mediaProduits ?? []) {
+    if (!imageParProduit[m.product_id]) imageParProduit[m.product_id] = m.url;
+  }
+
   return (
     <div className="mx-auto max-w-2xl">
       <h1 className="mb-6 text-2xl font-semibold">Nouvelle commande</h1>
@@ -48,6 +64,7 @@ export default async function NouvelleCommandePage({
         variants={(variants ?? []) as (ProductVariant & { inventory: Inventory[] })[]}
         produitPreselectionne={produit}
         imageParVariante={imageParVariante}
+        imageParProduit={imageParProduit}
       />
     </div>
   );

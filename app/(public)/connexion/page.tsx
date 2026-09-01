@@ -11,7 +11,11 @@ export default function ConnexionPage() {
 
   return (
     <main className="mx-auto max-w-md px-6 py-16">
-      <h1 className="mb-8 text-2xl font-semibold">Connexion</h1>
+      <div className="mb-8 flex flex-col items-center text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-easy-drop.png" alt="Easy Drop" className="mb-4 h-16 w-16 rounded-2xl object-contain" />
+        <h1 className="text-2xl font-semibold">Connexion</h1>
+      </div>
       <form action={formAction} className="space-y-4">
         <div>
           <Label htmlFor="identifiant">Téléphone ou email</Label>

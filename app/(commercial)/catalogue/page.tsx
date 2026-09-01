@@ -51,6 +51,8 @@ export default async function CatalogueCommercialPage() {
     imageUrl: imageParProduit.get(p.id),
     disponible: variantesParProduit.has(p.id) ? (stockParProduit.get(p.id) ?? 0) > 0 : true,
     prixFournisseur: p.prix_fournisseur,
+    couleurs: p.couleurs,
+    tailles: p.tailles,
   }));
 
   return (
