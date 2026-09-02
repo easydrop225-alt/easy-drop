@@ -25,7 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     .eq("statut", "confirmation");
 
   return (
-    <div className="min-h-screen bg-beige-50">
+    <div className="min-h-dvh bg-beige-50">
       {user?.id && <SonNouvelleCommande adminId={user.id} />}
       {user?.id && <PushNotificationSetup />}
       <HeaderAdmin

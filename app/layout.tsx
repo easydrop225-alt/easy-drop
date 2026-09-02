@@ -23,6 +23,11 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   themeColor: "#C25E3F",
+  // Nécessaire pour que env(safe-area-inset-bottom) reflète la vraie zone
+  // sûre sur les iPhone à encoche/barre de geste — sans ça, la barre de
+  // navigation du bas peut se retrouver partiellement sous la barre du
+  // navigateur ou l'indicateur d'accueil iOS.
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

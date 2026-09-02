@@ -21,11 +21,11 @@ export default async function CommercialLayout({ children }: { children: React.R
     .maybeSingle();
 
   return (
-    <div className="min-h-screen bg-beige-50">
+    <div className="min-h-dvh bg-beige-50">
       {user?.id && <PushNotificationSetup />}
       {profile && !profile.onboarding_termine && <OnboardingTutoriel />}
       <HeaderCommercial notificationsNonLues={notificationsNonLues ?? 0} />
-      <div className="mx-auto max-w-6xl px-6 py-8 pb-24 md:pb-8">{children}</div>
+      <div className="mx-auto max-w-6xl px-6 py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8">{children}</div>
       <BottomNavCommercial />
     </div>
   );
