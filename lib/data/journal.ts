@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
  * plusieurs IP séparées par des virgules si des proxys intermédiaires
  * existent — la première est celle du client d'origine).
  */
-async function recupererIP(): Promise<string | null> {
+export async function recupererIP(): Promise<string | null> {
   const h = await headers();
   const forwarded = h.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0]?.trim() ?? null;
@@ -23,7 +23,7 @@ async function recupererIP(): Promise<string | null> {
  * journal : la sécurité fonctionnelle prime sur la traçabilité.
  */
 export async function journaliserConnexion(
-  action: "connexion_reussie" | "connexion_echouee" | "deconnexion",
+  action: "connexion_reussie" | "connexion_echouee" | "deconnexion" | "inscription",
   userId: string | null,
   details?: Record<string, unknown>
 ) {
