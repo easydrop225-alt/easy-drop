@@ -83,6 +83,13 @@ export default async function MediasProduitPage({
         <div>
           <h1 className="text-2xl font-semibold">{(product as Product).nom}</h1>
           <p className="text-sm text-ink-900/60">Prix fournisseur : {formatFCFA((product as Product).prix_fournisseur)}</p>
+          {(product as Product).prix_min_conseille != null && (product as Product).prix_max_conseille != null && (
+            <p className="text-sm text-terracotta-600">
+              Revente conseillée : <span className="font-semibold">
+                {formatFCFA((product as Product).prix_min_conseille!)} – {formatFCFA((product as Product).prix_max_conseille!)}
+              </span>
+            </p>
+          )}
         </div>
         <Link
           href={`/commandes/nouvelle?produit=${id}`}
