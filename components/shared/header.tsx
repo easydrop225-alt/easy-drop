@@ -34,7 +34,7 @@ export function HeaderCommercial({
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-ink-900/5 bg-surface print:hidden">
+    <header className="sticky top-0 z-40 border-b border-ink-900/5 bg-surface print:hidden">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/accueil" className="flex items-center gap-2 text-lg font-semibold">
           <Image src="/icons/icon-192.png" alt="Easy Drop" width={36} height={36} className="rounded-lg" />
@@ -137,7 +137,7 @@ export function HeaderAdmin({
   ];
 
   return (
-    <header className="border-b border-ink-900/5 bg-surface print:hidden">
+    <header className="sticky top-0 z-40 border-b border-ink-900/5 bg-surface print:hidden">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
         <Link href="/admin/dashboard" className="flex items-center gap-2 text-lg font-semibold">
           <Image src="/icons/icon-192.png" alt="Easy Drop" width={36} height={36} className="rounded-lg" />
