@@ -62,11 +62,20 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Rafraîchit la session (obligatoire : sans cet appel, les tokens Supabase
-  // expirent silencieusement côté serveur même si l'utilisateur reste actif).
+  // Vérifie la session à partir du cookie, sans appel réseau systématique
+  // vers Supabase (contrairement à getUser(), qui revalide le jeton auprès
+  // du serveur à CHAQUE navigation — un aller-retour réseau supplémentaire
+  // ressenti comme une latence entre les onglets). getSession() ne fait un
+  // appel réseau que lorsque le jeton a réellement besoin d'être renouvelé.
+  //
+  // Ce contrôle sert uniquement à rediriger rapidement vers la connexion :
+  // la vraie barrière de sécurité reste les policies RLS de la base de
+  // données et les vérifications faites dans les pages/actions serveur,
+  // qui utilisent bien getUser() là où ça compte réellement.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
 
   const { pathname } = request.nextUrl;
 
