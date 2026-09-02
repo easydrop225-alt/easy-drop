@@ -5,7 +5,11 @@ export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "rounded-2xl border border-ink-900/5 bg-surface p-5 shadow-sm",
+        // "Option A · Relief doux" : le relief vient de l'ombre (shadow-card),
+        // pas d'une bordure — border-transparent (plutôt que pas de bordure
+        // du tout) pour que les pages qui ajoutent une couleur de bordure
+        // par-dessus (ex: notification non lue) continuent de fonctionner.
+        "rounded-2xl border border-transparent bg-surface p-6 shadow-card",
         className
       )}
       {...props}
