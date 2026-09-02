@@ -2,6 +2,7 @@ import { HeaderAdmin } from "@/components/shared/header";
 import { createClient } from "@/lib/supabase/server";
 import { SonNouvelleCommande } from "@/components/shared/son-nouvelle-commande";
 import { PushNotificationSetup } from "@/components/shared/push-notification-setup";
+import { listerComptesLies } from "./comptes-lies/actions";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -19,16 +20,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const septJoursAvant = new Date();
   septJoursAvant.setDate(septJoursAvant.getDate() - 7);
 
-  const { count: commerciauxRecents } = await supabase
-    .from("profiles")
-    .select("*", { count: "exact", head: true })
-    .eq("role", "commercial")
-    .gte("created_at", septJoursAvant.toISOString());
-
-  const { count: commandesNouvelles } = await supabase
-    .from("orders")
-    .select("*", { count: "exact", head: true })
-    .eq("statut", "confirmation");
+  // Requêtes indépendantes, lancées en parallèle plutôt que l'une après
+  // l'autre.
+  const [{ count: commerciauxRecents }, { count: commandesNouvelles }, liens] = await Promise.all([
+    supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "commercial").gte("created_at", septJoursAvant.toISOString()),
+    supabase.from("orders").select("*", { count: "exact", head: true }).eq("statut", "confirmation"),
+    listerComptesLies(),
+  ]);
 
   return (
     <div className="min-h-dvh bg-beige-50">
@@ -39,6 +37,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           commerciauxRecents: commerciauxRecents ?? 0,
           commandesNouvelles: commandesNouvelles ?? 0,
         }}
+        comptesLies={liens}
       />
       <div className="mx-auto max-w-7xl px-6 py-8 print:p-0">{children}</div>
     </div>

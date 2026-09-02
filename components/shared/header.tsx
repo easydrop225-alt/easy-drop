@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { LogoutButton } from "./logout-button";
 import { RechercheGlobale } from "./recherche-globale";
 import { ThemeToggle } from "./theme-toggle";
+import { CompteSwitcher } from "./compte-switcher";
 
 const NAV_COMMERCIAL = [
   { href: "/accueil", label: "Accueil" },
@@ -80,7 +81,13 @@ export interface AdminNavCounts {
   commandesNouvelles: number;
 }
 
-export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
+export function HeaderAdmin({
+  counts,
+  comptesLies = [],
+}: {
+  counts?: AdminNavCounts;
+  comptesLies?: { lienId: string; compteCibleId: string; label: string }[];
+}) {
   const pathname = usePathname();
   const [menuOuvert, setMenuOuvert] = useState(false);
 
@@ -157,6 +164,7 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
         <div className="flex items-center gap-3">
           <RechercheGlobale />
           <div className="hidden items-center gap-2 lg:flex">
+            <CompteSwitcher liens={comptesLies} />
             <ThemeToggle />
             <LogoutButton />
           </div>
@@ -203,7 +211,10 @@ export function HeaderAdmin({ counts }: { counts?: AdminNavCounts }) {
           ))}
           <div className="mt-2 flex items-center justify-between border-t border-ink-900/5 pt-2">
             <LogoutButton />
-            <ThemeToggle />
+            <div className="flex items-center gap-1">
+              <CompteSwitcher liens={comptesLies} />
+              <ThemeToggle />
+            </div>
           </div>
         </nav>
       )}

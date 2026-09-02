@@ -3,6 +3,8 @@ import type { Setting, Product } from "@/types/database";
 import { ParametresForm } from "./form";
 import { SonNotificationUploader } from "@/components/shared/son-notification-uploader";
 import { AccueilCommercialForm } from "./accueil-commercial-form";
+import { ComptesLiesForm } from "../comptes-lies/comptes-lies-form";
+import { listerComptesLies } from "../comptes-lies/actions";
 import { Card } from "@/components/ui/card";
 
 import type { Metadata } from "next";
@@ -18,6 +20,13 @@ export default async function ParametresPage() {
   ]);
   const list = (settings ?? []) as Setting[];
   const get = (cle: string) => list.find((s) => s.cle === cle)?.valeur;
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const { data: monProfil } = session
+    ? await supabase.from("profiles").select("role").eq("id", session.user.id).single()
+    : { data: null };
+  const estSuperAdmin = monProfil?.role === "super_admin";
+  const liens = estSuperAdmin ? await listerComptesLies() : [];
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -44,6 +53,13 @@ export default async function ParametresPage() {
         <h2 className="mb-3 font-medium">Son de notification (nouvelle commande)</h2>
         <SonNotificationUploader sonActuelUrl={get("son_notification_url") as string | undefined ?? null} />
       </Card>
+
+      {estSuperAdmin && (
+        <Card>
+          <h2 className="mb-3 font-medium">Comptes liés (bascule rapide)</h2>
+          <ComptesLiesForm liens={liens} />
+        </Card>
+      )}
     </div>
   );
 }
