@@ -5,33 +5,34 @@
 :root {
   --font-sans: "Inter", system-ui, sans-serif;
 
-  /* Thème clair (valeurs par défaut) — chaque variable est un triplet RGB
-     "R G B" (sans virgules) pour rester compatible avec le format
+  /* Thème clair — refonte validée avec Yann (fond de page orange assumé,
+     texte brun profond). Chaque variable est un triplet RGB "R G B" (sans
+     virgules) pour rester compatible avec le format
      rgb(var(--x) / <alpha-value>) utilisé par Tailwind. */
-  --color-beige-50: 250 247 242;   /* #FAF7F2 — fond de page */
-  --color-beige-100: 243 236 225;  /* #F3ECE1 — blocs secondaires */
+  --color-beige-50: 242 172 125;   /* #F2AC7D — fond de page (orange chaud) */
+  --color-beige-100: 238 226 200;  /* #EEE2C8 — blocs secondaires / surbrillance (crème) */
   --color-surface: 255 255 255;    /* #FFFFFF — cartes, champs, en-têtes */
-  --color-ink-900: 26 24 22;       /* #1A1816 — texte principal */
-  --color-terracotta-50: 253 241 236;
-  --color-terracotta-400: 221 122 80;
-  --color-terracotta-500: 194 94 63;
-  --color-terracotta-600: 162 74 48;
+  --color-ink-900: 61 37 33;       /* #3D2521 — texte principal (brun profond) */
+  --color-terracotta-50: 250 232 219;
+  --color-terracotta-400: 231 147 90;
+  --color-terracotta-500: 220 112 50;
+  --color-terracotta-600: 193 85 31;
 
   color-scheme: light;
 }
 
 .dark {
-  /* Thème sombre — un fond presque noir mais légèrement chaud (cohérent
-     avec la charte beige/terracotta), du texte presque blanc, et les
-     mêmes accents terracotta (qui restent très lisibles sur fond sombre). */
-  --color-beige-50: 20 18 16;      /* fond de page */
-  --color-beige-100: 32 28 25;     /* blocs secondaires / surbrillance */
-  --color-surface: 30 27 24;       /* cartes, champs, en-têtes */
-  --color-ink-900: 245 243 240;    /* texte principal (presque blanc) */
+  /* Thème sombre — refonte validée avec Yann : fond de page noir pur
+     (plus de brun), cartes en brun profond pour rester distinctes du
+     fond, texte crème, accents orange éclaircis pour rester lisibles. */
+  --color-beige-50: 0 0 0;         /* fond de page (noir pur) */
+  --color-beige-100: 47 31 27;     /* blocs secondaires / surbrillance */
+  --color-surface: 54 37 32;       /* cartes, champs, en-têtes */
+  --color-ink-900: 238 226 200;    /* texte principal (crème) */
   --color-terracotta-50: 46 30 24;
-  --color-terracotta-400: 231 140 100;
-  --color-terracotta-500: 209 111 77;
-  --color-terracotta-600: 224 128 92;
+  --color-terracotta-400: 240 164 116;
+  --color-terracotta-500: 234 125 62;
+  --color-terracotta-600: 241 137 85;
 
   color-scheme: dark;
 }
@@ -43,15 +44,15 @@ body {
 /*
   Les contours (border-ink-900/5, /10, /20) sont dérivés de la couleur du
   texte à faible opacité — ça fonctionne bien en clair, mais devient trop
-  terne en sombre (le mélange reste trop proche du fond). On fixe donc,
-  uniquement en mode sombre, une couleur de contour à part entière,
-  clairement visible sur le fond sombre de l'application (validée avec
-  l'utilisateur — "Option E").
+  terne en sombre (le mélange reste trop proche du fond, surtout avec le
+  fond noir pur de la refonte). On fixe donc, uniquement en mode sombre,
+  une couleur de contour à part entière (gris-mauve, cohérente avec la
+  nouvelle palette), clairement visible sur le fond sombre de l'application.
 */
 .dark .border-ink-900\/5,
 .dark .border-ink-900\/10,
 .dark .border-ink-900\/20 {
-  border-color: #8A8178;
+  border-color: #BCB2B3;
 }
 
 /* Bandeau d'information défilant sur l'accueil commercial (texte dupliqué
