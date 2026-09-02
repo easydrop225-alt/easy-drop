@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import { definirNouveauMotDePasse } from "./actions";
 import { Label } from "@/components/ui/input";
@@ -18,9 +19,9 @@ export default function ReinitialiserMotDePassePage() {
       <main className="mx-auto max-w-md px-6 py-16 text-center">
         <h1 className="mb-3 text-2xl font-semibold">Mot de passe mis à jour ✅</h1>
         <p className="mb-6 text-sm text-ink-900/60">Tu peux maintenant te connecter avec ton nouveau mot de passe.</p>
-        <a href="/connexion">
+        <Link href="/connexion">
           <Button className="w-full">Se connecter</Button>
-        </a>
+        </Link>
       </main>
     );
   }

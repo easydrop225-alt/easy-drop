@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/produits/product-card";
 import { notFound } from "next/navigation";
@@ -37,7 +38,7 @@ export default async function CategoriePubliquePage({
   return (
     <main className="mx-auto max-w-6xl px-6 py-12">
       <div className="mb-6 flex items-center gap-2">
-        <a href="/produits" className="text-sm text-ink-900/50 hover:underline">Catalogue</a>
+        <Link href="/produits" className="text-sm text-ink-900/50 hover:underline">Catalogue</Link>
         <span className="text-ink-900/30">/</span>
         <h1 className="text-2xl font-semibold">{(category as Category).icone} {(category as Category).nom}</h1>
       </div>

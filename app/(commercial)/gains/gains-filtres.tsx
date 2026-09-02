@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
 import { formatFCFA } from "@/lib/utils";
@@ -69,9 +70,9 @@ export function GainsFiltres({
               <p className="text-xl font-semibold text-terracotta-600">{formatFCFA(resumeParrainage.bonusEstime)}</p>
             </div>
           </div>
-          <a href="/parrainage" className="block rounded-xl bg-terracotta-500 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-terracotta-600">
+          <Link href="/parrainage" className="block rounded-xl bg-terracotta-500 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-terracotta-600">
             Voir plus — tous les détails du parrainage →
-          </a>
+          </Link>
         </Card>
       )}
     </div>

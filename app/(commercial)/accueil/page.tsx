@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import { formatFCFA } from "@/lib/utils";
@@ -76,29 +77,29 @@ export default async function AccueilCommercialPage() {
 
       {/* Accès rapides */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <a href="/catalogue" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
+        <Link href="/catalogue" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
           <ShoppingBag className="text-terracotta-500" />
           <span className="text-xs font-medium">Produits disponibles</span>
-        </a>
-        <a href="/commandes" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
+        </Link>
+        <Link href="/commandes" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
           <ClipboardList className="text-terracotta-500" />
           <span className="text-xs font-medium">Mes commandes</span>
-        </a>
-        <a href="/gains" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
+        </Link>
+        <Link href="/gains" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
           <Wallet className="text-terracotta-500" />
           <span className="text-xs font-medium">Mes gains</span>
-        </a>
-        <a href="/dashboard" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
+        </Link>
+        <Link href="/dashboard" className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-4 text-center hover:shadow-md">
           <LayoutGrid className="text-terracotta-500" />
           <span className="text-xs font-medium">Dashboard</span>
-        </a>
+        </Link>
       </div>
 
       {/* Résumé du jour — aperçu rapide, extrait du dashboard (détail complet sur /dashboard). */}
       <div>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-medium">Résumé du jour</h2>
-          <a href="/dashboard" className="text-sm text-terracotta-600 underline">Voir le détail</a>
+          <Link href="/dashboard" className="text-sm text-terracotta-600 underline">Voir le détail</Link>
         </div>
         <div className="grid grid-cols-3 gap-3 rounded-2xl bg-ink-900 p-5 text-beige-50">
           <div>
@@ -121,11 +122,11 @@ export default async function AccueilCommercialPage() {
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-medium">Produits populaires</h2>
-            <a href="/catalogue" className="text-sm text-terracotta-600 underline">Voir tout</a>
+            <Link href="/catalogue" className="text-sm text-terracotta-600 underline">Voir tout</Link>
           </div>
           <div className="flex gap-3 overflow-x-auto pb-1">
             {produitsVedette.map((p) => (
-              <a
+              <Link
                 key={p.id}
                 href={`/catalogue/${p.id}`}
                 className="w-36 shrink-0 overflow-hidden rounded-2xl border border-ink-900/5 bg-surface transition hover:shadow-md"
@@ -141,7 +142,7 @@ export default async function AccueilCommercialPage() {
                   <p className="truncate text-xs font-medium">{p.nom}</p>
                   <p className="text-xs text-ink-900/50">{formatFCFA(p.prix_fournisseur)}</p>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>

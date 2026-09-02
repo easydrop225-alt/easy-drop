@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CategoryGrid } from "@/components/produits/category-grid";
 import type { Category, Product } from "@/types/database";
@@ -25,9 +26,9 @@ export default async function CataloguePublicPage() {
       />
       <p className="mt-10 rounded-xl bg-beige-100 p-4 text-sm text-ink-900/70">
         Les prix ne sont visibles qu'après création d'un compte commercial validé.{" "}
-        <a href="/inscription" className="font-medium text-terracotta-600 underline">
+        <Link href="/inscription" className="font-medium text-terracotta-600 underline">
           Devenir commercial
-        </a>
+        </Link>
       </p>
     </main>
   );

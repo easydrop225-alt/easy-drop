@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CommerciauxFiltres } from "@/components/commerciaux/commerciaux-filtres";
 import { calculerBonusParrainage, premierJourDuMois } from "@/lib/parrainage";
@@ -69,9 +70,9 @@ export default async function AdminCommerciauxPage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Commerciaux</h1>
         {enAttente > 0 && (
-          <a href="/admin/commerciaux/validation" className="rounded-xl bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600">
+          <Link href="/admin/commerciaux/validation" className="rounded-xl bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600">
             {enAttente} en attente de validation
-          </a>
+          </Link>
         )}
       </div>
       <CommerciauxFiltres commerciaux={list} performanceParId={performanceParId} parrainageParId={parrainageParId} />

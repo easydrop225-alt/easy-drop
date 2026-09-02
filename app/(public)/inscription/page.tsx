@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import { Suspense, useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -79,7 +80,7 @@ export default function InscriptionPage() {
         <FormulaireInscription />
       </Suspense>
       <p className="mt-6 text-center text-sm text-ink-900/60">
-        Déjà un compte ? <a href="/connexion" className="font-medium text-terracotta-600 underline">Se connecter</a>
+        Déjà un compte ? <Link href="/connexion" className="font-medium text-terracotta-600 underline">Se connecter</Link>
       </p>
     </main>
   );

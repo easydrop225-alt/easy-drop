@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
@@ -40,12 +41,12 @@ export default async function ProduitPublicPage({
         <div>
           <h1 className="text-3xl font-semibold">{(product as Product).nom}</h1>
           <p className="mt-4 text-ink-900/70">{(product as Product).description}</p>
-          <a
+          <Link
             href="/inscription"
             className="mt-6 inline-block rounded-xl bg-terracotta-500 px-6 py-3 font-medium text-white hover:bg-terracotta-600"
           >
             Je veux vendre ce produit
-          </a>
+          </Link>
         </div>
       </div>
     </main>

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatFCFA } from "@/lib/utils";
@@ -83,12 +84,12 @@ export default async function MediasProduitPage({
           <h1 className="text-2xl font-semibold">{(product as Product).nom}</h1>
           <p className="text-sm text-ink-900/60">Prix fournisseur : {formatFCFA((product as Product).prix_fournisseur)}</p>
         </div>
-        <a
+        <Link
           href={`/commandes/nouvelle?produit=${id}`}
           className="rounded-xl bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600"
         >
           Créer une commande
-        </a>
+        </Link>
       </div>
 
       <Card>

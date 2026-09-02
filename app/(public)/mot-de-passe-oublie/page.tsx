@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { demanderReinitialisation } from "./actions";
@@ -45,7 +46,7 @@ function FormulaireMotDePasseOublie() {
 
       <div className="mt-6 space-y-1 text-sm">
         <p>
-          <a href="/connexion" className="text-terracotta-600 underline">Retour à la connexion</a>
+          <Link href="/connexion" className="text-terracotta-600 underline">Retour à la connexion</Link>
         </p>
         <p className="text-ink-900/50">
           Pas d&apos;adresse email enregistrée sur ton compte ? Contacte l&apos;administrateur Easy Drop directement (bouton WhatsApp dans l&apos;app) pour qu&apos;il réinitialise ton mot de passe.

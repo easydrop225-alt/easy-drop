@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { HistoriqueCommandesCommercial } from "@/components/commandes/historique-commandes-commercial";
 import { dateIlYA3Mois } from "@/lib/utils";
@@ -27,9 +28,9 @@ export default async function MesCommandesPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Mes commandes</h1>
-        <a href="/commandes/nouvelle" className="rounded-xl bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600">
+        <Link href="/commandes/nouvelle" className="rounded-xl bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600">
           Nouvelle commande
-        </a>
+        </Link>
       </div>
       <p className="mb-4 text-xs text-ink-900/40">Affichage des 3 derniers mois.</p>
       <HistoriqueCommandesCommercial orders={list} />

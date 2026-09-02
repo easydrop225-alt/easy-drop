@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { formatFCFA } from "@/lib/utils";
@@ -30,9 +31,9 @@ export default async function AdminProduitsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Produits</h1>
-        <a href="/admin/produits/nouveau" className="rounded-xl bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600">
+        <Link href="/admin/produits/nouveau" className="rounded-xl bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600">
           Nouveau produit
-        </a>
+        </Link>
       </div>
 
       <div className="space-y-6">
@@ -55,7 +56,7 @@ export default async function AdminProduitsPage() {
                         <td className="p-3">{p.nom}</td>
                         <td className="p-3">{formatFCFA(p.prix_fournisseur)}</td>
                         <td className="p-3">{p.actif ? "Actif" : "Inactif"}</td>
-                        <td className="p-3"><a href={`/admin/produits/${p.id}/edit`} className="text-terracotta-600 underline">Modifier</a></td>
+                        <td className="p-3"><Link href={`/admin/produits/${p.id}/edit`} className="text-terracotta-600 underline">Modifier</Link></td>
                         <td className="p-3"><SupprimerProduitButton productId={p.id} nomProduit={p.nom} /></td>
                       </tr>
                     ))}
@@ -77,7 +78,7 @@ export default async function AdminProduitsPage() {
                       <td className="p-3">{p.nom}</td>
                       <td className="p-3">{formatFCFA(p.prix_fournisseur)}</td>
                       <td className="p-3">{p.actif ? "Actif" : "Inactif"}</td>
-                      <td className="p-3"><a href={`/admin/produits/${p.id}/edit`} className="text-terracotta-600 underline">Modifier</a></td>
+                      <td className="p-3"><Link href={`/admin/produits/${p.id}/edit`} className="text-terracotta-600 underline">Modifier</Link></td>
                       <td className="p-3"><SupprimerProduitButton productId={p.id} nomProduit={p.nom} /></td>
                     </tr>
                   ))}

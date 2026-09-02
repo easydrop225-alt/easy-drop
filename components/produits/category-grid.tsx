@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Category } from "@/types/database";
 
 export function CategoryGrid({
@@ -18,7 +19,7 @@ export function CategoryGrid({
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
       {categoriesAvecProduits.map((cat) => (
-        <a
+        <Link
           key={cat.id}
           href={`${hrefPrefix}/${cat.slug}`}
           className="flex flex-col items-center gap-2 rounded-2xl border border-ink-900/5 bg-surface p-6 text-center transition hover:shadow-md"
@@ -28,7 +29,7 @@ export function CategoryGrid({
           <span className="rounded-full bg-beige-100 px-2 py-0.5 text-xs text-ink-900/50">
             {compteParCategorie.get(cat.id)} produit(s)
           </span>
-        </a>
+        </Link>
       ))}
     </div>
   );

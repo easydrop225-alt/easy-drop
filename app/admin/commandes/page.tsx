@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 import { CommandesGroupeesAdmin, type OrderComplete } from "@/components/commandes/commandes-groupees-admin";
 import type { Media } from "@/types/database";
 
@@ -59,25 +60,25 @@ export default async function AdminCommandesPage({
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-3 text-sm">
-          <a
-            href={page > 1 ? `/admin/commandes?page=${page - 1}` : undefined}
+          <Link
+            href={page > 1 ? `/admin/commandes?page=${page - 1}` : `/admin/commandes?page=${page}`}
             aria-disabled={page <= 1}
             className={`rounded-lg border border-ink-900/10 px-3 py-1.5 ${
               page <= 1 ? "pointer-events-none opacity-30" : "hover:bg-beige-100"
             }`}
           >
             ← Précédent
-          </a>
+          </Link>
           <span className="text-ink-900/60">Page {page} sur {totalPages}</span>
-          <a
-            href={page < totalPages ? `/admin/commandes?page=${page + 1}` : undefined}
+          <Link
+            href={page < totalPages ? `/admin/commandes?page=${page + 1}` : `/admin/commandes?page=${page}`}
             aria-disabled={page >= totalPages}
             className={`rounded-lg border border-ink-900/10 px-3 py-1.5 ${
               page >= totalPages ? "pointer-events-none opacity-30" : "hover:bg-beige-100"
             }`}
           >
             Suivant →
-          </a>
+          </Link>
         </div>
       )}
       {totalPages > 1 && (

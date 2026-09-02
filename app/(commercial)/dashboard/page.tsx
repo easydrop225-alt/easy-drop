@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
@@ -154,7 +155,7 @@ export default async function DashboardCommercialPage() {
             <CardValue className="text-terracotta-600">{formatFCFA(bonusParrainageEstime)}</CardValue>
           </Card>
         </div>
-        <a href="/parrainage" className="mt-2 inline-block text-sm text-terracotta-600 underline">Voir tous les détails du parrainage →</a>
+        <Link href="/parrainage" className="mt-2 inline-block text-sm text-terracotta-600 underline">Voir tous les détails du parrainage →</Link>
       </div>
 
       <PeriodChart
@@ -179,7 +180,7 @@ export default async function DashboardCommercialPage() {
             <tbody>
               {commandesJour.map((order) => (
                 <tr key={order.id} className="border-b border-ink-900/5 last:border-0">
-                  <td className="p-3"><a href={`/commandes/${order.id}`} className="font-medium hover:underline">{order.numero_commande}</a></td>
+                  <td className="p-3"><Link href={`/commandes/${order.id}`} className="font-medium hover:underline">{order.numero_commande}</Link></td>
                   <td className="p-3">{order.client_nom}</td>
                   <td className="p-3"><StatutBadge statut={order.statut} /></td>
                 </tr>
@@ -206,7 +207,7 @@ export default async function DashboardCommercialPage() {
             <tbody>
               {dernieresCommandes.map((order) => (
                 <tr key={order.id} className="border-b border-ink-900/5 last:border-0">
-                  <td className="p-3"><a href={`/commandes/${order.id}`} className="hover:underline">{order.numero_commande}</a></td>
+                  <td className="p-3"><Link href={`/commandes/${order.id}`} className="hover:underline">{order.numero_commande}</Link></td>
                   <td className="p-3">{order.client_nom}</td>
                   <td className="p-3"><StatutBadge statut={order.statut} /></td>
                 </tr>

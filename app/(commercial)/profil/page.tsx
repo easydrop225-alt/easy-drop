@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { AvatarUploader } from "@/components/produits/avatar-uploader";
 import { BadgesPerformance } from "@/components/produits/badges-performance";
@@ -50,19 +51,19 @@ export default async function ProfilPage() {
         <p><span className="text-ink-900/50">Statut : </span>{p?.statut}</p>
       </Card>
 
-      <a
+      <Link
         href="/parrainage"
         className="flex items-center justify-center gap-2 rounded-xl bg-terracotta-500 px-4 py-3 text-sm font-medium text-white hover:bg-terracotta-600"
       >
         🤝 Mon Parrainage
-      </a>
+      </Link>
 
-      <a
+      <Link
         href="/formation"
         className="flex items-center justify-center gap-2 rounded-xl bg-terracotta-500 px-4 py-3 text-sm font-medium text-white hover:bg-terracotta-600"
       >
         🎓 Espace formation
-      </a>
+      </Link>
 
       {lienCommunaute && (
         <a
@@ -84,12 +85,12 @@ export default async function ProfilPage() {
         💬 Contacter le service client (WhatsApp)
       </a>
 
-      <a
+      <Link
         href="/a-propos"
         className="flex items-center justify-center gap-2 rounded-xl bg-gray-500 px-4 py-3 text-sm font-medium text-white hover:bg-gray-600"
       >
         ℹ️ À propos d'Easy Drop
-      </a>
+      </Link>
       <div className="flex justify-center md:hidden"><LogoutButton /></div>
     </div>
   );

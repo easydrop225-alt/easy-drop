@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Category } from "@/types/database";
 
 export function CategoryRow({
@@ -16,14 +17,14 @@ export function CategoryRow({
   return (
     <div className="flex gap-3 overflow-x-auto pb-1">
       {categoriesAvecProduits.map((cat) => (
-        <a
+        <Link
           key={cat.id}
           href={`${hrefPrefix}/${cat.slug}`}
           className="flex w-20 shrink-0 flex-col items-center gap-1.5 rounded-2xl border border-ink-900/5 bg-surface p-3 text-center transition hover:shadow-md"
         >
           <span className="text-2xl">{cat.icone}</span>
           <span className="text-xs font-medium leading-tight">{cat.nom}</span>
-        </a>
+        </Link>
       ))}
     </div>
   );

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -44,9 +45,9 @@ export default async function StocksPage() {
             {rows.map((row) => (
               <tr key={row.id} className="border-b border-ink-900/5 last:border-0">
                 <td className="p-3">
-                  <a href={`/admin/produits/${row.product_variants?.products?.id}/edit`} className="hover:underline">
+                  <Link href={`/admin/produits/${row.product_variants?.products?.id}/edit`} className="hover:underline">
                     {row.product_variants?.products?.nom}
-                  </a>
+                  </Link>
                 </td>
                 <td className="p-3">{[row.product_variants?.couleur, row.product_variants?.taille].filter(Boolean).join(" / ") || "—"}</td>
                 <td className={cn("p-3 font-medium", row.quantite_disponible <= row.seuil_alerte && "text-red-600")}>

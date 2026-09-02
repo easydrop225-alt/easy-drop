@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import { useActionState } from "react";
 import { connecter } from "./actions";
@@ -24,9 +25,9 @@ export default function ConnexionPage() {
         <div>
           <div className="flex items-center justify-between">
             <Label htmlFor="motDePasse">Mot de passe</Label>
-            <a href="/mot-de-passe-oublie" className="text-xs text-terracotta-600 underline">
+            <Link href="/mot-de-passe-oublie" className="text-xs text-terracotta-600 underline">
               Mot de passe oublié ?
-            </a>
+            </Link>
           </div>
           <PasswordInput id="motDePasse" name="motDePasse" required />
         </div>
@@ -36,7 +37,7 @@ export default function ConnexionPage() {
         </Button>
       </form>
       <p className="mt-6 text-sm text-ink-900/60">
-        Pas encore de compte ? <a href="/inscription" className="text-terracotta-600 underline">S'inscrire</a>
+        Pas encore de compte ? <Link href="/inscription" className="text-terracotta-600 underline">S'inscrire</Link>
       </p>
     </main>
   );

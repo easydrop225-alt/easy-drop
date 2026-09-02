@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import type { Notification } from "@/types/database";
@@ -26,7 +27,7 @@ export default async function NotificationsCommercialPage() {
       </div>
       <div className="space-y-2">
         {list.map((n) => (
-          <a key={n.id} href={n.lien ?? "#"}>
+          <Link key={n.id} href={n.lien ?? "#"}>
             <Card className={n.lu ? "opacity-60" : "border-terracotta-400/40"}>
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -36,7 +37,7 @@ export default async function NotificationsCommercialPage() {
                 <span className="shrink-0 text-xs text-ink-900/40">{formatDate(n.created_at)}</span>
               </div>
             </Card>
-          </a>
+          </Link>
         ))}
         {list.length === 0 && <p className="text-ink-900/60">Aucune notification pour l'instant.</p>}
       </div>

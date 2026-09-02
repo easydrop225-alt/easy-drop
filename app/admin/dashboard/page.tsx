@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
 import { formatFCFA } from "@/lib/utils";
@@ -130,26 +131,26 @@ export default async function DashboardAdminPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Dashboard administrateur</h1>
-        <a href="/admin/rapports" className="text-sm font-medium text-terracotta-600 underline">
+        <Link href="/admin/rapports" className="text-sm font-medium text-terracotta-600 underline">
           Voir les rapports détaillés →
-        </a>
+        </Link>
       </div>
 
       <div>
         <h2 className="mb-3 text-lg font-medium">À faire aujourd'hui</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <a href="/admin/commandes" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-surface p-4 hover:shadow-md">
+          <Link href="/admin/commandes" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-surface p-4 hover:shadow-md">
             <span className="text-sm">🟡 Nouvelles commandes à traiter</span>
             <span className="text-xl font-semibold">{nouvellesCommandes}</span>
-          </a>
-          <a href="/admin/paiements" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-surface p-4 hover:shadow-md">
+          </Link>
+          <Link href="/admin/paiements" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-surface p-4 hover:shadow-md">
             <span className="text-sm">💰 Commerciaux à payer</span>
             <span className="text-xl font-semibold">{commerciauxAPayer}</span>
-          </a>
-          <a href="/admin/stocks" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-surface p-4 hover:shadow-md">
+          </Link>
+          <Link href="/admin/stocks" className="flex items-center justify-between rounded-2xl border border-ink-900/5 bg-surface p-4 hover:shadow-md">
             <span className="text-sm">📦 Stocks presque épuisés</span>
             <span className="text-xl font-semibold">{stockFaible}</span>
-          </a>
+          </Link>
         </div>
       </div>
 
