@@ -35,12 +35,19 @@ export function CatalogueRecherche({
   const resultats = useMemo(() => {
     const termeRecherche = recherche.trim().toLowerCase();
 
-    return produits.filter((p) => {
-      if (termeRecherche && !p.nom.toLowerCase().includes(termeRecherche)) return false;
-      if (categorieId !== "toutes" && p.categoryId !== categorieId) return false;
-      if (disponibiliteSeulement && (!p.disponible || !p.actif)) return false;
-      return true;
-    });
+    return produits
+      .filter((p) => {
+        if (termeRecherche && !p.nom.toLowerCase().includes(termeRecherche)) return false;
+        if (categorieId !== "toutes" && p.categoryId !== categorieId) return false;
+        if (disponibiliteSeulement && (!p.disponible || !p.actif)) return false;
+        return true;
+      })
+      // Les produits désactivés par l'admin sont relégués en fin de liste,
+      // plutôt que mélangés au reste selon l'ordre alphabétique.
+      .sort((a, b) => {
+        if (a.actif !== b.actif) return a.actif ? -1 : 1;
+        return 0;
+      });
   }, [produits, recherche, categorieId, disponibiliteSeulement]);
 
   return (
