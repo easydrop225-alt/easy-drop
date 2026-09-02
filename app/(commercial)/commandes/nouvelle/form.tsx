@@ -8,7 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { formatFCFA } from "@/lib/utils";
 import { fourchetteFraisParDefaut } from "@/lib/calculs/calcul-livraison";
+import { coutFournisseurLignes as coutFournisseurLignesPartage } from "@/lib/calculs/prix-variante";
 import { COMMUNES_ABIDJAN, tarifPourCommune } from "@/lib/data/communes-abidjan";
+import { PanierCommande, type LignePanierAffichage } from "./panier-commande";
+import { RecapitulatifCommande } from "./recapitulatif-commande";
 import type { Product, ProductVariant, Inventory, ZoneLivraison } from "@/types/database";
 
 type VariantAvecStock = ProductVariant & { inventory: Inventory[] };
@@ -241,17 +244,17 @@ export function NouvelleCommandeForm({
   }
 
   // Certaines variantes ont leur propre prix fournisseur (ex : une taille
-  // XXL qui coûte plus cher à produire) — on l'utilise à la place du prix
-  // par défaut du produit quand il est renseigné, ligne par ligne.
+  // XXL qui coûte plus cher à produire) — logique centralisée dans
+  // lib/calculs/prix-variante.ts (partagée avec l'action serveur).
   function coutFournisseurLignes(
     lignes: { productVariantId: string | null; quantite: number }[],
     prixFournisseurParDefaut: number
   ) {
-    return lignes.reduce((acc, l) => {
-      const variante = l.productVariantId ? variants.find((v) => v.id === l.productVariantId) : undefined;
-      const prix = variante?.prix_fournisseur ?? prixFournisseurParDefaut;
-      return acc + l.quantite * prix;
-    }, 0);
+    return coutFournisseurLignesPartage(
+      lignes,
+      prixFournisseurParDefaut,
+      (variantId) => variants.find((v) => v.id === variantId)?.prix_fournisseur
+    );
   }
 
   const quantiteTotalePanierBrute = panier.reduce(
@@ -289,6 +292,26 @@ export function NouvelleCommandeForm({
     return a + (produit ? prixVente - coutFournisseurLignes(lignesDeCeProduit, produit.prix_fournisseur) : 0);
   }, 0);
   const prixTotalAvecLivraison = modeTarification === "total" ? prixTotalCommande : prixVenteTotalPanier + prixLivraison;
+
+  const lignesPanierAffichage: LignePanierAffichage[] = panier.map((ligne, index) => {
+    const produit = products.find((p) => p.id === ligne.productId);
+    const lignesDuProduit = lignesPourProduit(ligne);
+    const qte = lignesDuProduit.reduce((x, l) => x + l.quantite, 0);
+    const prixVenteLigne = modeTarification === "total" ? prixVenteUnitaireMoyenGlobal * qte : ligne.prixVente;
+    const benefice = produit ? prixVenteLigne - coutFournisseurLignes(lignesDuProduit, produit.prix_fournisseur) : 0;
+    // Miniature représentative de la ligne : photo de la première variante
+    // choisie si elle en a une, sinon photo générale du produit.
+    const premiereVarianteId = lignesDuProduit[0]?.productVariantId;
+    const photo = (premiereVarianteId && imageParVariante?.[premiereVarianteId]) || imageParProduit?.[ligne.productId];
+    const detail =
+      `${qte} pièce${qte > 1 ? "s" : ""}` +
+      (modeTarification === "parProduit"
+        ? ` · ${formatFCFA(prixVenteLigne)} · bénéfice ${formatFCFA(benefice)}`
+        : prixTotalCommande > 0
+          ? ` · part du prix total : ${formatFCFA(prixVenteLigne)}`
+          : " · en attente du prix total");
+    return { cle: `${ligne.productId}-${index}`, nomProduit: produit?.nom ?? "Produit", quantite: qte, photo, detail };
+  });
 
   function handleCommuneChange(valeur: string) {
     setCommune(valeur);
@@ -361,58 +384,7 @@ export function NouvelleCommandeForm({
 
       {panier.length > 0 && (
         <Card>
-          <h2 className="mb-3 font-medium">Produits de cette commande ({panier.length})</h2>
-          <div className="divide-y divide-ink-900/5">
-            {panier.map((ligne, index) => {
-              const produit = products.find((p) => p.id === ligne.productId);
-              const lignesDuProduit = lignesPourProduit(ligne);
-              const qte = lignesDuProduit.reduce((x, l) => x + l.quantite, 0);
-              const prixVenteLigne = modeTarification === "total" ? prixVenteUnitaireMoyenGlobal * qte : ligne.prixVente;
-              const benefice = produit ? prixVenteLigne - coutFournisseurLignes(lignesDuProduit, produit.prix_fournisseur) : 0;
-              // Miniature représentative de la ligne : photo de la première
-              // variante choisie si elle en a une, sinon photo générale du
-              // produit — avec la quantité totale affichée en badge, comme
-              // un panier d'achat classique.
-              const premiereVarianteId = lignesDuProduit[0]?.productVariantId;
-              const photo = (premiereVarianteId && imageParVariante?.[premiereVarianteId]) || imageParProduit?.[ligne.productId];
-              return (
-                <div key={`${ligne.productId}-${index}`} className="flex items-center justify-between gap-3 py-2.5">
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-12 w-12 shrink-0">
-                      {photo ? (
-                        <Image src={photo} alt="" fill sizes="48px" className="rounded-lg object-cover" />
-                      ) : (
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-beige-100 text-ink-900/30">
-                          <span className="text-lg">📦</span>
-                        </div>
-                      )}
-                      <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-terracotta-500 px-1 text-[11px] font-semibold text-white">
-                        {qte}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{produit?.nom ?? "Produit"}</p>
-                      <p className="text-xs text-ink-900/50">
-                        {qte} pièce{qte > 1 ? "s" : ""}
-                        {modeTarification === "parProduit"
-                          ? ` · ${formatFCFA(prixVenteLigne)} · bénéfice ${formatFCFA(benefice)}`
-                          : prixTotalCommande > 0
-                            ? ` · part du prix total : ${formatFCFA(prixVenteLigne)}`
-                            : " · en attente du prix total"}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => retirerDuPanier(index)}
-                    className="shrink-0 text-xs text-red-600 underline"
-                  >
-                    Retirer
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          <PanierCommande lignes={lignesPanierAffichage} onRetirer={retirerDuPanier} />
         </Card>
       )}
 
@@ -626,62 +598,18 @@ export function NouvelleCommandeForm({
         </div>
       </Card>
 
-      <Card className="space-y-2 bg-beige-100">
-        <div className="flex justify-between text-sm">
-          <span className="text-ink-900/60">Produits différents</span>
-          <span>{panier.length}</span>
-        </div>
-        <div className="flex justify-between text-sm">
-          <span className="text-ink-900/60">Nombre total de pièces</span>
-          <span>{quantiteTotalePanier}</span>
-        </div>
-
-        {modeTarification === "total" ? (
-          <>
-            <div className="flex justify-between text-sm">
-              <span className="text-ink-900/60">Prix de la livraison ({zone === "abidjan" ? "selon la commune" : "hors Abidjan"})</span>
-              <span>{formatFCFA(prixLivraison)}</span>
-            </div>
-            <div className="py-1">
-              <Label htmlFor="prixTotalCommandeInput">Prix total de la commande (produits + livraison, FCFA)</Label>
-              <Input
-                id="prixTotalCommandeInput"
-                type="number"
-                min={0}
-                value={prixTotalCommande || ""}
-                onChange={(e) => setPrixTotalCommande(Number(e.target.value))}
-              />
-              <p className="mt-1 text-xs text-ink-900/50">
-                C&apos;est le montant total que le client paie, livraison comprise. La part "produits" est calculée automatiquement en retirant la livraison ci-dessus, puis répartie entre les {panier.length || "..."} produit(s) au prorata des quantités.
-              </p>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-ink-900/60">→ Part produits (calculée)</span>
-              <span>{formatFCFA(prixVenteTotalPanier)}</span>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="flex justify-between text-sm">
-              <span className="text-ink-900/60">Prix de vente (tous produits)</span>
-              <span>{formatFCFA(prixVenteTotalPanier)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-ink-900/60">Prix de la livraison</span>
-              <span>{formatFCFA(prixLivraison)}</span>
-            </div>
-          </>
-        )}
-
-        <div className="flex justify-between border-t border-ink-900/10 pt-2 font-medium">
-          <span>Prix total (payé par le client)</span>
-          <span>{formatFCFA(prixTotalAvecLivraison)}</span>
-        </div>
-        <div className="mt-3 border-t border-ink-900/10 pt-3">
-          <p className="text-sm text-ink-900/60">Bénéfice estimé pour cette commande</p>
-          <p className="text-2xl font-semibold text-terracotta-600">{formatFCFA(beneficeTotalPanier)}</p>
-        </div>
-      </Card>
+      <RecapitulatifCommande
+        nombreProduits={panier.length}
+        quantiteTotale={quantiteTotalePanier}
+        modeTarification={modeTarification}
+        zone={zone}
+        prixLivraison={prixLivraison}
+        prixTotalCommande={prixTotalCommande}
+        onChangePrixTotalCommande={setPrixTotalCommande}
+        prixVenteTotalPanier={prixVenteTotalPanier}
+        prixTotalAvecLivraison={prixTotalAvecLivraison}
+        beneficeTotalPanier={beneficeTotalPanier}
+      />
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <Button

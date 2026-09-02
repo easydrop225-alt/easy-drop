@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { nouvelleCommandeSchema } from "@/lib/validations/schemas";
 import { calculDateLivraisonPrevue } from "@/lib/calculs/calcul-livraison";
+import { prixFournisseurEffectif } from "@/lib/calculs/prix-variante";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -96,7 +97,10 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
       product_variant_id: ligne.productVariantId,
       quantite: ligne.quantite,
       prix_vente_unitaire: prixVenteUnitaire,
-      prix_fournisseur_unitaire: (ligne.productVariantId && prixFournisseurParVarianteId.get(ligne.productVariantId)) ?? prixFournisseur,
+      prix_fournisseur_unitaire: prixFournisseurEffectif(
+        ligne.productVariantId ? prixFournisseurParVarianteId.get(ligne.productVariantId) : undefined,
+        prixFournisseur
+      ),
       observation: parsed.data.observation ?? null,
     }));
   });
