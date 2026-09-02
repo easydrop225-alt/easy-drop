@@ -15,11 +15,14 @@ export default async function MediasProduitPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: product } = await supabase.from("products").select("*").eq("id", id).single();
+  // Les 3 requêtes ci-dessous ne dépendent que de l'id du produit (déjà
+  // connu via les params), pas les unes des autres — on les lance en parallèle.
+  const [{ data: product }, { data: media }, { data: variants }] = await Promise.all([
+    supabase.from("products").select("*").eq("id", id).single(),
+    supabase.from("media").select("*").eq("product_id", id).order("ordre"),
+    supabase.from("product_variants").select("*").eq("product_id", id),
+  ]);
   if (!product) notFound();
-
-  const { data: media } = await supabase.from("media").select("*").eq("product_id", id).order("ordre");
-  const { data: variants } = await supabase.from("product_variants").select("*").eq("product_id", id);
 
   const list = (media ?? []) as Media[];
   const listeVariantes = (variants ?? []) as ProductVariant[];

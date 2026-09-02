@@ -12,8 +12,10 @@ export const metadata: Metadata = { title: "Produits" };
 
 export default async function AdminProduitsPage() {
   const supabase = await createClient();
-  const { data: products } = await supabase.from("products").select("*").order("created_at", { ascending: false });
-  const { data: categories } = await supabase.from("categories").select("*").order("ordre");
+  const [{ data: products }, { data: categories }] = await Promise.all([
+    supabase.from("products").select("*").order("created_at", { ascending: false }),
+    supabase.from("categories").select("*").order("ordre"),
+  ]);
 
   const list = (products ?? []) as Product[];
   const categoryList = (categories ?? []) as Category[];

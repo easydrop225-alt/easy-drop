@@ -17,21 +17,30 @@ export default async function NouvelleCommandePage({
     .order("nom");
 
   const productIds = (products ?? []).map((p) => p.id);
-  const { data: variants } = productIds.length
-    ? await supabase.from("product_variants").select("*, inventory(*)").in("product_id", productIds)
-    : { data: [] as (ProductVariant & { inventory: Inventory[] })[] };
 
-  // Une photo par variante (quand elle existe) pour aider à distinguer
-  // visuellement les couleurs/tailles pendant la sélection.
-  const { data: mediaVariantes } = productIds.length
-    ? await supabase
-        .from("media")
-        .select("product_variant_id, url")
-        .in("product_id", productIds)
-        .eq("type", "image")
-        .not("product_variant_id", "is", null)
-        .order("ordre")
-    : { data: [] as Pick<Media, "product_variant_id" | "url">[] };
+  // Les 3 requêtes ci-dessous dépendent seulement de la liste de produits
+  // déjà connue, pas les unes des autres — on les lance en parallèle.
+  const [{ data: variants }, { data: mediaVariantes }, { data: mediaProduits }] = productIds.length
+    ? await Promise.all([
+        supabase.from("product_variants").select("*, inventory(*)").in("product_id", productIds),
+        // Une photo par variante (quand elle existe) pour aider à distinguer
+        // visuellement les couleurs/tailles pendant la sélection.
+        supabase
+          .from("media")
+          .select("product_variant_id, url")
+          .in("product_id", productIds)
+          .eq("type", "image")
+          .not("product_variant_id", "is", null)
+          .order("ordre"),
+        // Une photo générale par produit, utilisée dans le récapitulatif du
+        // panier quand aucune variante précise n'a de photo dédiée.
+        supabase.from("media").select("product_id, url").in("product_id", productIds).eq("type", "image").order("ordre"),
+      ])
+    : [
+        { data: [] as (ProductVariant & { inventory: Inventory[] })[] },
+        { data: [] as Pick<Media, "product_variant_id" | "url">[] },
+        { data: [] as Pick<Media, "product_id" | "url">[] },
+      ];
 
   const imageParVariante: Record<string, string> = {};
   for (const m of mediaVariantes ?? []) {
@@ -39,17 +48,6 @@ export default async function NouvelleCommandePage({
       imageParVariante[m.product_variant_id] = m.url;
     }
   }
-
-  // Une photo générale par produit, utilisée dans le récapitulatif du
-  // panier quand aucune variante précise n'a de photo dédiée.
-  const { data: mediaProduits } = productIds.length
-    ? await supabase
-        .from("media")
-        .select("product_id, url")
-        .in("product_id", productIds)
-        .eq("type", "image")
-        .order("ordre")
-    : { data: [] as Pick<Media, "product_id" | "url">[] };
 
   const imageParProduit: Record<string, string> = {};
   for (const m of mediaProduits ?? []) {

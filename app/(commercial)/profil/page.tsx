@@ -22,18 +22,21 @@ export default async function ProfilPage() {
   // policies RLS de la base de données.
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user ?? null;
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user?.id).single();
+
+  // Les 4 requêtes ci-dessous ne dépendent que de l'id utilisateur (déjà en
+  // main via le cookie de session), pas les unes des autres — on les lance
+  // en parallèle plutôt que de les enchaîner.
+  const [{ data: profile }, { count: commandesLivrees }, { data: rangDuMois }, { data: settingsData }] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", user?.id).single(),
+    supabase
+      .from("orders")
+      .select("*", { count: "exact", head: true })
+      .eq("commercial_id", user?.id ?? "")
+      .eq("statut", "livree"),
+    supabase.rpc("mon_rang_du_mois"),
+    supabase.from("settings").select("*").eq("cle", "whatsapp_communaute_lien").maybeSingle(),
+  ]);
   const p = profile as Profile | null;
-
-  const { count: commandesLivrees } = await supabase
-    .from("orders")
-    .select("*", { count: "exact", head: true })
-    .eq("commercial_id", user?.id ?? "")
-    .eq("statut", "livree");
-
-  const { data: rangDuMois } = await supabase.rpc("mon_rang_du_mois");
-
-  const { data: settingsData } = await supabase.from("settings").select("*").eq("cle", "whatsapp_communaute_lien").maybeSingle();
   const lienCommunaute = (settingsData as Setting | null)?.valeur as string | undefined;
 
   return (

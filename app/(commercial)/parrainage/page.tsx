@@ -19,18 +19,21 @@ export default async function ParrainagePage() {
   // policies RLS de la base de données.
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user ?? null;
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user?.id ?? "").single();
-  const p = profile as Profile | null;
 
   const debutMois = premierJourDuMois(new Date());
   const finMois = new Date(); finMois.setDate(finMois.getDate() + 1);
 
-  const [{ data: filleuls }, { data: mesVentesLivrees }, { data: pointsCeMois }, { data: versements }] = await Promise.all([
-    supabase.from("profiles").select("id, prenom, nom, nom_boutique").eq("parrain_id", user?.id ?? ""),
-    supabase.from("orders").select("id").eq("commercial_id", user?.id ?? "").eq("statut", "livree").gte("created_at", debutMois),
-    supabase.from("points_parrainage").select("id, filleul_id").eq("parrain_id", user?.id ?? "").gte("created_at", debutMois),
-    supabase.from("versements_parrainage").select("*").eq("parrain_id", user?.id ?? "").order("mois", { ascending: false }),
-  ]);
+  // Les 5 requêtes ci-dessous ne dépendent que de l'id utilisateur (déjà en
+  // main via le cookie de session), pas les unes des autres.
+  const [{ data: profile }, { data: filleuls }, { data: mesVentesLivrees }, { data: pointsCeMois }, { data: versements }] =
+    await Promise.all([
+      supabase.from("profiles").select("*").eq("id", user?.id ?? "").single(),
+      supabase.from("profiles").select("id, prenom, nom, nom_boutique").eq("parrain_id", user?.id ?? ""),
+      supabase.from("orders").select("id").eq("commercial_id", user?.id ?? "").eq("statut", "livree").gte("created_at", debutMois),
+      supabase.from("points_parrainage").select("id, filleul_id").eq("parrain_id", user?.id ?? "").gte("created_at", debutMois),
+      supabase.from("versements_parrainage").select("*").eq("parrain_id", user?.id ?? "").order("mois", { ascending: false }),
+    ]);
+  const p = profile as Profile | null;
 
   const filleulsList = filleuls ?? [];
   const ventesPersonnellesCeMois = mesVentesLivrees?.length ?? 0;
