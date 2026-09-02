@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { compresserImage } from "@/lib/media/image-compression";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Media, ProductVariant } from "@/types/database";
@@ -45,11 +46,12 @@ export function MediaUploader({ productId }: { productId: string }) {
 
     try {
       for (const file of Array.from(files)) {
-        const path = `${productId}/${type}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+        const fichierAEnvoyer = type === "image" ? await compresserImage(file) : file;
+        const path = `${productId}/${type}/${Date.now()}-${fichierAEnvoyer.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
         const { error: uploadError } = await supabase.storage
           .from("product-media")
-          .upload(path, file, { cacheControl: "3600", upsert: false });
+          .upload(path, fichierAEnvoyer, { cacheControl: "3600", upsert: false });
 
         if (uploadError) throw uploadError;
 
@@ -142,7 +144,7 @@ export function MediaUploader({ productId }: { productId: string }) {
         />
       </div>
 
-      {uploading && <p className="text-sm text-ink-900/60">Envoi en cours...</p>}
+      {uploading && <p className="text-sm text-ink-900/60">Compression et envoi en cours...</p>}
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {variants.length > 0 && media.length > 0 && (
