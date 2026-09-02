@@ -24,7 +24,13 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + "/");
 }
 
-export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNonLues?: number }) {
+export function HeaderCommercial({
+  notificationsNonLues = 0,
+  comptesLies = [],
+}: {
+  notificationsNonLues?: number;
+  comptesLies?: { lienId: string; compteCibleId: string; label: string }[];
+}) {
   const pathname = usePathname();
 
   return (
@@ -56,6 +62,7 @@ export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNo
             notifications (le profil est accessible depuis la barre de
             navigation du bas — voir BottomNavCommercial). */}
         <div className="flex items-center gap-4 md:hidden">
+          <CompteSwitcher liens={comptesLies} />
           <ThemeToggle />
           <Link href="/notifications" className="relative text-ink-900/70" aria-label="Notifications">
             <Bell size={22} />
@@ -68,6 +75,7 @@ export function HeaderCommercial({ notificationsNonLues = 0 }: { notificationsNo
         </div>
 
         <div className="hidden items-center gap-2 md:flex">
+          <CompteSwitcher liens={comptesLies} />
           <ThemeToggle />
           <LogoutButton />
         </div>
