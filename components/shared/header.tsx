@@ -176,6 +176,12 @@ export function HeaderAdmin({
             <ThemeToggle />
             <LogoutButton />
           </div>
+          {/* Visible en permanence sur mobile, pas caché dans le menu
+              déroulant — c'est un raccourci qu'on veut pouvoir utiliser
+              d'un coup d'œil, sans ouvrir le menu. */}
+          <div className="lg:hidden">
+            <CompteSwitcher liens={comptesLies} />
+          </div>
           <button
             onClick={() => setMenuOuvert(!menuOuvert)}
             className="rounded-lg p-2 hover:bg-beige-100 lg:hidden"
@@ -219,10 +225,7 @@ export function HeaderAdmin({
           ))}
           <div className="mt-2 flex items-center justify-between border-t border-ink-900/5 pt-2">
             <LogoutButton />
-            <div className="flex items-center gap-1">
-              <CompteSwitcher liens={comptesLies} />
-              <ThemeToggle />
-            </div>
+            <ThemeToggle />
           </div>
         </nav>
       )}

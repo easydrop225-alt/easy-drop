@@ -106,6 +106,13 @@ export async function delierCompte(lienId: string) {
 /**
  * Récupère les comptes liés au compte actuellement connecté, pour les
  * afficher (bouton de bascule, liste dans Paramètres).
+ *
+ * Profite de cet appel (déclenché à chaque chargement de page) pour garder
+ * le jeton de rafraîchissement de CE compte à jour dans les liens existants
+ * — indispensable, car Supabase renouvelle silencieusement ce jeton à
+ * chaque utilisation normale de l'app (rotation de sécurité). Sans cette
+ * mise à jour continue, la valeur enregistrée à la création du lien devient
+ * périmée dès la première navigation qui suit, et la bascule échoue.
  */
 export async function listerComptesLies() {
   const supabase = await createClient();
@@ -117,7 +124,27 @@ export async function listerComptesLies() {
     .select("*")
     .or(`compte_a_id.eq.${session.user.id},compte_b_id.eq.${session.user.id}`);
 
-  return (data ?? []).map((lien) => {
+  const liens = data ?? [];
+
+  if (liens.length > 0 && session.refresh_token) {
+    try {
+      const admin = createAdminClient();
+      for (const lien of liens) {
+        const estA = lien.compte_a_id === session.user.id;
+        const champ = estA ? "refresh_token_a" : "refresh_token_b";
+        const valeurActuelle = estA ? lien.refresh_token_a : lien.refresh_token_b;
+        // On n'écrit que si la valeur a changé, pour ne pas faire une
+        // requête d'écriture inutile à chaque page si rien n'a bougé.
+        if (valeurActuelle !== session.refresh_token) {
+          await admin.from("comptes_lies").update({ [champ]: session.refresh_token }).eq("id", lien.id);
+        }
+      }
+    } catch {
+      // Ne bloque jamais l'affichage de la page pour ça.
+    }
+  }
+
+  return liens.map((lien) => {
     const estA = lien.compte_a_id === session.user.id;
     return {
       lienId: lien.id as string,
