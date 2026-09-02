@@ -10,8 +10,10 @@ export const metadata: Metadata = { title: "Catégories" };
 
 export default async function CategoriesPage() {
   const supabase = await createClient();
-  const { data: categories } = await supabase.from("categories").select("*").order("ordre");
-  const { data: products } = await supabase.from("products").select("id, category_id");
+  const [{ data: categories }, { data: products }] = await Promise.all([
+    supabase.from("categories").select("*").order("ordre"),
+    supabase.from("products").select("id, category_id"),
+  ]);
   const list = (categories ?? []) as Category[];
   const productList = (products ?? []) as Pick<Product, "id" | "category_id">[];
 

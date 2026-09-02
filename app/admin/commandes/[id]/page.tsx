@@ -22,18 +22,21 @@ export default async function DetailCommandeAdminPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: order } = await supabase.from("orders").select("*, profiles(nom, prenom, telephone, nom_boutique)").eq("id", id).single();
+  // Les 3 requêtes ci-dessous ne dépendent que de l'id de la commande (déjà
+  // connu via les params), pas les unes des autres — on les lance en parallèle.
+  const [{ data: order }, { data: items }, { data: pointParrainage }] = await Promise.all([
+    supabase.from("orders").select("*, profiles(nom, prenom, telephone, nom_boutique)").eq("id", id).single(),
+    supabase.from("order_items").select("*, products(*)").eq("order_id", id),
+    supabase
+      .from("points_parrainage")
+      .select("*, profiles:parrain_id(prenom, nom, nom_boutique, code_parrainage)")
+      .eq("order_id", id)
+      .maybeSingle(),
+  ]);
   if (!order) notFound();
 
-  const { data: items } = await supabase.from("order_items").select("*, products(*)").eq("order_id", id);
   const itemList = ((items ?? []) as (OrderItem & { products: Product })[]);
   const o = order as Order & { profiles: Pick<Profile, "nom" | "prenom" | "telephone" | "nom_boutique"> };
-
-  const { data: pointParrainage } = await supabase
-    .from("points_parrainage")
-    .select("*, profiles:parrain_id(prenom, nom, nom_boutique, code_parrainage)")
-    .eq("order_id", id)
-    .maybeSingle();
 
   const prixVente = itemList.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0);
   const prixFournisseur = itemList.reduce((a, i) => a + i.prix_fournisseur_unitaire * i.quantite, 0);

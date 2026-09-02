@@ -17,10 +17,12 @@ export default async function DetailCommandePage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: order } = await supabase.from("orders").select("*").eq("id", id).single();
+  const [{ data: order }, { data: items }] = await Promise.all([
+    supabase.from("orders").select("*").eq("id", id).single(),
+    supabase.from("order_items").select("*, products(*)").eq("order_id", id),
+  ]);
   if (!order) notFound();
 
-  const { data: items } = await supabase.from("order_items").select("*, products(*)").eq("order_id", id);
   const itemList = ((items ?? []) as (OrderItem & { products: Product })[]);
   const o = order as Order;
 

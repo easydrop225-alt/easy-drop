@@ -70,7 +70,7 @@ export function CommercialPerformanceChart({
             <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
             <YAxis type="category" dataKey="nom" tick={{ fontSize: 11 }} width={120} />
             <Tooltip />
-            <Bar dataKey="valeur" fill="#C25E3F" radius={[0, 6, 6, 0]} name="Commandes livrées" />
+            <Bar dataKey="valeur" fill="rgb(var(--color-terracotta-500))" radius={[0, 6, 6, 0]} name="Commandes livrées" />
           </BarChart>
         </ResponsiveContainer>
       )}

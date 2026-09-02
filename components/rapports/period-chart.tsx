@@ -22,7 +22,7 @@ export function PeriodChart({
   type = "bar",
   unite = "nombre",
   defaultGranularite = "mois",
-  color = "#C25E3F",
+  color = "rgb(var(--color-terracotta-500))",
   color2 = "rgb(var(--color-ink-900))",
 }: {
   title: string;

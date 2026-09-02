@@ -97,6 +97,17 @@ export interface Media {
   ordre: number;
 }
 
+export interface ProductPriceHistory {
+  id: string;
+  product_id: string;
+  product_variant_id: string | null;
+  champ: "prix_fournisseur" | "prix_min_conseille" | "prix_max_conseille";
+  ancienne_valeur: number | null;
+  nouvelle_valeur: number | null;
+  modifie_par: string | null;
+  created_at: string;
+}
+
 export interface Inventory {
   id: string;
   product_variant_id: string;

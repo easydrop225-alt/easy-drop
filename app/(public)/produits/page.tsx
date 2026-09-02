@@ -7,8 +7,10 @@ export const revalidate = 300;
 
 export default async function CataloguePublicPage() {
   const supabase = await createClient();
-  const { data: categories } = await supabase.from("categories").select("*").eq("actif", true).order("ordre");
-  const { data: products } = await supabase.from("products_public").select("id, category_id");
+  const [{ data: categories }, { data: products }] = await Promise.all([
+    supabase.from("categories").select("*").eq("actif", true).order("ordre"),
+    supabase.from("products_public").select("id, category_id"),
+  ]);
 
   const compteParCategorie = new Map<string, number>();
   for (const p of (products ?? []) as Pick<Product, "id" | "category_id">[]) {

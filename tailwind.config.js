@@ -61,6 +61,12 @@ module.exports = {
       borderRadius: {
         xl: "0.875rem",
       },
+      boxShadow: {
+        // Relief des cartes ("Option A" validée avec Yann) : un contact net
+        // + une lueur chaude très diffuse teintée terracotta, pour que le
+        // relief vienne de l'ombre plutôt que d'une bordure visible.
+        card: "0 1px 2px rgb(0 0 0 / 0.06), 0 12px 28px -12px rgb(var(--color-terracotta-500) / 0.3)",
+      },
     },
   },
   plugins: [],

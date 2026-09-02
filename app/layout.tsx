@@ -22,7 +22,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#C25E3F",
+  themeColor: "#DC7032",
   // Nécessaire pour que env(safe-area-inset-bottom) reflète la vraie zone
   // sûre sur les iPhone à encoche/barre de geste — sans ça, la barre de
   // navigation du bas peut se retrouver partiellement sous la barre du

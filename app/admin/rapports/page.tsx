@@ -1,13 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import dynamic from "next/dynamic";
-
-// Chargés en différé : Recharts est une librairie assez lourde, pas besoin
-// de la faire attendre à l'utilisateur avant que le reste de la page
-// (chiffres, tableaux) ne s'affiche.
-const PeriodChart = dynamic(() => import("@/components/rapports/period-chart").then((m) => m.PeriodChart));
-const CommercialPerformanceChart = dynamic(() =>
-  import("@/components/rapports/commercial-performance-chart").then((m) => m.CommercialPerformanceChart)
-);
+import { PeriodChart, CommercialPerformanceChart } from "@/components/rapports/charts-lazy";
 import { formatFCFA } from "@/lib/utils";
 import type { PointJournalier } from "@/lib/stats/aggregate";
 import type { Order, OrderItem, Profile } from "@/types/database";
