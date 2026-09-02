@@ -1,41 +1,22 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { useActionState } from "react";
-import { connecter } from "./actions";
-import { Input, Label } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { PasswordInput } from "@/components/ui/password-input";
+import { FormulaireConnexion } from "./formulaire-connexion";
 
 export default function ConnexionPage() {
-  const [state, formAction, pending] = useActionState(connecter, undefined as { error?: string } | undefined);
-
   return (
     <main className="mx-auto max-w-md px-6 py-16">
       <div className="mb-8 flex flex-col items-center text-center">
-        <Image src="/logo-easy-drop.png" alt="Easy Drop" width={64} height={64} className="mb-4 h-16 w-16 rounded-2xl object-contain" />
+        <Image
+          src="/logo-easy-drop.png"
+          alt="Easy Drop"
+          width={64}
+          height={64}
+          priority
+          className="mb-4 h-16 w-16 rounded-2xl object-contain"
+        />
         <h1 className="text-2xl font-semibold">Connexion</h1>
       </div>
-      <form action={formAction} className="space-y-4">
-        <div>
-          <Label htmlFor="identifiant">Téléphone ou email</Label>
-          <Input id="identifiant" name="identifiant" required />
-        </div>
-        <div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="motDePasse">Mot de passe</Label>
-            <Link href="/mot-de-passe-oublie" className="text-xs text-terracotta-600 underline">
-              Mot de passe oublié ?
-            </Link>
-          </div>
-          <PasswordInput id="motDePasse" name="motDePasse" required />
-        </div>
-        {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-        <Button type="submit" disabled={pending} className="w-full">
-          {pending ? "Connexion..." : "Se connecter"}
-        </Button>
-      </form>
+      <FormulaireConnexion />
       <p className="mt-6 text-sm text-ink-900/60">
         Pas encore de compte ? <Link href="/inscription" className="text-terracotta-600 underline">S'inscrire</Link>
       </p>
