@@ -11,7 +11,13 @@ export const metadata: Metadata = { title: "Mes commandes" };
 
 export default async function MesCommandesPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // getSession() lit la session depuis le cookie, sans appel réseau
+  // systématique vers Supabase à chaque affichage de page (contrairement
+  // à getUser()) — l'id récupéré ici ne sert qu'à filtrer les propres
+  // données de la personne, déjà protégées indépendamment par les
+  // policies RLS de la base de données.
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
 
   // Historique limité aux 3 derniers mois pour rester rapide même avec
   // beaucoup de commandes accumulées (n'affecte pas les rapports annuels).

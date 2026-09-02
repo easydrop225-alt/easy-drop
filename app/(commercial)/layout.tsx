@@ -6,7 +6,13 @@ import { PushNotificationSetup } from "@/components/shared/push-notification-set
 
 export default async function CommercialLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // getSession() lit la session depuis le cookie, sans appel réseau
+  // systématique vers Supabase à chaque affichage de page (contrairement
+  // à getUser()) — l'id récupéré ici ne sert qu'à filtrer les propres
+  // données de la personne, déjà protégées indépendamment par les
+  // policies RLS de la base de données.
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
 
   const { count: notificationsNonLues } = await supabase
     .from("notifications")

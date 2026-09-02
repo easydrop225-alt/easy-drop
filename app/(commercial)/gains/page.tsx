@@ -11,7 +11,13 @@ export const metadata: Metadata = { title: "Mes gains" };
 
 export default async function MesGainsPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // getSession() lit la session depuis le cookie, sans appel réseau
+  // systématique vers Supabase à chaque affichage de page (contrairement
+  // à getUser()) — l'id récupéré ici ne sert qu'à filtrer les propres
+  // données de la personne, déjà protégées indépendamment par les
+  // policies RLS de la base de données.
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
   const debutMois = premierJourDuMois(new Date());
 
   // Historique affiché (tableau) limité aux 3 derniers mois pour rester

@@ -5,7 +5,13 @@ import { PushNotificationSetup } from "@/components/shared/push-notification-set
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  // getSession() lit la session depuis le cookie, sans appel réseau
+  // systématique vers Supabase à chaque affichage de page (contrairement
+  // à getUser()) — l'id récupéré ici ne sert qu'à filtrer les propres
+  // données de la personne, déjà protégées indépendamment par les
+  // policies RLS de la base de données.
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
 
   // Les inscriptions sont désormais validées automatiquement (voir
   // 06_DECISIONS_TECHNIQUES.md) — ce badge informe des inscriptions
