@@ -143,17 +143,39 @@ export async function modifierVariante(
 ) {
   const supabase = await createClient();
 
+  const nouveauPrix = updates.prixFournisseur ? Number(updates.prixFournisseur) : null;
+
+  const { data: varianteActuelle } = await supabase
+    .from("product_variants")
+    .select("prix_fournisseur")
+    .eq("id", variantId)
+    .single();
+
   const { error } = await supabase
     .from("product_variants")
     .update({
       couleur: updates.couleur || null,
       taille: updates.taille || null,
       nom: updates.nom || null,
-      prix_fournisseur: updates.prixFournisseur ? Number(updates.prixFournisseur) : null,
+      prix_fournisseur: nouveauPrix,
     })
     .eq("id", variantId);
 
   if (error) return { error: error.message };
+
+  if (varianteActuelle && varianteActuelle.prix_fournisseur !== nouveauPrix) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    await supabase.from("product_price_history").insert({
+      product_id: productId,
+      product_variant_id: variantId,
+      champ: "prix_fournisseur",
+      ancienne_valeur: varianteActuelle.prix_fournisseur,
+      nouvelle_valeur: nouveauPrix,
+      modifie_par: user?.id ?? null,
+    });
+  }
 
   // Détache l'ancienne photo de cette variante (si elle en avait une),
   // puis attache la nouvelle si une a été choisie — permet aussi de

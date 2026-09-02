@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { produitSchema } from "@/lib/validations/schemas";
+import { champsPrixModifies } from "@/lib/produits/historique-prix";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -62,15 +63,26 @@ export async function modifierProduit(productId: string, _prevState: unknown, fo
   }
 
   const supabase = await createClient();
+
+  const nouveauxPrix = {
+    prix_fournisseur: parsed.data.prixFournisseur,
+    prix_min_conseille: parsed.data.prixMinConseille ?? null,
+    prix_max_conseille: parsed.data.prixMaxConseille ?? null,
+  };
+
+  const { data: produitActuel } = await supabase
+    .from("products")
+    .select("prix_fournisseur, prix_min_conseille, prix_max_conseille")
+    .eq("id", productId)
+    .single();
+
   const { error } = await supabase
     .from("products")
     .update({
       nom: parsed.data.nom,
       category_id: parsed.data.categoryId,
       description: parsed.data.description,
-      prix_fournisseur: parsed.data.prixFournisseur,
-      prix_min_conseille: parsed.data.prixMinConseille ?? null,
-      prix_max_conseille: parsed.data.prixMaxConseille ?? null,
+      ...nouveauxPrix,
       couleurs: parsed.data.couleurs,
       tailles: parsed.data.tailles,
       actif: parsed.data.actif,
@@ -78,6 +90,24 @@ export async function modifierProduit(productId: string, _prevState: unknown, fo
     .eq("id", productId);
 
   if (error) return { error: error.message };
+
+  if (produitActuel) {
+    const changements = champsPrixModifies(produitActuel, nouveauxPrix);
+    if (changements.length > 0) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      await supabase.from("product_price_history").insert(
+        changements.map((c) => ({
+          product_id: productId,
+          champ: c.champ,
+          ancienne_valeur: c.ancienne_valeur,
+          nouvelle_valeur: c.nouvelle_valeur,
+          modifie_par: user?.id ?? null,
+        }))
+      );
+    }
+  }
 
   revalidatePath("/admin/produits");
   redirect("/admin/produits");

@@ -4,7 +4,8 @@ import { ProduitForm } from "../../form";
 import { modifierProduit } from "../../actions";
 import { MediaUploader } from "@/components/produits/media-uploader";
 import { VariantesManager } from "@/components/produits/variantes-manager";
-import type { Category, Product, ProductVariant, Inventory } from "@/types/database";
+import { HistoriquePrix } from "@/components/produits/historique-prix";
+import type { Category, Product, ProductVariant, Inventory, ProductPriceHistory, Profile } from "@/types/database";
 
 export default async function EditProduitPage({
   params,
@@ -14,14 +15,18 @@ export default async function EditProduitPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: product } = await supabase.from("products").select("*").eq("id", id).single();
-  if (!product) notFound();
+  const [{ data: product }, { data: categories }, { data: variants }, { data: historique }] = await Promise.all([
+    supabase.from("products").select("*").eq("id", id).single(),
+    supabase.from("categories").select("*").order("ordre"),
+    supabase.from("product_variants").select("*, inventory(*)").eq("product_id", id),
+    supabase
+      .from("product_price_history")
+      .select("*, profiles(prenom, nom)")
+      .eq("product_id", id)
+      .order("created_at", { ascending: false }),
+  ]);
 
-  const { data: categories } = await supabase.from("categories").select("*").order("ordre");
-  const { data: variants } = await supabase
-    .from("product_variants")
-    .select("*, inventory(*)")
-    .eq("product_id", id);
+  if (!product) notFound();
 
   const modifierCeProduit = modifierProduit.bind(null, id);
 
@@ -42,6 +47,11 @@ export default async function EditProduitPage({
         productId={id}
         variants={(variants ?? []) as (ProductVariant & { inventory: Inventory[] })[]}
         prixFournisseurProduit={(product as Product).prix_fournisseur}
+      />
+
+      <HistoriquePrix
+        historique={(historique ?? []) as (ProductPriceHistory & { profiles: Pick<Profile, "prenom" | "nom"> | null })[]}
+        variants={(variants ?? []) as ProductVariant[]}
       />
     </div>
   );
