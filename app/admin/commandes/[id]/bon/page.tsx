@@ -38,10 +38,10 @@ export default async function BonDeCommandePage({
       <div className="rounded-2xl border-2 border-ink-900 p-6 print:rounded-none print:border-0">
         {/* En-tête — icône à gauche, nom de boutique + téléphone à droite */}
         <div className="mb-4 flex items-center gap-3">
-          <ShoppingBag size={32} strokeWidth={2} className="shrink-0" />
+          <ShoppingBag size={32} strokeWidth={2.5} className="shrink-0 text-ink-900" />
           <div>
-            <p className="text-lg font-bold leading-tight">{o.profiles?.nom_boutique || `${o.profiles?.prenom} ${o.profiles?.nom}`}</p>
-            <p className="text-sm text-ink-900/70">{o.profiles?.telephone}</p>
+            <p className="text-lg font-bold leading-tight text-ink-900">{o.profiles?.nom_boutique || `${o.profiles?.prenom} ${o.profiles?.nom}`}</p>
+            <p className="text-sm font-bold text-ink-900">{o.profiles?.telephone}</p>
           </div>
         </div>
 
@@ -50,26 +50,26 @@ export default async function BonDeCommandePage({
           <p className="text-sm font-bold uppercase tracking-wide text-white">Infos du client</p>
         </div>
 
-        <div className="mb-4 border-t border-dashed border-ink-900/20 pt-4">
-          <p className="text-xs uppercase text-ink-900/50">Destinataire</p>
-          <p className="text-lg font-semibold">{o.client_nom}</p>
-          <p className="text-base">{o.client_telephone}</p>
-          <p className="mt-1 text-sm">{o.client_adresse}, {o.client_commune}</p>
+        <div className="mb-4 border-t-2 border-dashed border-ink-900 pt-4">
+          <p className="text-xs font-bold uppercase text-ink-900">Destinataire</p>
+          <p className="text-lg font-bold text-ink-900">{o.client_nom}</p>
+          <p className="text-base font-bold text-ink-900">{o.client_telephone}</p>
+          <p className="mt-1 text-sm font-bold text-ink-900">{o.client_adresse}, {o.client_commune}</p>
           {o.zone === "hors_abidjan" && o.ville_expedition && (
-            <p className="text-sm text-ink-900/60">Expédition → {o.ville_expedition} ({o.gare || "gare non précisée"})</p>
+            <p className="text-sm font-bold text-ink-900">Expédition → {o.ville_expedition} ({o.gare || "gare non précisée"})</p>
           )}
         </div>
 
-        <div className="mb-4 border-t border-dashed border-ink-900/20 pt-4">
-          <p className="mb-1 text-xs uppercase text-ink-900/50">Articles</p>
-          <ul className="space-y-1 text-sm">
+        <div className="mb-4 border-t-2 border-dashed border-ink-900 pt-4">
+          <p className="mb-1 text-xs font-bold uppercase text-ink-900">Articles</p>
+          <ul className="space-y-1 text-sm font-bold text-ink-900">
             {o.order_items.map((item) => {
               const variante = item.product_variants
                 ? [item.product_variants.couleur, item.product_variants.taille].filter(Boolean).join(" / ")
                 : "";
               return (
                 <li key={item.id}>
-                  <span className="font-medium">{item.quantite}×</span> {item.products?.nom}
+                  <span className="font-bold">{item.quantite}×</span> {item.products?.nom}
                   {variante && ` (${variante})`}
                 </li>
               );
@@ -77,14 +77,14 @@ export default async function BonDeCommandePage({
           </ul>
         </div>
 
-        <div className="border-t border-dashed border-ink-900/20 pt-4">
+        <div className="border-t-2 border-dashed border-ink-900 pt-4">
           <div className="rounded-2xl border-2 border-ink-900 px-4 py-3">
-            <p className="text-sm text-ink-900/60">Prix total (livraison incluse)</p>
-            <p className="text-2xl font-bold">{formatFCFA(prixTotal)}</p>
+            <p className="text-sm font-bold text-ink-900">Prix total (livraison incluse)</p>
+            <p className="text-2xl font-bold text-ink-900">{formatFCFA(prixTotal)}</p>
           </div>
         </div>
 
-        <div className="mt-6 border-t border-ink-900/10 pt-3 text-center text-xs text-ink-900/40">
+        <div className="mt-6 border-t-2 border-ink-900 pt-3 text-center text-xs font-bold text-ink-900">
           <p>Réf. {o.numero_commande}</p>
           {dateLivraison && <p>Livraison prévue le {formatDate(dateLivraison)}</p>}
         </div>
