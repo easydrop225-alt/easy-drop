@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { StatutRapideSelect } from "./statut-rapide-select";
 import { BarreActionGroupee } from "./barre-action-groupee";
-import { formatDate, formatFCFA } from "@/lib/utils";
+import { cn, formatDate, formatFCFA } from "@/lib/utils";
 import { exporterCSV } from "@/lib/export-csv";
 import { Button } from "@/components/ui/button";
 import { FiltreDate, correspondAuFiltre, type FiltreDateValeur } from "./filtre-date";
@@ -17,6 +17,31 @@ export type OrderComplete = Order & {
   profiles: Pick<Profile, "nom" | "prenom" | "telephone" | "nom_boutique">;
   order_items: (OrderItem & { products: Product; product_variants: ProductVariant | null })[];
 };
+
+type BeneficeCommande = { total: number; paye: boolean };
+
+/** Bénéfice de la commande + statut de paiement — le badge payé/non payé ne
+ * s'affiche que pour les commandes livrées (avant, le paiement n'a pas de
+ * sens ; annulée, le bénéfice est nul). Sert à vérifier d'un coup d'œil la
+ * somme des paiements en attente d'un commercial (page Paiements). */
+function ColonneBenefice({ order, benefice }: { order: OrderComplete; benefice?: BeneficeCommande }) {
+  if (!benefice) return <span className="text-ink-900/30">—</span>;
+  return (
+    <div className="whitespace-nowrap">
+      <p className="font-medium">{formatFCFA(benefice.total)}</p>
+      {order.statut === "livree" && (
+        <span
+          className={cn(
+            "mt-0.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium",
+            benefice.paye ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
+          )}
+        >
+          {benefice.paye ? "Payé" : "Non payé"}
+        </span>
+      )}
+    </div>
+  );
+}
 
 type Onglet = "nouvelles" | "annulees" | "livrees" | "relance" | "toutes";
 
@@ -79,9 +104,11 @@ function ColonneStatut({ order }: { order: OrderComplete }) {
 export function CommandesGroupeesAdmin({
   orders,
   imageParProduit,
+  beneficeParCommande,
 }: {
   orders: OrderComplete[];
   imageParProduit: Record<string, string | undefined>;
+  beneficeParCommande: Record<string, BeneficeCommande>;
 }) {
   const [filtre, setFiltre] = useState<FiltreDateValeur>({ annee: new Date().getFullYear(), mois: null, jour: null });
   const [groupeOuvert, setGroupeOuvert] = useState<Record<string, boolean>>({});
@@ -242,6 +269,9 @@ export function CommandesGroupeesAdmin({
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         <StatutRapideSelect orderId={order.id} statutActuel={order.statut} />
+                        <ColonneBenefice order={order} benefice={beneficeParCommande[order.id]} />
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
                         <Link
                           href={`/admin/commandes/${order.id}/bon`}
                           target="_blank"
@@ -270,6 +300,7 @@ export function CommandesGroupeesAdmin({
                         <th className="p-2">Prix total</th>
                         <th className="p-2">Date</th>
                         <th className="p-2">Statut</th>
+                        <th className="p-2">Bénéfice</th>
                         <th className="p-2"></th>
                       </tr>
                     </thead>
@@ -317,6 +348,9 @@ export function CommandesGroupeesAdmin({
                             <td className="p-2">
                               <ColonneStatut order={order} />
                               <div className="mt-1"><StatutRapideSelect orderId={order.id} statutActuel={order.statut} /></div>
+                            </td>
+                            <td className="p-2">
+                              <ColonneBenefice order={order} benefice={beneficeParCommande[order.id]} />
                             </td>
                             <td className="p-2">
                               <Link

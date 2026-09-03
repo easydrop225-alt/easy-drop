@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { CommandesGroupeesAdmin, type OrderComplete } from "@/components/commandes/commandes-groupees-admin";
-import type { Media } from "@/types/database";
+import type { Media, Profit } from "@/types/database";
 
 import type { Metadata } from "next";
 
@@ -41,13 +41,33 @@ export default async function AdminCommandesPage({
   const totalPages = Math.max(1, Math.ceil(total / TAILLE_PAGE));
 
   const productIds = Array.from(new Set(list.flatMap((o) => o.order_items.map((i) => i.product_id))));
-  const { data: media } = productIds.length
-    ? await supabase.from("media").select("*").in("product_id", productIds).eq("type", "image").order("ordre")
-    : { data: [] as Media[] };
+  const orderIds = list.map((o) => o.id);
+
+  // Les deux requêtes ci-dessous ne dépendent que des commandes déjà
+  // chargées, pas l'une de l'autre — on les lance en parallèle.
+  const [{ data: media }, { data: profits }] = await Promise.all([
+    productIds.length
+      ? supabase.from("media").select("*").in("product_id", productIds).eq("type", "image").order("ordre")
+      : Promise.resolve({ data: [] as Media[] }),
+    orderIds.length
+      ? supabase.from("profits").select("order_id, statut, montant_benefice").in("order_id", orderIds)
+      : Promise.resolve({ data: [] as Pick<Profit, "order_id" | "statut" | "montant_benefice">[] }),
+  ]);
 
   const imageParProduit: Record<string, string | undefined> = {};
   for (const m of (media ?? []) as Media[]) {
     if (!(m.product_id in imageParProduit)) imageParProduit[m.product_id] = m.url;
+  }
+
+  // Regroupe les lignes de bénéfice par commande : montant total + le
+  // paiement n'est considéré "payé" que si TOUTES les lignes le sont
+  // (une commande peut avoir plusieurs produits, donc plusieurs lignes).
+  const beneficeParCommande: Record<string, { total: number; paye: boolean }> = {};
+  for (const p of (profits ?? []) as Pick<Profit, "order_id" | "statut" | "montant_benefice">[]) {
+    const entry = beneficeParCommande[p.order_id] ?? { total: 0, paye: true };
+    entry.total += Number(p.montant_benefice);
+    if (p.statut !== "paye") entry.paye = false;
+    beneficeParCommande[p.order_id] = entry;
   }
 
   return (
@@ -56,7 +76,7 @@ export default async function AdminCommandesPage({
         <h1 className="text-2xl font-semibold">Toutes les commandes</h1>
         <p className="text-sm text-ink-900/50">{total} commande{total !== 1 ? "s" : ""} au total</p>
       </div>
-      <CommandesGroupeesAdmin orders={list} imageParProduit={imageParProduit} />
+      <CommandesGroupeesAdmin orders={list} imageParProduit={imageParProduit} beneficeParCommande={beneficeParCommande} />
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-3 text-sm">
