@@ -76,12 +76,31 @@ function ColonneStatut({ order }: { order: OrderComplete }) {
   );
 }
 
+function beneficeEtStatutPaiement(order: OrderComplete, profit?: { montant: number; statut: string }) {
+  // Si un versement existe déjà pour cette commande, on se base dessus (la
+  // vraie source de vérité pour le paiement). Sinon, on affiche une
+  // estimation calculée directement depuis les lignes de la commande.
+  const montant = profit
+    ? profit.montant
+    : order.order_items.reduce((a, i) => a + Number(i.benefice_ligne ?? 0), 0);
+
+  // Le badge Payé/Non payé ne veut dire quelque chose qu'une fois la
+  // commande réellement livrée — avant, aucun paiement n'est encore dû.
+  const badge = order.statut === "livree"
+    ? (profit?.statut === "paye" ? "paye" : "non_paye")
+    : null;
+
+  return { montant, badge };
+}
+
 export function CommandesGroupeesAdmin({
   orders,
   imageParProduit,
+  profitParOrderId = {},
 }: {
   orders: OrderComplete[];
   imageParProduit: Record<string, string | undefined>;
+  profitParOrderId?: Record<string, { montant: number; statut: string }>;
 }) {
   const [filtre, setFiltre] = useState<FiltreDateValeur>({ annee: new Date().getFullYear(), mois: null, jour: null });
   const [groupeOuvert, setGroupeOuvert] = useState<Record<string, boolean>>({});
@@ -244,6 +263,24 @@ export function CommandesGroupeesAdmin({
                           <RecapitulatifArticles order={order} />
                         </div>
                         <ColonneDate order={order} />
+                        {(() => {
+                          const { montant, badge } = beneficeEtStatutPaiement(order, profitParOrderId[order.id]);
+                          return (
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="text-ink-900/50">Bénéfice :</span>
+                              <span className="font-medium">{formatFCFA(montant)}</span>
+                              {badge && (
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                    badge === "paye" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                                  }`}
+                                >
+                                  {badge === "paye" ? "Payé" : "Non payé"}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </Link>
                       </div>
                       <div className="flex items-center justify-between gap-2">
@@ -276,6 +313,7 @@ export function CommandesGroupeesAdmin({
                         <th className="p-2">Prix total</th>
                         <th className="p-2">Date</th>
                         <th className="p-2">Statut</th>
+                        <th className="p-2">Bénéfice</th>
                         <th className="p-2"></th>
                       </tr>
                     </thead>
@@ -323,6 +361,25 @@ export function CommandesGroupeesAdmin({
                             <td className="p-2">
                               <ColonneStatut order={order} />
                               <div className="mt-1"><StatutRapideSelect orderId={order.id} statutActuel={order.statut} /></div>
+                            </td>
+                            <td className="p-2 whitespace-nowrap">
+                              {(() => {
+                                const { montant, badge } = beneficeEtStatutPaiement(order, profitParOrderId[order.id]);
+                                return (
+                                  <div>
+                                    <p className="font-medium">{formatFCFA(montant)}</p>
+                                    {badge && (
+                                      <span
+                                        className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                          badge === "paye" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                                        }`}
+                                      >
+                                        {badge === "paye" ? "Payé" : "Non payé"}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="p-2">
                               <Link

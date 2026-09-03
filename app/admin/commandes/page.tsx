@@ -40,14 +40,25 @@ export default async function AdminCommandesPage({
   const total = totalCommandes ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / TAILLE_PAGE));
 
+  const orderIds = list.map((o) => o.id);
   const productIds = Array.from(new Set(list.flatMap((o) => o.order_items.map((i) => i.product_id))));
-  const { data: media } = productIds.length
-    ? await supabase.from("media").select("*").in("product_id", productIds).eq("type", "image").order("ordre")
-    : { data: [] as Media[] };
+  const [{ data: media }, { data: profits }] = await Promise.all([
+    productIds.length
+      ? supabase.from("media").select("*").in("product_id", productIds).eq("type", "image").order("ordre")
+      : Promise.resolve({ data: [] as Media[] }),
+    orderIds.length
+      ? supabase.from("profits").select("order_id, montant_benefice, statut").in("order_id", orderIds)
+      : Promise.resolve({ data: [] as { order_id: string; montant_benefice: number; statut: string }[] }),
+  ]);
 
   const imageParProduit: Record<string, string | undefined> = {};
   for (const m of (media ?? []) as Media[]) {
     if (!(m.product_id in imageParProduit)) imageParProduit[m.product_id] = m.url;
+  }
+
+  const profitParOrderId: Record<string, { montant: number; statut: string }> = {};
+  for (const p of profits ?? []) {
+    profitParOrderId[p.order_id] = { montant: p.montant_benefice, statut: p.statut };
   }
 
   return (
@@ -56,7 +67,7 @@ export default async function AdminCommandesPage({
         <h1 className="text-2xl font-semibold">Toutes les commandes</h1>
         <p className="text-sm text-ink-900/50">{total} commande{total !== 1 ? "s" : ""} au total</p>
       </div>
-      <CommandesGroupeesAdmin orders={list} imageParProduit={imageParProduit} />
+      <CommandesGroupeesAdmin orders={list} imageParProduit={imageParProduit} profitParOrderId={profitParOrderId} />
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-3 text-sm">
