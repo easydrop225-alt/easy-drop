@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatFCFA, formatDate } from "@/lib/utils";
 import { ImprimerBouton } from "./imprimer-bouton";
+import { ShoppingBag } from "lucide-react";
 import type { Order, OrderItem, Product, ProductVariant, Profile } from "@/types/database";
 
 export default async function BonDeCommandePage({
@@ -35,9 +36,18 @@ export default async function BonDeCommandePage({
       </div>
 
       <div className="rounded-2xl border-2 border-ink-900 p-6 print:rounded-none print:border-0">
-        <div className="mb-4 text-center">
-          <p className="text-lg font-bold">{o.profiles?.nom_boutique || `${o.profiles?.prenom} ${o.profiles?.nom}`}</p>
-          <p className="text-sm text-ink-900/70">{o.profiles?.telephone}</p>
+        {/* En-tête — icône à gauche, nom de boutique + téléphone à droite */}
+        <div className="mb-4 flex items-center gap-3">
+          <ShoppingBag size={32} strokeWidth={2} className="shrink-0" />
+          <div>
+            <p className="text-lg font-bold leading-tight">{o.profiles?.nom_boutique || `${o.profiles?.prenom} ${o.profiles?.nom}`}</p>
+            <p className="text-sm text-ink-900/70">{o.profiles?.telephone}</p>
+          </div>
+        </div>
+
+        {/* Bandeau "INFOS DU CLIENT" */}
+        <div className="mb-4 rounded-xl bg-ink-900 py-2 text-center">
+          <p className="text-sm font-bold uppercase tracking-wide text-white">Infos du client</p>
         </div>
 
         <div className="mb-4 border-t border-dashed border-ink-900/20 pt-4">
@@ -67,9 +77,11 @@ export default async function BonDeCommandePage({
           </ul>
         </div>
 
-        <div className="border-t border-dashed border-ink-900/20 pt-4 text-right">
-          <p className="text-sm text-ink-900/60">Prix total (livraison incluse)</p>
-          <p className="text-2xl font-bold">{formatFCFA(prixTotal)}</p>
+        <div className="border-t border-dashed border-ink-900/20 pt-4">
+          <div className="rounded-2xl border-2 border-ink-900 px-4 py-3">
+            <p className="text-sm text-ink-900/60">Prix total (livraison incluse)</p>
+            <p className="text-2xl font-bold">{formatFCFA(prixTotal)}</p>
+          </div>
         </div>
 
         <div className="mt-6 border-t border-ink-900/10 pt-3 text-center text-xs text-ink-900/40">
