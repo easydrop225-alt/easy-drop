@@ -34,8 +34,13 @@ export async function enregistrerPaiement(input: {
   mode: "wave" | "orange_money" | "especes";
   numeroDepot: string;
   preuveUrl?: string;
+  orderIds: string[];
 }) {
   const supabase = await createClient();
+
+  if (!input.orderIds || input.orderIds.length === 0) {
+    return { error: "Aucune commande sélectionnée pour ce versement." };
+  }
 
   const { error } = await supabase.from("payments").insert({
     commercial_id: input.commercialId,
@@ -49,16 +54,20 @@ export async function enregistrerPaiement(input: {
 
   if (error) return { error: error.message };
 
-  // Marque comme payés les bénéfices en attente de ce commercial
-  // (jusqu'à hauteur du montant versé n'est pas géré finement ici : on
-  // marque l'ensemble des bénéfices en attente comme payés, en supposant
-  // que le versement couvre la totalité affichée dans "Paiements en attente").
-  await supabase
+  // Ne marque payés QUE les bénéfices des commandes explicitement
+  // sélectionnées par l'admin — plus question de solder automatiquement
+  // tout ce qui est en attente pour ce commercial, au risque de marquer
+  // "payé" des commandes que ce versement précis ne couvre pas.
+  const { error: profitsError } = await supabase
     .from("profits")
     .update({ statut: "paye" })
     .eq("commercial_id", input.commercialId)
-    .eq("statut", "en_attente");
+    .eq("statut", "en_attente")
+    .in("order_id", input.orderIds);
+
+  if (profitsError) return { error: profitsError.message };
 
   revalidatePath("/admin/paiements");
+  revalidatePath("/admin/commandes");
   return { success: true };
 }
