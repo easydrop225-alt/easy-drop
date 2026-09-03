@@ -24,6 +24,13 @@ export async function changerStatutCommande(
   revalidatePath("/admin/commandes");
   revalidatePath(`/admin/commandes/${orderId}`);
   revalidatePath(`/commandes/${orderId}`);
+  // Un changement de statut peut faire apparaître/disparaître un bénéfice
+  // des pages qui agrègent la table `profits` (livrée <-> annulée change le
+  // statut du profit associé) — sans ça, ces pages restaient sur une valeur
+  // périmée tant que le cache de navigation de Next.js n'expirait pas.
+  revalidatePath("/admin/paiements");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/gains");
   return { success: true };
 }
 
@@ -51,6 +58,9 @@ export async function changerStatutPlusieursCommandes(
   if (error) return { error: error.message };
   revalidatePath("/admin/commandes");
   for (const id of orderIds) revalidatePath(`/commandes/${id}`);
+  revalidatePath("/admin/paiements");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/gains");
   return { success: true, nombre: orderIds.length };
 }
 
