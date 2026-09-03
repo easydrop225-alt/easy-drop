@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { HistoriqueCommandesCommercial } from "@/components/commandes/historique-commandes-commercial";
-import { dateIlYA3Mois } from "@/lib/utils";
+import { dateIlYA1Mois } from "@/lib/utils";
 import type { Order } from "@/types/database";
 
 import type { Metadata } from "next";
@@ -19,13 +19,15 @@ export default async function MesCommandesPage() {
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user ?? null;
 
-  // Historique limité aux 3 derniers mois pour rester rapide même avec
-  // beaucoup de commandes accumulées (n'affecte pas les rapports annuels).
+  // Historique limité au dernier mois pour rester rapide même avec beaucoup
+  // de commandes accumulées (n'affecte pas les rapports annuels). Les
+  // commandes livrées/annulées de cette période restent consultables via
+  // le bouton "Historique" sur cette même page.
   const { data: orders } = await supabase
     .from("orders")
     .select("*")
     .eq("commercial_id", user?.id)
-    .gte("created_at", dateIlYA3Mois())
+    .gte("created_at", dateIlYA1Mois())
     .order("created_at", { ascending: false });
 
   const list = (orders ?? []) as Order[];
@@ -38,7 +40,7 @@ export default async function MesCommandesPage() {
           Nouvelle commande
         </Link>
       </div>
-      <p className="mb-4 text-xs text-ink-900/40">Affichage des 3 derniers mois.</p>
+      <p className="mb-4 text-xs text-ink-900/40">Affichage du dernier mois.</p>
       <HistoriqueCommandesCommercial orders={list} />
     </div>
   );
