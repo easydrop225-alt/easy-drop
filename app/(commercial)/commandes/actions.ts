@@ -197,3 +197,53 @@ export async function refuserSuppressionCommande(orderId: string) {
   revalidatePath(`/commandes/${orderId}`);
   return { success: true };
 }
+
+// Statuts pour lesquels le commercial peut encore annuler lui-même —
+// c'est-à-dire avant que la commande ne soit passée en livraison.
+const STATUTS_ANNULABLES_PAR_COMMERCIAL = ["confirmation", "traitement", "relance"];
+const DELAI_ANNULATION_HEURES = 24;
+
+/**
+ * Permet au commercial d'annuler lui-même sa propre commande, sans passer
+ * par l'admin — mais seulement dans les 24h suivant son enregistrement, et
+ * seulement si elle n'est pas encore en cours de livraison (au-delà, seul
+ * l'admin peut agir, la marchandise étant potentiellement déjà en route).
+ */
+export async function annulerCommandeParCommercial(orderId: string, motif: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Session expirée, merci de te reconnecter." };
+
+  const { data: order } = await supabase
+    .from("orders")
+    .select("statut, created_at, commercial_id")
+    .eq("id", orderId)
+    .single();
+
+  if (!order) return { error: "Commande introuvable." };
+  if (order.commercial_id !== user.id) return { error: "Cette commande ne t'appartient pas." };
+
+  if (!STATUTS_ANNULABLES_PAR_COMMERCIAL.includes(order.statut)) {
+    return { error: "Cette commande est déjà en cours de livraison ou au-delà : seul l'administrateur peut encore l'annuler." };
+  }
+
+  const heuresEcoulees = (Date.now() - new Date(order.created_at).getTime()) / (1000 * 60 * 60);
+  if (heuresEcoulees > DELAI_ANNULATION_HEURES) {
+    return { error: "Le délai de 24h pour annuler toi-même cette commande est dépassé. Contacte l'administration si besoin." };
+  }
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      statut: "annulee",
+      motif_annulation: motif.trim() || "Annulée par le commercial",
+    })
+    .eq("id", orderId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/commandes/${orderId}`);
+  revalidatePath("/commandes");
+  revalidatePath("/admin/commandes");
+  return { success: true };
+}
