@@ -35,18 +35,21 @@ export default async function BonDeCommandePage({
         <ImprimerBouton />
       </div>
 
-      <div className="rounded-2xl border-2 border-ink-900 p-6 print:rounded-none print:border-0">
-        {/* En-tête — icône à gauche, nom de boutique + téléphone à droite */}
-        <div className="mb-4 flex items-center gap-3">
-          <ShoppingBag size={32} strokeWidth={2.5} className="shrink-0 text-ink-900" />
+      <div className="rounded-2xl border-2 border-ink-900 p-6 print:rounded-none print:border-0 print:p-4">
+        {/* En-tête — icône à gauche, nom de boutique + téléphone à droite.
+            Volontairement compact (peu d'espace vertical) : le papier
+            thermique doit surtout donner de la place aux informations
+            réellement utiles pour la livraison (destinataire, articles). */}
+        <div className="mb-2 flex items-center gap-2">
+          <ShoppingBag size={24} strokeWidth={2.5} className="shrink-0 text-ink-900" />
           <div>
-            <p className="text-lg font-bold leading-tight text-ink-900">{o.profiles?.nom_boutique || `${o.profiles?.prenom} ${o.profiles?.nom}`}</p>
-            <p className="text-sm font-bold text-ink-900">{o.profiles?.telephone}</p>
+            <p className="text-base font-bold leading-tight text-ink-900">{o.profiles?.nom_boutique || `${o.profiles?.prenom} ${o.profiles?.nom}`}</p>
+            <p className="text-xs font-bold leading-tight text-ink-900">{o.profiles?.telephone}</p>
           </div>
         </div>
 
         {/* Bandeau "INFOS DU CLIENT" */}
-        <div className="mb-4 rounded-xl bg-ink-900 py-2 text-center">
+        <div className="mb-3 rounded-xl bg-ink-900 py-1.5 text-center">
           <p className="text-sm font-bold uppercase tracking-wide text-white">Infos du client</p>
         </div>
 
