@@ -18,7 +18,7 @@ export type OrderComplete = Order & {
   order_items: (OrderItem & { products: Product; product_variants: ProductVariant | null })[];
 };
 
-type Onglet = "nouvelles" | "annulees" | "livrees" | "relance" | "toutes";
+type Onglet = "actives" | "nouvelles" | "annulees" | "livrees" | "relance" | "historique" | "toutes";
 
 function prixTotal(order: OrderComplete): number {
   return order.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0) + order.frais_livraison;
@@ -85,7 +85,7 @@ export function CommandesGroupeesAdmin({
 }) {
   const [filtre, setFiltre] = useState<FiltreDateValeur>({ annee: new Date().getFullYear(), mois: null, jour: null });
   const [groupeOuvert, setGroupeOuvert] = useState<Record<string, boolean>>({});
-  const [ongletActif, setOngletActif] = useState<Onglet>("toutes");
+  const [ongletActif, setOngletActif] = useState<Onglet>("actives");
   const [selection, setSelection] = useState<Set<string>>(new Set());
 
   function basculerSelection(orderId: string) {
@@ -99,19 +99,23 @@ export function CommandesGroupeesAdmin({
 
   const dates = useMemo(() => orders.map((o) => o.created_at), [orders]);
   const compteParStatut = useMemo(() => ({
+    actives: orders.filter((o) => o.statut !== "livree" && o.statut !== "annulee").length,
     nouvelles: orders.filter((o) => o.statut === "confirmation").length,
     annulees: orders.filter((o) => o.statut === "annulee").length,
     livrees: orders.filter((o) => o.statut === "livree").length,
     relance: orders.filter((o) => o.statut === "relance").length,
+    historique: orders.filter((o) => o.statut === "livree" || o.statut === "annulee").length,
   }), [orders]);
 
   const filtrees = useMemo(() => {
     const parDate = orders.filter((o) => correspondAuFiltre(o.created_at, filtre));
     switch (ongletActif) {
+      case "actives": return parDate.filter((o) => o.statut !== "livree" && o.statut !== "annulee");
       case "nouvelles": return parDate.filter((o) => o.statut === "confirmation");
       case "annulees": return parDate.filter((o) => o.statut === "annulee");
       case "livrees": return parDate.filter((o) => o.statut === "livree");
       case "relance": return parDate.filter((o) => o.statut === "relance");
+      case "historique": return parDate.filter((o) => o.statut === "livree" || o.statut === "annulee");
       default: return parDate;
     }
   }, [orders, filtre, ongletActif]);
@@ -128,8 +132,10 @@ export function CommandesGroupeesAdmin({
   }, [filtrees]);
 
   const onglets: { valeur: Onglet; label: string; compte?: number }[] = [
+    { valeur: "actives", label: "📋 En attente de traitement", compte: compteParStatut.actives },
     { valeur: "nouvelles", label: "🟡 Nouvelles", compte: compteParStatut.nouvelles },
     { valeur: "relance", label: "🟠 À relancer", compte: compteParStatut.relance },
+    { valeur: "historique", label: "Historique (livrées / annulées)", compte: compteParStatut.historique },
     { valeur: "livrees", label: "🟢 Livrées", compte: compteParStatut.livrees },
     { valeur: "annulees", label: "🔴 Annulées", compte: compteParStatut.annulees },
     { valeur: "toutes", label: "Toutes les commandes" },
