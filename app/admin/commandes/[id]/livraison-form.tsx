@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { modifierFraisLivraison } from "../actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ export function LivraisonForm({ orderId, fraisActuel }: { orderId: string; frais
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const router = useRouter();
 
   function handleValider() {
     setError(null);
@@ -17,7 +19,10 @@ export function LivraisonForm({ orderId, fraisActuel }: { orderId: string; frais
     startTransition(async () => {
       const res = await modifierFraisLivraison(orderId, frais);
       if (res?.error) setError(res.error);
-      else setSaved(true);
+      else {
+        setSaved(true);
+        router.refresh();
+      }
     });
   }
 

@@ -95,12 +95,13 @@ export async function annulerDemandeSuppression(orderId: string) {
 export async function modifierFraisLivraison(orderId: string, nouveauFrais: number) {
   const supabase = await createClient();
 
-  const { data: order } = await supabase
+  const { data: order, error: lectureError } = await supabase
     .from("orders")
     .select("frais_livraison, order_items(id, quantite, prix_vente_unitaire)")
     .eq("id", orderId)
     .single();
 
+  if (lectureError) return { error: lectureError.message };
   if (!order) return { error: "Commande introuvable." };
 
   const items = order.order_items as { id: string; quantite: number; prix_vente_unitaire: number }[];
