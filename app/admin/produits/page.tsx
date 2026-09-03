@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { ProductCard } from "@/components/produits/product-card";
+import { CatalogueRecherche, type ProduitPourRecherche } from "@/components/produits/catalogue-recherche";
 import type { Product, Category, ProductVariant, Inventory, Media } from "@/types/database";
 
 import type { Metadata } from "next";
@@ -45,45 +45,27 @@ export default async function AdminProduitsPage() {
     if (!imageParProduit.has(m.product_id)) imageParProduit.set(m.product_id, m.url);
   }
 
-  const parCategorie = new Map<string, Product[]>();
-  const sansCategorie: Product[] = [];
-  for (const p of list) {
-    if (!p.category_id) { sansCategorie.push(p); continue; }
-    const arr = parCategorie.get(p.category_id) ?? [];
-    arr.push(p);
-    parCategorie.set(p.category_id, arr);
-  }
-
-  // Les produits désactivés sont relégués en fin de chaque groupe, plutôt
-  // que mélangés avec les actifs.
-  function trierActifsDabord(produits: Product[]) {
-    return [...produits].sort((a, b) => (a.actif === b.actif ? 0 : a.actif ? -1 : 1));
-  }
-
+  const categoryById = new Map(categoryList.map((c) => [c.id, c] as const));
   const maintenant = Date.now();
 
-  function GrilleProduits({ produits }: { produits: Product[] }) {
-    return (
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        {trierActifsDabord(produits).map((p) => {
-          const disponible = variantesParProduit.has(p.id) ? (stockParProduit.get(p.id) ?? 0) > 0 : true;
-          return (
-            <ProductCard
-              key={p.id}
-              product={p}
-              prixFournisseur={p.prix_fournisseur}
-              imageUrl={imageParProduit.get(p.id)}
-              href={`/admin/produits/${p.id}/edit`}
-              disponible={disponible}
-              actif={p.actif}
-              nouveau={maintenant - new Date(p.created_at).getTime() < TRENTE_JOURS_MS}
-              favoris={false}
-            />
-          );
-        })}
-      </div>
-    );
-  }
+  const produitsPourRecherche: ProduitPourRecherche[] = list.map((p) => ({
+    id: p.id,
+    nom: p.nom,
+    slug: p.slug,
+    categoryId: p.category_id,
+    categoryNom: p.category_id ? (categoryById.get(p.category_id)?.nom ?? null) : null,
+    prixMinConseille: p.prix_min_conseille,
+    prixMaxConseille: p.prix_max_conseille,
+    imageUrl: imageParProduit.get(p.id),
+    disponible: variantesParProduit.has(p.id) ? (stockParProduit.get(p.id) ?? 0) > 0 : true,
+    actif: p.actif,
+    nouveau: maintenant - new Date(p.created_at).getTime() < TRENTE_JOURS_MS,
+    prixFournisseur: p.prix_fournisseur,
+    couleurs: p.couleurs,
+    tailles: p.tailles,
+    createdAt: p.created_at,
+    stockTotal: stockParProduit.get(p.id) ?? 0,
+  }));
 
   return (
     <div>
@@ -94,30 +76,13 @@ export default async function AdminProduitsPage() {
         </Link>
       </div>
 
-      <div className="space-y-8">
-        {categoryList
-          .filter((c) => (parCategorie.get(c.id)?.length ?? 0) > 0)
-          .map((cat) => (
-            <div key={cat.id}>
-              <h2 className="mb-3 flex items-center gap-2 font-medium">
-                <span className="text-xl">{cat.icone}</span> {cat.nom}
-                <span className="rounded-full bg-beige-100 px-2 py-0.5 text-xs text-ink-900/50">
-                  {parCategorie.get(cat.id)?.length ?? 0} produit(s)
-                </span>
-              </h2>
-              <GrilleProduits produits={parCategorie.get(cat.id) ?? []} />
-            </div>
-          ))}
-
-        {sansCategorie.length > 0 && (
-          <div>
-            <h2 className="mb-3 font-medium">Sans catégorie</h2>
-            <GrilleProduits produits={sansCategorie} />
-          </div>
-        )}
-
-        {list.length === 0 && <p className="text-ink-900/60">Aucun produit.</p>}
-      </div>
+      <CatalogueRecherche
+        produits={produitsPourRecherche}
+        categories={categoryList.map((c) => ({ id: c.id, nom: c.nom }))}
+        hrefPrefix="/admin/produits"
+        hrefSuffix="/edit"
+        favoris={false}
+      />
     </div>
   );
 }
