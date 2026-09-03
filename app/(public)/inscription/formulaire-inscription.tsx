@@ -15,13 +15,15 @@ export function FormulaireInscription() {
 
   return (
     <form action={formAction} className="space-y-4">
-      <div>
-        <Label htmlFor="prenom">Prénom</Label>
-        <Input id="prenom" name="prenom" required />
-      </div>
-      <div>
-        <Label htmlFor="nom">Nom</Label>
-        <Input id="nom" name="nom" required />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label htmlFor="prenom">Prénom</Label>
+          <Input id="prenom" name="prenom" required />
+        </div>
+        <div>
+          <Label htmlFor="nom">Nom</Label>
+          <Input id="nom" name="nom" required />
+        </div>
       </div>
       <div>
         <Label htmlFor="nomBoutique">Nom de ta boutique</Label>
