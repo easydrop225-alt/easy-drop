@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { repartirCorrectionLivraison } from "@/lib/calculs/calcul-livraison";
 import type { OrderStatut } from "@/types/database";
 
 export async function changerStatutCommande(
@@ -93,6 +94,40 @@ export async function annulerDemandeSuppression(orderId: string) {
 
 export async function modifierFraisLivraison(orderId: string, nouveauFrais: number) {
   const supabase = await createClient();
+
+  const { data: order } = await supabase
+    .from("orders")
+    .select("frais_livraison, order_items(id, quantite, prix_vente_unitaire)")
+    .eq("id", orderId)
+    .single();
+
+  if (!order) return { error: "Commande introuvable." };
+
+  const items = order.order_items as { id: string; quantite: number; prix_vente_unitaire: number }[];
+  const lignes = items.map((i) => ({ quantite: i.quantite, prixVenteUnitaire: i.prix_vente_unitaire }));
+
+  // Si le prix de la livraison augmente (ou diminue), le prix total payé
+  // par le client ne doit pas bouger : la différence est compensée sur le
+  // prix de vente, répartie au prorata des quantités (même logique que le
+  // mode "un seul prix total" du formulaire de commande) — jamais ajoutée
+  // en plus du prix déjà convenu avec le client.
+  const resultat = repartirCorrectionLivraison(lignes, order.frais_livraison, nouveauFrais);
+  if (!resultat) {
+    return {
+      error: "Cette correction ferait passer le prix de vente d'un produit sous 0 FCFA — ajuste manuellement le prix de vente d'abord.",
+    };
+  }
+
+  for (const [i, item] of items.entries()) {
+    const ligneResultat = resultat[i];
+    if (!ligneResultat || ligneResultat.prixVenteUnitaire === lignes[i]?.prixVenteUnitaire) continue;
+    const { error: itemError } = await supabase
+      .from("order_items")
+      .update({ prix_vente_unitaire: ligneResultat.prixVenteUnitaire })
+      .eq("id", item.id);
+    if (itemError) return { error: itemError.message };
+  }
+
   const { error } = await supabase
     .from("orders")
     .update({ frais_livraison: nouveauFrais })
@@ -100,10 +135,10 @@ export async function modifierFraisLivraison(orderId: string, nouveauFrais: numb
 
   if (error) return { error: error.message };
 
-  // Note : le bénéfice du commercial ne dépend pas du prix de la livraison
-  // (Bénéfice = Prix vente - Prix fournisseur), donc aucune mise à jour de
-  // la table `profits` n'est nécessaire ici. Seul le "Prix total" affiché
-  // (Prix de vente + Prix de la livraison) change, automatiquement, à l'affichage.
+  // Note : le prix total (Prix de vente + Prix de la livraison) reste donc
+  // inchangé après cette correction — seule sa répartition entre "vente" et
+  // "livraison" change, ce qui répercute automatiquement le bon montant
+  // sur le bénéfice du commercial (Bénéfice = Prix vente - Prix fournisseur).
   revalidatePath("/admin/commandes");
   revalidatePath(`/admin/commandes/${orderId}`);
   revalidatePath(`/commandes/${orderId}`);
