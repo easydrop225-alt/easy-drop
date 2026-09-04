@@ -2,7 +2,41 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { repartirProportionnellement } from "@/lib/calculs/repartition-proportionnelle";
 import type { OrderStatut } from "@/types/database";
+
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
+/**
+ * Recale les lignes de bénéfice "en attente" d'une commande sur les
+ * order_items après une modification de prix — le trigger SQL ne crée le
+ * profit qu'à la création de la ligne, jamais à sa mise à jour, donc sans
+ * ça "Paiements en attente" / Dashboard / Gains restent sur l'ancien
+ * montant indéfiniment. Les profits déjà payés ou annulés ne sont jamais
+ * retouchés (un règlement déjà effectué ne se corrige pas rétroactivement).
+ */
+async function resynchroniserProfitsCommande(supabase: SupabaseServerClient, orderId: string) {
+  const [{ data: items }, { data: profitsEnAttente }] = await Promise.all([
+    supabase.from("order_items").select("benefice_ligne").eq("order_id", orderId),
+    supabase.from("profits").select("id, montant_benefice").eq("order_id", orderId).eq("statut", "en_attente").order("created_at"),
+  ]);
+
+  const profits = (profitsEnAttente ?? []) as { id: string; montant_benefice: number }[];
+  if (profits.length === 0) return;
+
+  const nouveauTotal = (items ?? []).reduce((a, i) => a + Number(i.benefice_ligne), 0);
+  const ancienTotal = profits.reduce((a, p) => a + Number(p.montant_benefice), 0);
+  const delta = nouveauTotal - ancienTotal;
+  if (delta === 0) return;
+
+  const ajustements = repartirProportionnellement(
+    profits.map((p) => ({ id: p.id, montant: Number(p.montant_benefice) })),
+    delta
+  );
+  for (const a of ajustements) {
+    await supabase.from("profits").update({ montant_benefice: a.nouveauMontant }).eq("id", a.id);
+  }
+}
 
 export async function changerStatutCommande(
   orderId: string,
@@ -101,8 +135,50 @@ export async function annulerDemandeSuppression(orderId: string) {
   return { success: true };
 }
 
+/**
+ * Corrige les frais de livraison SANS changer le prix total de la commande
+ * (déjà annoncé/payé par le client) : l'écart est absorbé par le prix de
+ * vente des lignes de la commande, réparti au prorata si plusieurs produits.
+ * Le bénéfice du commercial (Prix vente - Prix fournisseur) diminue ou
+ * augmente automatiquement en conséquence — voir resynchroniserProfitsCommande
+ * pour la répercussion sur "Paiements en attente".
+ */
 export async function modifierFraisLivraison(orderId: string, nouveauFrais: number) {
   const supabase = await createClient();
+
+  const [{ data: order }, { data: items }] = await Promise.all([
+    supabase.from("orders").select("frais_livraison").eq("id", orderId).single(),
+    supabase.from("order_items").select("id, prix_vente_unitaire, quantite").eq("order_id", orderId),
+  ]);
+
+  if (!order) return { error: "Commande introuvable." };
+
+  const lignes = (items ?? []) as { id: string; prix_vente_unitaire: number; quantite: number }[];
+  const delta = nouveauFrais - Number(order.frais_livraison);
+
+  if (delta !== 0 && lignes.length > 0) {
+    const totalVenteActuel = lignes.reduce((a, l) => a + Number(l.prix_vente_unitaire) * l.quantite, 0);
+    if (delta > totalVenteActuel) {
+      return {
+        error: "Cette hausse de frais de livraison dépasse le prix de vente total de la commande — impossible de garder le prix total inchangé.",
+      };
+    }
+
+    const lignesAjustees = repartirProportionnellement(
+      lignes.map((l) => ({ id: l.id, montant: Number(l.prix_vente_unitaire) * l.quantite })),
+      -delta
+    );
+
+    for (const ligne of lignesAjustees) {
+      const quantite = lignes.find((l) => l.id === ligne.id)!.quantite;
+      const { error: itemError } = await supabase
+        .from("order_items")
+        .update({ prix_vente_unitaire: Math.round(ligne.nouveauMontant / quantite) })
+        .eq("id", ligne.id);
+      if (itemError) return { error: itemError.message };
+    }
+  }
+
   const { error } = await supabase
     .from("orders")
     .update({ frais_livraison: nouveauFrais })
@@ -110,13 +186,14 @@ export async function modifierFraisLivraison(orderId: string, nouveauFrais: numb
 
   if (error) return { error: error.message };
 
-  // Note : le bénéfice du commercial ne dépend pas du prix de la livraison
-  // (Bénéfice = Prix vente - Prix fournisseur), donc aucune mise à jour de
-  // la table `profits` n'est nécessaire ici. Seul le "Prix total" affiché
-  // (Prix de vente + Prix de la livraison) change, automatiquement, à l'affichage.
+  await resynchroniserProfitsCommande(supabase, orderId);
+
   revalidatePath("/admin/commandes");
   revalidatePath(`/admin/commandes/${orderId}`);
   revalidatePath(`/commandes/${orderId}`);
+  revalidatePath("/admin/paiements");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/gains");
   return { success: true };
 }
 
@@ -159,8 +236,13 @@ export async function modifierInfosCommandeAdmin(orderId: string, infos: InfosCo
 
   if (itemError) return { error: itemError.message };
 
+  await resynchroniserProfitsCommande(supabase, orderId);
+
   revalidatePath("/admin/commandes");
   revalidatePath(`/admin/commandes/${orderId}`);
   revalidatePath(`/commandes/${orderId}`);
+  revalidatePath("/admin/paiements");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/gains");
   return { success: true };
 }

@@ -22,15 +22,20 @@ export function LivraisonForm({ orderId, fraisActuel }: { orderId: string; frais
   }
 
   return (
-    <div className="flex items-end gap-3">
-      <div className="flex-1">
-        <Input type="number" min={0} value={frais} onChange={(e) => setFrais(Number(e.target.value))} />
+    <div>
+      <div className="flex items-end gap-3">
+        <div className="flex-1">
+          <Input type="number" min={0} value={frais} onChange={(e) => setFrais(Number(e.target.value))} />
+        </div>
+        <Button size="sm" disabled={pending} onClick={handleValider}>
+          {pending ? "Enregistrement..." : "Corriger le prix de livraison"}
+        </Button>
+        {saved && <span className="text-sm text-emerald-600">Enregistré ✓</span>}
+        {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
-      <Button size="sm" disabled={pending} onClick={handleValider}>
-        {pending ? "Enregistrement..." : "Corriger le prix de livraison"}
-      </Button>
-      {saved && <span className="text-sm text-emerald-600">Enregistré ✓</span>}
-      {error && <span className="text-sm text-red-600">{error}</span>}
+      <p className="mt-1 text-xs text-ink-900/40">
+        Le prix total de la commande ne change pas : l&apos;écart est absorbé par le prix de vente (et donc le bénéfice du commercial), pas rajouté au client.
+      </p>
     </div>
   );
 }
