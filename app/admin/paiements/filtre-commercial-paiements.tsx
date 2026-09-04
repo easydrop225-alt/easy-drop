@@ -6,11 +6,18 @@ import { PaiementEnAttenteCard } from "./paiement-en-attente-card";
 import { HistoriqueVersementsGroupe } from "./historique-groupe";
 import type { Payment, Profile } from "@/types/database";
 
+interface CommandeDue {
+  orderId: string;
+  numeroCommande: string;
+  montant: number;
+}
+
 interface CommercialDu {
   commercial: Profile;
   montantDu: number;
   dateDebut: string;
   dateFin: string;
+  commandes: CommandeDue[];
 }
 
 type PaymentAvecCommercial = Payment & { profiles: Pick<Profile, "nom" | "prenom" | "nom_boutique"> };
@@ -60,6 +67,7 @@ export function FiltreCommercialPaiements({
               montantDu={c.montantDu}
               dateDebut={c.dateDebut}
               dateFin={c.dateFin}
+              commandes={c.commandes}
             />
           ))}
           {commerciauxDusFiltres.length === 0 && (

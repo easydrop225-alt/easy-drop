@@ -29,3 +29,9 @@ export function dateIlYA3Mois(): string {
   d.setMonth(d.getMonth() - 3);
   return d.toISOString();
 }
+
+export function dateIlYA1Mois(): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return d.toISOString();
+}

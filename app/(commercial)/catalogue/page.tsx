@@ -69,6 +69,8 @@ export default async function CatalogueCommercialPage() {
     prixFournisseur: p.prix_fournisseur,
     couleurs: p.couleurs,
     tailles: p.tailles,
+    createdAt: p.created_at,
+    stockTotal: stockParProduit.get(p.id) ?? 0,
   }));
 
   return (

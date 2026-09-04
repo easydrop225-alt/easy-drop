@@ -5,6 +5,8 @@ import { modifierProduit } from "../../actions";
 import { MediaUploader } from "@/components/produits/media-uploader";
 import { VariantesManager } from "@/components/produits/variantes-manager";
 import { HistoriquePrix } from "@/components/produits/historique-prix";
+import { SupprimerProduitButton } from "../../delete-button";
+import { Card } from "@/components/ui/card";
 import type { Category, Product, ProductVariant, Inventory, ProductPriceHistory, Profile } from "@/types/database";
 
 export default async function EditProduitPage({
@@ -53,6 +55,14 @@ export default async function EditProduitPage({
         historique={(historique ?? []) as (ProductPriceHistory & { profiles: Pick<Profile, "prenom" | "nom"> | null })[]}
         variants={(variants ?? []) as ProductVariant[]}
       />
+
+      <Card className="border-red-200 bg-red-50">
+        <h2 className="mb-2 font-medium text-red-700">Zone de suppression</h2>
+        <p className="mb-3 text-xs text-ink-900/60">
+          Supprime définitivement ce produit, ses variantes et ses photos. Cette action est irréversible.
+        </p>
+        <SupprimerProduitButton productId={id} nomProduit={(product as Product).nom} />
+      </Card>
     </div>
   );
 }

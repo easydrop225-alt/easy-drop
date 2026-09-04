@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { StatutRapideSelect } from "./statut-rapide-select";
 import { BarreActionGroupee } from "./barre-action-groupee";
-import { cn, formatDate, formatFCFA } from "@/lib/utils";
+import { formatDate, formatFCFA } from "@/lib/utils";
 import { exporterCSV } from "@/lib/export-csv";
 import { Button } from "@/components/ui/button";
 import { FiltreDate, correspondAuFiltre, type FiltreDateValeur } from "./filtre-date";
@@ -18,32 +18,7 @@ export type OrderComplete = Order & {
   order_items: (OrderItem & { products: Product; product_variants: ProductVariant | null })[];
 };
 
-type BeneficeCommande = { total: number; paye: boolean };
-
-/** Bénéfice de la commande + statut de paiement — le badge payé/non payé ne
- * s'affiche que pour les commandes livrées (avant, le paiement n'a pas de
- * sens ; annulée, le bénéfice est nul). Sert à vérifier d'un coup d'œil la
- * somme des paiements en attente d'un commercial (page Paiements). */
-function ColonneBenefice({ order, benefice }: { order: OrderComplete; benefice?: BeneficeCommande }) {
-  if (!benefice) return <span className="text-ink-900/30">—</span>;
-  return (
-    <div className="whitespace-nowrap">
-      <p className="font-medium">{formatFCFA(benefice.total)}</p>
-      {order.statut === "livree" && (
-        <span
-          className={cn(
-            "mt-0.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium",
-            benefice.paye ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"
-          )}
-        >
-          {benefice.paye ? "Payé" : "Non payé"}
-        </span>
-      )}
-    </div>
-  );
-}
-
-type Onglet = "nouvelles" | "annulees" | "livrees" | "relance" | "toutes";
+type Onglet = "actives" | "nouvelles" | "annulees" | "livrees" | "relance" | "historique" | "toutes";
 
 function prixTotal(order: OrderComplete): number {
   return order.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0) + order.frais_livraison;
@@ -101,18 +76,35 @@ function ColonneStatut({ order }: { order: OrderComplete }) {
   );
 }
 
+function beneficeEtStatutPaiement(order: OrderComplete, profit?: { montant: number; statut: string }) {
+  // Si un versement existe déjà pour cette commande, on se base dessus (la
+  // vraie source de vérité pour le paiement). Sinon, on affiche une
+  // estimation calculée directement depuis les lignes de la commande.
+  const montant = profit
+    ? profit.montant
+    : order.order_items.reduce((a, i) => a + Number(i.benefice_ligne ?? 0), 0);
+
+  // Le badge Payé/Non payé ne veut dire quelque chose qu'une fois la
+  // commande réellement livrée — avant, aucun paiement n'est encore dû.
+  const badge = order.statut === "livree"
+    ? (profit?.statut === "paye" ? "paye" : "non_paye")
+    : null;
+
+  return { montant, badge };
+}
+
 export function CommandesGroupeesAdmin({
   orders,
   imageParProduit,
-  beneficeParCommande,
+  profitParOrderId = {},
 }: {
   orders: OrderComplete[];
   imageParProduit: Record<string, string | undefined>;
-  beneficeParCommande: Record<string, BeneficeCommande>;
+  profitParOrderId?: Record<string, { montant: number; statut: string }>;
 }) {
   const [filtre, setFiltre] = useState<FiltreDateValeur>({ annee: new Date().getFullYear(), mois: null, jour: null });
   const [groupeOuvert, setGroupeOuvert] = useState<Record<string, boolean>>({});
-  const [ongletActif, setOngletActif] = useState<Onglet>("toutes");
+  const [ongletActif, setOngletActif] = useState<Onglet>("actives");
   const [selection, setSelection] = useState<Set<string>>(new Set());
 
   function basculerSelection(orderId: string) {
@@ -126,19 +118,23 @@ export function CommandesGroupeesAdmin({
 
   const dates = useMemo(() => orders.map((o) => o.created_at), [orders]);
   const compteParStatut = useMemo(() => ({
+    actives: orders.filter((o) => o.statut !== "livree" && o.statut !== "annulee").length,
     nouvelles: orders.filter((o) => o.statut === "confirmation").length,
     annulees: orders.filter((o) => o.statut === "annulee").length,
     livrees: orders.filter((o) => o.statut === "livree").length,
     relance: orders.filter((o) => o.statut === "relance").length,
+    historique: orders.filter((o) => o.statut === "livree" || o.statut === "annulee").length,
   }), [orders]);
 
   const filtrees = useMemo(() => {
     const parDate = orders.filter((o) => correspondAuFiltre(o.created_at, filtre));
     switch (ongletActif) {
+      case "actives": return parDate.filter((o) => o.statut !== "livree" && o.statut !== "annulee");
       case "nouvelles": return parDate.filter((o) => o.statut === "confirmation");
       case "annulees": return parDate.filter((o) => o.statut === "annulee");
       case "livrees": return parDate.filter((o) => o.statut === "livree");
       case "relance": return parDate.filter((o) => o.statut === "relance");
+      case "historique": return parDate.filter((o) => o.statut === "livree" || o.statut === "annulee");
       default: return parDate;
     }
   }, [orders, filtre, ongletActif]);
@@ -155,8 +151,10 @@ export function CommandesGroupeesAdmin({
   }, [filtrees]);
 
   const onglets: { valeur: Onglet; label: string; compte?: number }[] = [
+    { valeur: "actives", label: "📋 En attente de traitement", compte: compteParStatut.actives },
     { valeur: "nouvelles", label: "🟡 Nouvelles", compte: compteParStatut.nouvelles },
     { valeur: "relance", label: "🟠 À relancer", compte: compteParStatut.relance },
+    { valeur: "historique", label: "Historique (livrées / annulées)", compte: compteParStatut.historique },
     { valeur: "livrees", label: "🟢 Livrées", compte: compteParStatut.livrees },
     { valeur: "annulees", label: "🔴 Annulées", compte: compteParStatut.annulees },
     { valeur: "toutes", label: "Toutes les commandes" },
@@ -265,13 +263,28 @@ export function CommandesGroupeesAdmin({
                           <RecapitulatifArticles order={order} />
                         </div>
                         <ColonneDate order={order} />
+                        {(() => {
+                          const { montant, badge } = beneficeEtStatutPaiement(order, profitParOrderId[order.id]);
+                          return (
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="text-ink-900/50">Bénéfice :</span>
+                              <span className="font-medium">{formatFCFA(montant)}</span>
+                              {badge && (
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                    badge === "paye" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                                  }`}
+                                >
+                                  {badge === "paye" ? "Payé" : "Non payé"}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </Link>
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         <StatutRapideSelect orderId={order.id} statutActuel={order.statut} />
-                        <ColonneBenefice order={order} benefice={beneficeParCommande[order.id]} />
-                      </div>
-                      <div className="flex items-center justify-between gap-2">
                         <Link
                           href={`/admin/commandes/${order.id}/bon`}
                           target="_blank"
@@ -349,8 +362,24 @@ export function CommandesGroupeesAdmin({
                               <ColonneStatut order={order} />
                               <div className="mt-1"><StatutRapideSelect orderId={order.id} statutActuel={order.statut} /></div>
                             </td>
-                            <td className="p-2">
-                              <ColonneBenefice order={order} benefice={beneficeParCommande[order.id]} />
+                            <td className="p-2 whitespace-nowrap">
+                              {(() => {
+                                const { montant, badge } = beneficeEtStatutPaiement(order, profitParOrderId[order.id]);
+                                return (
+                                  <div>
+                                    <p className="font-medium">{formatFCFA(montant)}</p>
+                                    {badge && (
+                                      <span
+                                        className={`inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                                          badge === "paye" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                                        }`}
+                                      >
+                                        {badge === "paye" ? "Payé" : "Non payé"}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
                             </td>
                             <td className="p-2">
                               <Link

@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { repartirProportionnellement } from "@/lib/calculs/repartition-proportionnelle";
+import { repartirCorrectionLivraison } from "@/lib/calculs/calcul-livraison";
 import type { OrderStatut } from "@/types/database";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -146,37 +147,38 @@ export async function annulerDemandeSuppression(orderId: string) {
 export async function modifierFraisLivraison(orderId: string, nouveauFrais: number) {
   const supabase = await createClient();
 
-  const [{ data: order }, { data: items }] = await Promise.all([
-    supabase.from("orders").select("frais_livraison").eq("id", orderId).single(),
-    supabase.from("order_items").select("id, prix_vente_unitaire, quantite").eq("order_id", orderId),
-  ]);
+  const { data: order, error: lectureError } = await supabase
+    .from("orders")
+    .select("frais_livraison, order_items(id, quantite, prix_vente_unitaire)")
+    .eq("id", orderId)
+    .single();
 
+  if (lectureError) return { error: lectureError.message };
   if (!order) return { error: "Commande introuvable." };
 
-  const lignes = (items ?? []) as { id: string; prix_vente_unitaire: number; quantite: number }[];
-  const delta = nouveauFrais - Number(order.frais_livraison);
+  const items = order.order_items as { id: string; quantite: number; prix_vente_unitaire: number }[];
+  const lignes = items.map((i) => ({ quantite: i.quantite, prixVenteUnitaire: i.prix_vente_unitaire }));
 
-  if (delta !== 0 && lignes.length > 0) {
-    const totalVenteActuel = lignes.reduce((a, l) => a + Number(l.prix_vente_unitaire) * l.quantite, 0);
-    if (delta > totalVenteActuel) {
-      return {
-        error: "Cette hausse de frais de livraison dépasse le prix de vente total de la commande — impossible de garder le prix total inchangé.",
-      };
-    }
+  // Si le prix de la livraison augmente (ou diminue), le prix total payé
+  // par le client ne doit pas bouger : la différence est compensée sur le
+  // prix de vente, répartie au prorata des quantités (même logique que le
+  // mode "un seul prix total" du formulaire de commande) — jamais ajoutée
+  // en plus du prix déjà convenu avec le client.
+  const resultat = repartirCorrectionLivraison(lignes, order.frais_livraison, nouveauFrais);
+  if (!resultat) {
+    return {
+      error: "Cette correction ferait passer le prix de vente d'un produit sous 0 FCFA — ajuste manuellement le prix de vente d'abord.",
+    };
+  }
 
-    const lignesAjustees = repartirProportionnellement(
-      lignes.map((l) => ({ id: l.id, montant: Number(l.prix_vente_unitaire) * l.quantite })),
-      -delta
-    );
-
-    for (const ligne of lignesAjustees) {
-      const quantite = lignes.find((l) => l.id === ligne.id)!.quantite;
-      const { error: itemError } = await supabase
-        .from("order_items")
-        .update({ prix_vente_unitaire: Math.round(ligne.nouveauMontant / quantite) })
-        .eq("id", ligne.id);
-      if (itemError) return { error: itemError.message };
-    }
+  for (const [i, item] of items.entries()) {
+    const ligneResultat = resultat[i];
+    if (!ligneResultat || ligneResultat.prixVenteUnitaire === lignes[i]?.prixVenteUnitaire) continue;
+    const { error: itemError } = await supabase
+      .from("order_items")
+      .update({ prix_vente_unitaire: ligneResultat.prixVenteUnitaire })
+      .eq("id", item.id);
+    if (itemError) return { error: itemError.message };
   }
 
   const { error } = await supabase
@@ -186,6 +188,10 @@ export async function modifierFraisLivraison(orderId: string, nouveauFrais: numb
 
   if (error) return { error: error.message };
 
+  // Note : le prix total (Prix de vente + Prix de la livraison) reste donc
+  // inchangé après cette correction — seule sa répartition entre "vente" et
+  // "livraison" change, ce qui répercute automatiquement le bon montant
+  // sur le bénéfice du commercial (Bénéfice = Prix vente - Prix fournisseur).
   await resynchroniserProfitsCommande(supabase, orderId);
 
   revalidatePath("/admin/commandes");

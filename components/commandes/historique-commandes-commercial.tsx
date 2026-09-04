@@ -43,12 +43,33 @@ function ColonneDate({ order }: { order: Order }) {
 
 export function HistoriqueCommandesCommercial({ orders }: { orders: Order[] }) {
   const [filtre, setFiltre] = useState<FiltreDateValeur>({ annee: new Date().getFullYear(), mois: null, jour: null });
+  const [vueArchive, setVueArchive] = useState(false);
 
-  const dates = useMemo(() => orders.map((o) => o.created_at), [orders]);
-  const filtrees = useMemo(() => orders.filter((o) => correspondAuFiltre(o.created_at, filtre)), [orders, filtre]);
+  // Une commande livrée ou annulée est considérée "traitée" : elle sort de
+  // la liste principale (qui ne montre alors que ce qui attend encore une
+  // action) pour rejoindre l'historique, accessible via le bouton dédié.
+  const actives = useMemo(() => orders.filter((o) => o.statut !== "livree" && o.statut !== "annulee"), [orders]);
+  const archivees = useMemo(() => orders.filter((o) => o.statut === "livree" || o.statut === "annulee"), [orders]);
+
+  const ordersAffichees = vueArchive ? archivees : actives;
+  const dates = useMemo(() => ordersAffichees.map((o) => o.created_at), [ordersAffichees]);
+  const filtrees = useMemo(() => ordersAffichees.filter((o) => correspondAuFiltre(o.created_at, filtre)), [ordersAffichees, filtre]);
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-medium text-ink-900/60">
+          {vueArchive ? `Historique (${archivees.length})` : `En attente de traitement (${actives.length})`}
+        </h2>
+        <button
+          type="button"
+          onClick={() => setVueArchive(!vueArchive)}
+          className="rounded-lg border border-ink-900/10 px-3 py-1.5 text-xs font-medium text-ink-900/70 hover:bg-beige-100"
+        >
+          {vueArchive ? "← Retour aux commandes en attente" : "Consulter l'historique (livrées / annulées)"}
+        </button>
+      </div>
+
       <FiltreDate dates={dates} valeur={filtre} onChange={setFiltre} />
 
       {/* Vue mobile : une carte compacte par commande. */}

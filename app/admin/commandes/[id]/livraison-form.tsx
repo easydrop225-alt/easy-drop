@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { modifierFraisLivraison } from "../actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ export function LivraisonForm({ orderId, fraisActuel }: { orderId: string; frais
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const router = useRouter();
 
   function handleValider() {
     setError(null);
@@ -17,7 +19,10 @@ export function LivraisonForm({ orderId, fraisActuel }: { orderId: string; frais
     startTransition(async () => {
       const res = await modifierFraisLivraison(orderId, frais);
       if (res?.error) setError(res.error);
-      else setSaved(true);
+      else {
+        setSaved(true);
+        router.refresh();
+      }
     });
   }
 
@@ -33,8 +38,8 @@ export function LivraisonForm({ orderId, fraisActuel }: { orderId: string; frais
         {saved && <span className="text-sm text-emerald-600">Enregistré ✓</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
-      <p className="mt-1 text-xs text-ink-900/40">
-        Le prix total de la commande ne change pas : l&apos;écart est absorbé par le prix de vente (et donc le bénéfice du commercial), pas rajouté au client.
+      <p className="mt-1 text-xs text-ink-900/50">
+        Le prix total payé par le client ne change pas : la différence est automatiquement retirée du prix de vente (et donc du bénéfice du commercial), jamais ajoutée en plus.
       </p>
     </div>
   );

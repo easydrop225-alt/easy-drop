@@ -9,11 +9,18 @@ import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Paiements" };
 
 
+interface CommandeDue {
+  orderId: string;
+  numeroCommande: string;
+  montant: number;
+}
+
 interface CommercialDu {
   commercial: Profile;
   montantDu: number;
   dateDebut: string;
   dateFin: string;
+  commandes: CommandeDue[];
 }
 
 export default async function AdminPaiementsPage() {
@@ -29,29 +36,38 @@ export default async function AdminPaiementsPage() {
       .order("date_paiement", { ascending: false }),
     supabase
       .from("profits")
-      .select("*, profiles(*), orders!inner(statut)")
+      .select("*, profiles(*), orders!inner(statut, numero_commande)")
       .eq("statut", "en_attente")
       .eq("orders.statut", "livree")
       .order("created_at"),
   ]);
 
   const list = (payments ?? []) as (Payment & { profiles: Pick<Profile, "nom" | "prenom" | "nom_boutique"> })[];
-  const profitList = (profitsEnAttente ?? []) as (Profit & { profiles: Profile })[];
+  const profitList = (profitsEnAttente ?? []) as (Profit & { profiles: Profile; orders: { statut: string; numero_commande: string } })[];
 
-  // Regroupe les bénéfices en attente par commercial.
+  // Regroupe les bénéfices en attente par commercial — en gardant le détail
+  // de chaque commande, pour permettre de choisir précisément lesquelles un
+  // versement couvre (plutôt que de tout marquer payé d'un coup).
   const parCommercial = new Map<string, CommercialDu>();
   for (const p of profitList) {
     const existing = parCommercial.get(p.commercial_id);
+    const commandeDue: CommandeDue = {
+      orderId: p.order_id,
+      numeroCommande: p.orders.numero_commande,
+      montant: Number(p.montant_benefice),
+    };
     if (existing) {
-      existing.montantDu += Number(p.montant_benefice);
+      existing.montantDu += commandeDue.montant;
+      existing.commandes.push(commandeDue);
       if (p.created_at < existing.dateDebut) existing.dateDebut = p.created_at;
       if (p.created_at > existing.dateFin) existing.dateFin = p.created_at;
     } else {
       parCommercial.set(p.commercial_id, {
         commercial: p.profiles,
-        montantDu: Number(p.montant_benefice),
+        montantDu: commandeDue.montant,
         dateDebut: p.created_at,
         dateFin: p.created_at,
+        commandes: [commandeDue],
       });
     }
   }

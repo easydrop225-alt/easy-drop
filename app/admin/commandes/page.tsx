@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { CommandesGroupeesAdmin, type OrderComplete } from "@/components/commandes/commandes-groupees-admin";
-import type { Media, Profit } from "@/types/database";
+import type { Media } from "@/types/database";
 
 import type { Metadata } from "next";
 
@@ -40,18 +40,15 @@ export default async function AdminCommandesPage({
   const total = totalCommandes ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / TAILLE_PAGE));
 
-  const productIds = Array.from(new Set(list.flatMap((o) => o.order_items.map((i) => i.product_id))));
   const orderIds = list.map((o) => o.id);
-
-  // Les deux requêtes ci-dessous ne dépendent que des commandes déjà
-  // chargées, pas l'une de l'autre — on les lance en parallèle.
+  const productIds = Array.from(new Set(list.flatMap((o) => o.order_items.map((i) => i.product_id))));
   const [{ data: media }, { data: profits }] = await Promise.all([
     productIds.length
       ? supabase.from("media").select("*").in("product_id", productIds).eq("type", "image").order("ordre")
       : Promise.resolve({ data: [] as Media[] }),
     orderIds.length
-      ? supabase.from("profits").select("order_id, statut, montant_benefice").in("order_id", orderIds)
-      : Promise.resolve({ data: [] as Pick<Profit, "order_id" | "statut" | "montant_benefice">[] }),
+      ? supabase.from("profits").select("order_id, montant_benefice, statut").in("order_id", orderIds)
+      : Promise.resolve({ data: [] as { order_id: string; montant_benefice: number; statut: string }[] }),
   ]);
 
   const imageParProduit: Record<string, string | undefined> = {};
@@ -59,15 +56,19 @@ export default async function AdminCommandesPage({
     if (!(m.product_id in imageParProduit)) imageParProduit[m.product_id] = m.url;
   }
 
-  // Regroupe les lignes de bénéfice par commande : montant total + le
-  // paiement n'est considéré "payé" que si TOUTES les lignes le sont
-  // (une commande peut avoir plusieurs produits, donc plusieurs lignes).
-  const beneficeParCommande: Record<string, { total: number; paye: boolean }> = {};
-  for (const p of (profits ?? []) as Pick<Profit, "order_id" | "statut" | "montant_benefice">[]) {
-    const entry = beneficeParCommande[p.order_id] ?? { total: 0, paye: true };
-    entry.total += Number(p.montant_benefice);
-    if (p.statut !== "paye") entry.paye = false;
-    beneficeParCommande[p.order_id] = entry;
+  // Une commande peut avoir plusieurs lignes (panier multi-produits), donc
+  // plusieurs lignes de profit pour un même order_id — il faut les additionner
+  // (jamais garder juste la dernière vue) et ne considérer la commande comme
+  // "payée" que si TOUTES ses lignes de bénéfice le sont.
+  const profitParOrderId: Record<string, { montant: number; statut: string }> = {};
+  const tousPayesParOrderId: Record<string, boolean> = {};
+  for (const p of profits ?? []) {
+    const existant = profitParOrderId[p.order_id];
+    profitParOrderId[p.order_id] = { montant: (existant?.montant ?? 0) + p.montant_benefice, statut: p.statut };
+    tousPayesParOrderId[p.order_id] = (tousPayesParOrderId[p.order_id] ?? true) && p.statut === "paye";
+  }
+  for (const orderId of Object.keys(profitParOrderId)) {
+    profitParOrderId[orderId]!.statut = tousPayesParOrderId[orderId] ? "paye" : "en_attente";
   }
 
   return (
@@ -76,7 +77,7 @@ export default async function AdminCommandesPage({
         <h1 className="text-2xl font-semibold">Toutes les commandes</h1>
         <p className="text-sm text-ink-900/50">{total} commande{total !== 1 ? "s" : ""} au total</p>
       </div>
-      <CommandesGroupeesAdmin orders={list} imageParProduit={imageParProduit} beneficeParCommande={beneficeParCommande} />
+      <CommandesGroupeesAdmin orders={list} imageParProduit={imageParProduit} profitParOrderId={profitParOrderId} />
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-3 text-sm">

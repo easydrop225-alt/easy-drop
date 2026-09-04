@@ -6,8 +6,11 @@ import { notFound } from "next/navigation";
 import type { Order, OrderItem, Product } from "@/types/database";
 import { MesInfosCommandeForm } from "./infos-form";
 import { SuppressionBanner } from "./suppression-banner";
+import { AnnulerCommandeBouton } from "./annuler-bouton";
 
 const STATUTS_MODIFIABLES = ["confirmation", "traitement"];
+const STATUTS_ANNULABLES = ["confirmation", "traitement", "relance"];
+const DELAI_ANNULATION_HEURES = 24;
 
 export default async function DetailCommandePage({
   params,
@@ -32,6 +35,9 @@ export default async function DetailCommandePage({
   const prixTotal = prixVente + prixLivraison;
   const benefice = prixVente - prixFournisseur;
 
+  const heuresEcoulees = (Date.now() - new Date(o.created_at).getTime()) / (1000 * 60 * 60);
+  const peutAnnuler = STATUTS_ANNULABLES.includes(o.statut) && heuresEcoulees <= DELAI_ANNULATION_HEURES;
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
@@ -48,6 +54,11 @@ export default async function DetailCommandePage({
         <OrderTimeline statut={o.statut} motif={o.motif_annulation} dateRelance={o.date_relance} />
         {o.date_livraison_prevue && (
           <p className="mt-2 text-xs text-ink-900/50">Livraison prévue le {formatDate(o.date_livraison_prevue)}</p>
+        )}
+        {peutAnnuler && (
+          <div className="mt-4 border-t border-ink-900/5 pt-3">
+            <AnnulerCommandeBouton orderId={o.id} />
+          </div>
         )}
       </Card>
 

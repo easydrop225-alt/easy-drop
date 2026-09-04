@@ -33,3 +33,30 @@ export function calculDateLivraisonPrevue(now: Date = new Date()): {
 export function fourchetteFraisParDefaut(zone: ZoneLivraison): { min: number; max: number } {
   return zone === "abidjan" ? { min: 1500, max: 2000 } : { min: 2500, max: 4000 };
 }
+
+/**
+ * Quand on corrige le prix de la livraison après coup (ex : la livraison
+ * a finalement coûté plus cher que prévu), le prix total payé par le
+ * client ne doit pas changer — la différence est retirée du prix de vente
+ * (donc du bénéfice du commercial), répartie au prorata des quantités
+ * entre les lignes de la commande. Retourne `null` si la correction ferait
+ * passer un prix de vente sous 0 (cas à traiter manuellement).
+ */
+export function repartirCorrectionLivraison<T extends { quantite: number; prixVenteUnitaire: number }>(
+  lignes: T[],
+  ancienFraisLivraison: number,
+  nouveauFraisLivraison: number
+): { prixVenteUnitaire: number }[] | null {
+  const delta = nouveauFraisLivraison - ancienFraisLivraison;
+  const quantiteTotale = lignes.reduce((a, l) => a + l.quantite, 0);
+
+  if (delta === 0 || quantiteTotale === 0) {
+    return lignes.map((l) => ({ prixVenteUnitaire: l.prixVenteUnitaire }));
+  }
+
+  const reductionParUnite = delta / quantiteTotale;
+  const resultat = lignes.map((l) => ({ prixVenteUnitaire: l.prixVenteUnitaire - reductionParUnite }));
+
+  if (resultat.some((l) => l.prixVenteUnitaire < 0)) return null;
+  return resultat;
+}
