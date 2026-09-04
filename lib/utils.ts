@@ -35,3 +35,17 @@ export function dateIlYA1Mois(): string {
   d.setMonth(d.getMonth() - 1);
   return d.toISOString();
 }
+
+/**
+ * Début de la semaine calendaire en cours (lundi 00h00), pas "il y a 7
+ * jours" — une commande de lundi dernier ne doit plus compter dans "cette
+ * semaine" une fois qu'on est passé au lundi suivant, même si moins de 7
+ * jours se sont écoulés depuis.
+ */
+export function debutSemaineCourante(): Date {
+  const d = new Date();
+  const jour = d.getDay() || 7; // dimanche = 0 → traité comme 7
+  d.setHours(0, 0, 0, 0);
+  if (jour > 1) d.setDate(d.getDate() - (jour - 1));
+  return d;
+}

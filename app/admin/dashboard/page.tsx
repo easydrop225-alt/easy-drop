@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
-import { formatFCFA } from "@/lib/utils";
+import { formatFCFA, debutSemaineCourante } from "@/lib/utils";
 import type { Order, OrderItem, Profile } from "@/types/database";
 
 import type { Metadata } from "next";
@@ -74,7 +74,7 @@ export default async function DashboardAdminPage() {
   const supabase = await createClient();
 
   const debutJour = new Date(); debutJour.setHours(0, 0, 0, 0);
-  const debutSemaine = new Date(); debutSemaine.setDate(debutSemaine.getDate() - 7);
+  const debutSemaine = debutSemaineCourante();
   const debutMois = new Date(); debutMois.setDate(1); debutMois.setHours(0, 0, 0, 0);
   const debutAnnee = new Date(); debutAnnee.setMonth(0, 1); debutAnnee.setHours(0, 0, 0, 0);
   const isoDebutAnnee = debutAnnee.toISOString();
@@ -155,7 +155,7 @@ export default async function DashboardAdminPage() {
       </div>
 
       <LigneMetriques titre="Aujourd'hui" metriques={metriquesJour} />
-      <LigneMetriques titre="Cette semaine (7 derniers jours)" metriques={metriquesSemaine} />
+      <LigneMetriques titre="Cette semaine (lundi à aujourd'hui)" metriques={metriquesSemaine} />
       <LigneMetriques titre="Ce mois-ci" metriques={metriquesMois} />
       <LigneMetriques titre="Cette année" metriques={metriquesAnnee} />
 
@@ -163,7 +163,7 @@ export default async function DashboardAdminPage() {
         <h2 className="mb-3 text-lg font-medium">Commerciaux</h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <Card><CardTitle>Commerciaux (total)</CardTitle><CardValue>{commerciauxList.length}</CardValue></Card>
-          <Card><CardTitle>Nouveaux (7 derniers jours)</CardTitle><CardValue>{nouveauxCommerciaux7j}</CardValue></Card>
+          <Card><CardTitle>Nouveaux (cette semaine)</CardTitle><CardValue>{nouveauxCommerciaux7j}</CardValue></Card>
         </div>
       </div>
     </div>
