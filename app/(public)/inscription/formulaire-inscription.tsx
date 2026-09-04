@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { inscrireCommercial } from "./actions";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,8 +8,6 @@ import { PasswordInput, ExigencesMotDePasse } from "@/components/ui/password-inp
 
 export function FormulaireInscription() {
   const [state, formAction, pending] = useActionState(inscrireCommercial, undefined as { error?: string } | undefined);
-  const searchParams = useSearchParams();
-  const codeParraine = searchParams.get("ref") ?? "";
   const [motDePasse, setMotDePasse] = useState("");
 
   return (
@@ -50,13 +47,6 @@ export function FormulaireInscription() {
           onChange={(e) => setMotDePasse(e.target.value)}
         />
         <ExigencesMotDePasse valeur={motDePasse} />
-      </div>
-      <div>
-        <Label htmlFor="codeParrainage">Code de parrainage (facultatif)</Label>
-        <Input id="codeParrainage" name="codeParrainage" defaultValue={codeParraine} placeholder="Ex : JEA7901 (facultatif)" />
-        <p className="mt-1 text-xs text-ink-900/50">
-          Si quelqu'un t'a invité, indique son code ici. Cette information ne pourra plus être modifiée ensuite.
-        </p>
       </div>
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <Button type="submit" disabled={pending} className="w-full">

@@ -3,31 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-// Enregistre un versement pour un commercial et marque ses bénéfices
-// "en_attente" correspondants comme "payé". La preuve (image) est déjà
-// envoyée côté client vers le bucket "payment-proofs" ; on ne reçoit ici
-// que son URL.
-export async function enregistrerVersementParrainage(input: {
-  parrainId: string;
-  mois: string; // YYYY-MM-01
-  montant: number;
-  mode: string;
-  referencePaiement?: string;
-}) {
-  const supabase = await createClient();
-  const { error } = await supabase.from("versements_parrainage").insert({
-    parrain_id: input.parrainId,
-    mois: input.mois,
-    montant: input.montant,
-    mode: input.mode,
-    reference_paiement: input.referencePaiement ?? null,
-  });
-
-  if (error) return { error: error.message };
-  revalidatePath("/admin/paiements");
-  return { success: true };
-}
-
 export async function enregistrerPaiement(input: {
   commercialId: string;
   montant: number;

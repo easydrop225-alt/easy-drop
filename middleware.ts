@@ -14,7 +14,6 @@ const ROUTES_COMMERCIAL = [
   "/gains",
   "/notifications",
   "/onboarding",
-  "/parrainage",
   "/profil",
 ];
 

@@ -16,7 +16,6 @@ export default function robots(): MetadataRoute.Robots {
         "/catalogue",
         "/commandes",
         "/gains",
-        "/parrainage",
         "/profil",
         "/notifications",
         "/formation",

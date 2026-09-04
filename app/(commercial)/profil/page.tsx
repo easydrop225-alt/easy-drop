@@ -61,13 +61,6 @@ export default async function ProfilPage() {
       </Card>
 
       <Link
-        href="/parrainage"
-        className="flex items-center justify-center gap-2 rounded-xl bg-terracotta-500 px-4 py-3 text-sm font-medium text-white hover:bg-terracotta-600"
-      >
-        🤝 Mon Parrainage
-      </Link>
-
-      <Link
         href="/formation"
         className="flex items-center justify-center gap-2 rounded-xl bg-terracotta-500 px-4 py-3 text-sm font-medium text-white hover:bg-terracotta-600"
       >

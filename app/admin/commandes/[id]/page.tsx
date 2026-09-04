@@ -22,16 +22,11 @@ export default async function DetailCommandeAdminPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  // Les 3 requêtes ci-dessous ne dépendent que de l'id de la commande (déjà
+  // Les 2 requêtes ci-dessous ne dépendent que de l'id de la commande (déjà
   // connu via les params), pas les unes des autres — on les lance en parallèle.
-  const [{ data: order }, { data: items }, { data: pointParrainage }] = await Promise.all([
+  const [{ data: order }, { data: items }] = await Promise.all([
     supabase.from("orders").select("*, profiles(nom, prenom, telephone, nom_boutique)").eq("id", id).single(),
     supabase.from("order_items").select("*, products(*)").eq("order_id", id),
-    supabase
-      .from("points_parrainage")
-      .select("*, profiles:parrain_id(prenom, nom, nom_boutique, code_parrainage)")
-      .eq("order_id", id)
-      .maybeSingle(),
   ]);
   if (!order) notFound();
 
@@ -60,21 +55,6 @@ export default async function DetailCommandeAdminPage({
         </div>
         <StatutBadge statut={o.statut} />
       </div>
-
-      {pointParrainage && (
-        <Card className="bg-beige-100">
-          <h2 className="mb-2 font-medium">🤝 Parrainage</h2>
-          <p className="text-sm text-ink-900/70">
-            Cette vente a généré <strong>1 point</strong> pour le parrain :{" "}
-            {pointParrainage.profiles?.prenom} {pointParrainage.profiles?.nom}
-            {pointParrainage.profiles?.nom_boutique && <> (🏪 {pointParrainage.profiles.nom_boutique})</>}
-            {" "}— code <span className="font-mono">{pointParrainage.profiles?.code_parrainage}</span>.
-          </p>
-          <p className="mt-1 text-xs text-ink-900/50">
-            La valeur exacte du point dépend des ventes personnelles du parrain sur l'ensemble du mois — voir l'onglet Paiements &gt; Parrainage pour le montant final.
-          </p>
-        </Card>
-      )}
 
       <Card>
         <h2 className="mb-3 font-medium">Changer le statut</h2>

@@ -35,21 +35,7 @@ export default function AProposPage() {
           <li><strong>Catalogue</strong> — Découvre tous les produits disponibles.</li>
           <li><strong>Commandes</strong> — Consulte tes commandes en temps réel.</li>
           <li><strong>Mes gains</strong> — Retrouve tous tes bénéfices et leur historique.</li>
-          <li><strong>Parrainage</strong> — Invite de nouveaux commerciaux et gagne des bonus supplémentaires.</li>
           <li><strong>Profil</strong> — Modifie tes informations personnelles.</li>
-        </ul>
-      </Card>
-
-      <Card className="space-y-2">
-        <h2 className="font-medium">Règles du Programme de Parrainage</h2>
-        <ul className="list-disc space-y-1.5 pl-5 text-sm text-ink-900/70">
-          <li>Un filleul ne peut avoir qu'un seul parrain.</li>
-          <li>Le lien de parrainage est définitif.</li>
-          <li>Seules les ventes effectivement livrées génèrent des points.</li>
-          <li>Les points sont calculés automatiquement.</li>
-          <li>Les gains sont débloqués chaque 1er du mois pour le mois précédent.</li>
-          <li>Les bonus de parrainage sont financés par Easy Drop et ne réduisent jamais la commission du vendeur ayant réalisé la vente.</li>
-          <li>Toute tentative de fraude (création de faux comptes, auto-parrainage, manipulation des ventes, etc.) entraîne l'annulation des bonus et peut conduire à la suspension du compte.</li>
         </ul>
       </Card>
     </div>
