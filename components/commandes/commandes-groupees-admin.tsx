@@ -18,7 +18,7 @@ export type OrderComplete = Order & {
   order_items: (OrderItem & { products: Product; product_variants: ProductVariant | null })[];
 };
 
-type Onglet = "actives" | "nouvelles" | "annulees" | "livrees" | "relance" | "historique" | "toutes";
+type Onglet = "actives" | "nouvelles" | "livraison" | "annulees" | "livrees" | "relance" | "historique" | "toutes";
 
 function prixTotal(order: OrderComplete): number {
   return order.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0) + order.frais_livraison;
@@ -120,6 +120,7 @@ export function CommandesGroupeesAdmin({
   const compteParStatut = useMemo(() => ({
     actives: orders.filter((o) => o.statut !== "livree" && o.statut !== "annulee").length,
     nouvelles: orders.filter((o) => o.statut === "confirmation").length,
+    livraison: orders.filter((o) => o.statut === "livraison").length,
     annulees: orders.filter((o) => o.statut === "annulee").length,
     livrees: orders.filter((o) => o.statut === "livree").length,
     relance: orders.filter((o) => o.statut === "relance").length,
@@ -131,6 +132,7 @@ export function CommandesGroupeesAdmin({
     switch (ongletActif) {
       case "actives": return parDate.filter((o) => o.statut !== "livree" && o.statut !== "annulee");
       case "nouvelles": return parDate.filter((o) => o.statut === "confirmation");
+      case "livraison": return parDate.filter((o) => o.statut === "livraison");
       case "annulees": return parDate.filter((o) => o.statut === "annulee");
       case "livrees": return parDate.filter((o) => o.statut === "livree");
       case "relance": return parDate.filter((o) => o.statut === "relance");
@@ -151,13 +153,14 @@ export function CommandesGroupeesAdmin({
   }, [filtrees]);
 
   const onglets: { valeur: Onglet; label: string; compte?: number }[] = [
+    { valeur: "toutes", label: "Toutes les commandes" },
     { valeur: "actives", label: "📋 En attente de traitement", compte: compteParStatut.actives },
     { valeur: "nouvelles", label: "🟡 Nouvelles", compte: compteParStatut.nouvelles },
+    { valeur: "livraison", label: "🔵 En cours de livraison", compte: compteParStatut.livraison },
     { valeur: "relance", label: "🟠 À relancer", compte: compteParStatut.relance },
-    { valeur: "historique", label: "Historique (livrées / annulées)", compte: compteParStatut.historique },
-    { valeur: "livrees", label: "🟢 Livrées", compte: compteParStatut.livrees },
     { valeur: "annulees", label: "🔴 Annulées", compte: compteParStatut.annulees },
-    { valeur: "toutes", label: "Toutes les commandes" },
+    { valeur: "livrees", label: "🟢 Livrées", compte: compteParStatut.livrees },
+    { valeur: "historique", label: "Historique (livrées / annulées)", compte: compteParStatut.historique },
   ];
 
   function exporter() {
