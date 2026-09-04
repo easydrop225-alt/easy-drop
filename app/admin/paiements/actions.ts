@@ -3,6 +3,24 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+/**
+ * Liste les commandes précisément couvertes par un versement donné — utile
+ * pour vérifier après coup ce qu'un paiement a réellement soldé, sans avoir
+ * à le reconstituer de mémoire (voir profits.payment_id).
+ */
+export async function listerCommandesDunVersement(paymentId: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("profits")
+    .select("montant_benefice, orders(numero_commande)")
+    .eq("payment_id", paymentId);
+
+  return (data ?? []).map((p) => ({
+    numeroCommande: (p.orders as unknown as { numero_commande: string } | null)?.numero_commande ?? "?",
+    montant: Number(p.montant_benefice),
+  }));
+}
+
 export async function enregistrerPaiement(input: {
   commercialId: string;
   montant: number;

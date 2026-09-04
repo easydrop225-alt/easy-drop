@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { formatFCFA, formatDate } from "@/lib/utils";
 import { exporterCSV } from "@/lib/export-csv";
+import { VoirCommandesVersementBouton } from "./voir-commandes-versement-bouton";
 import { FiltreDate, correspondAuFiltre, type FiltreDateValeur } from "@/components/commandes/filtre-date";
 import type { Payment, Profile } from "@/types/database";
 
@@ -92,6 +93,11 @@ export function HistoriqueVersementsGroupe({ payments }: { payments: PaymentAvec
                       <span className={p.statut === "paye" ? "font-medium text-emerald-600" : "text-ink-900/60"}>
                         {p.statut === "paye" ? "✓ Payé" : p.statut}
                       </span>
+                      {p.statut === "paye" && (
+                        <div className="mt-1">
+                          <VoirCommandesVersementBouton paymentId={p.id} />
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
