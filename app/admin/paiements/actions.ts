@@ -42,25 +42,31 @@ export async function enregistrerPaiement(input: {
     return { error: "Aucune commande sélectionnée pour ce versement." };
   }
 
-  const { error } = await supabase.from("payments").insert({
-    commercial_id: input.commercialId,
-    montant: input.montant,
-    mode: input.mode,
-    reference_paiement: input.numeroDepot || null,
-    preuve_url: input.preuveUrl ?? null,
-    statut: "paye",
-    date_paiement: new Date().toISOString().slice(0, 10),
-  });
+  const { data: paiement, error } = await supabase
+    .from("payments")
+    .insert({
+      commercial_id: input.commercialId,
+      montant: input.montant,
+      mode: input.mode,
+      reference_paiement: input.numeroDepot || null,
+      preuve_url: input.preuveUrl ?? null,
+      statut: "paye",
+      date_paiement: new Date().toISOString().slice(0, 10),
+    })
+    .select("id")
+    .single();
 
   if (error) return { error: error.message };
 
   // Ne marque payés QUE les bénéfices des commandes explicitement
   // sélectionnées par l'admin — plus question de solder automatiquement
   // tout ce qui est en attente pour ce commercial, au risque de marquer
-  // "payé" des commandes que ce versement précis ne couvre pas.
+  // "payé" des commandes que ce versement précis ne couvre pas. Le lien
+  // payment_id garde une trace exacte et vérifiable de ce que ce versement
+  // a couvert, pour ne plus jamais avoir à reconstituer ça après coup.
   const { error: profitsError } = await supabase
     .from("profits")
-    .update({ statut: "paye" })
+    .update({ statut: "paye", payment_id: paiement.id })
     .eq("commercial_id", input.commercialId)
     .eq("statut", "en_attente")
     .in("order_id", input.orderIds);
