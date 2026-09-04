@@ -56,9 +56,19 @@ export default async function AdminCommandesPage({
     if (!(m.product_id in imageParProduit)) imageParProduit[m.product_id] = m.url;
   }
 
+  // Une commande peut avoir plusieurs lignes (panier multi-produits), donc
+  // plusieurs lignes de profit pour un même order_id — il faut les additionner
+  // (jamais garder juste la dernière vue) et ne considérer la commande comme
+  // "payée" que si TOUTES ses lignes de bénéfice le sont.
   const profitParOrderId: Record<string, { montant: number; statut: string }> = {};
+  const tousPayesParOrderId: Record<string, boolean> = {};
   for (const p of profits ?? []) {
-    profitParOrderId[p.order_id] = { montant: p.montant_benefice, statut: p.statut };
+    const existant = profitParOrderId[p.order_id];
+    profitParOrderId[p.order_id] = { montant: (existant?.montant ?? 0) + p.montant_benefice, statut: p.statut };
+    tousPayesParOrderId[p.order_id] = (tousPayesParOrderId[p.order_id] ?? true) && p.statut === "paye";
+  }
+  for (const orderId of Object.keys(profitParOrderId)) {
+    profitParOrderId[orderId]!.statut = tousPayesParOrderId[orderId] ? "paye" : "en_attente";
   }
 
   return (
