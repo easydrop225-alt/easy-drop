@@ -131,9 +131,14 @@ export default async function DashboardAdminPage() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Dashboard administrateur</h1>
-        <Link href="/admin/rapports" className="text-sm font-medium text-terracotta-600 underline">
-          Voir les rapports détaillés →
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/commandes/nouvelle" className="rounded-xl bg-terracotta-500 px-4 py-2 text-sm font-medium text-white hover:bg-terracotta-600">
+            + Nouvelle commande
+          </Link>
+          <Link href="/admin/rapports" className="text-sm font-medium text-terracotta-600 underline">
+            Voir les rapports détaillés →
+          </Link>
+        </div>
       </div>
 
       <div>

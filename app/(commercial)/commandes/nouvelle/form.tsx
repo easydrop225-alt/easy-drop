@@ -9,6 +9,7 @@ import { tarifPourCommune } from "@/lib/data/communes-abidjan";
 import { PanierCommande } from "./panier-commande";
 import { RecapitulatifCommande } from "./recapitulatif-commande";
 import { ModeTarificationCard } from "./mode-tarification-card";
+import { TypeCommandeCard, type TypeCommande } from "./type-commande-card";
 import { AjouterProduitCard } from "./ajouter-produit-card";
 import { ClientCard } from "./client-card";
 import { LivraisonCard } from "./livraison-card";
@@ -33,11 +34,22 @@ export function NouvelleCommandeForm({
   const [state, formAction, pending] = useActionState(creerCommande, undefined as { error?: string } | undefined);
   const formRef = useRef<HTMLFormElement>(null);
 
+  // Première question posée à l'ouverture : simplifie tout le reste du
+  // formulaire selon qu'il s'agit d'un seul produit ou de plusieurs.
+  const [typeCommande, setTypeCommande] = useState<TypeCommande | null>(null);
+
   // Deux façons de fixer le prix quand plusieurs produits différents sont
   // commandés ensemble : soit un prix propre à chaque produit (par défaut),
   // soit un seul prix pour toute la commande, réparti automatiquement.
+  // Pour un produit unique, le mode "par produit" s'impose de lui-même
+  // (prix de vente et prix de livraison saisis séparément).
   const [modeTarification, setModeTarification] = useState<"parProduit" | "total">("parProduit");
   const [prixTotalCommande, setPrixTotalCommande] = useState(0);
+
+  function choisirTypeCommande(v: TypeCommande) {
+    setTypeCommande(v);
+    if (v === "unique") setModeTarification("parProduit");
+  }
 
   const [zone, setZone] = useState<ZoneLivraison>("abidjan");
   const [commune, setCommune] = useState("");
@@ -121,6 +133,15 @@ export function NouvelleCommandeForm({
     }
   }, [zone, livraisonModifieeManuellement]);
 
+  // Si un brouillon restauré contenait déjà un panier, on déduit le type de
+  // commande plutôt que de forcer la personne à re-choisir après coup.
+  useEffect(() => {
+    if (typeCommande === null && panierCommande.panier.length > 0) {
+      setTypeCommande(panierCommande.panier.length === 1 ? "unique" : "multiple");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [brouillonRestaure]);
+
   return (
     <form ref={formRef} action={formAction} onSubmit={surSoumission} className="space-y-6">
       <input type="hidden" name="produitsJson" value={JSON.stringify(panierCommande.produitsJson)} />
@@ -142,93 +163,107 @@ export function NouvelleCommandeForm({
         </div>
       )}
 
-      <ModeTarificationCard
-        modeTarification={modeTarification}
-        onChange={setModeTarification}
-        panierNonVide={panierCommande.panier.length > 0}
+      <TypeCommandeCard
+        valeur={typeCommande}
+        onChange={choisirTypeCommande}
+        verrouille={panierCommande.panier.length > 0}
       />
 
-      {panierCommande.panier.length > 0 && (
-        <Card>
-          <PanierCommande lignes={panierCommande.lignesPanierAffichage} onRetirer={panierCommande.retirerDuPanier} />
-        </Card>
+      {typeCommande && (
+        <>
+          {typeCommande === "multiple" && (
+            <ModeTarificationCard
+              modeTarification={modeTarification}
+              onChange={setModeTarification}
+              panierNonVide={panierCommande.panier.length > 0}
+            />
+          )}
+
+          {panierCommande.panier.length > 0 && (
+            <Card>
+              <PanierCommande lignes={panierCommande.lignesPanierAffichage} onRetirer={panierCommande.retirerDuPanier} />
+            </Card>
+          )}
+
+          {(typeCommande === "multiple" || panierCommande.panier.length === 0) && (
+            <AjouterProduitCard
+              panierNonVide={panierCommande.panier.length > 0}
+              productsDisponibles={panierCommande.productsDisponibles}
+              stagingProductId={panierCommande.stagingProductId}
+              onSelectionnerProduit={panierCommande.selectionnerProduit}
+              stagingVariantes={panierCommande.stagingVariantes}
+              stagingQuantites={panierCommande.stagingQuantites}
+              onQuantiteChange={panierCommande.setStagingQuantite}
+              modeTarification={modeTarification}
+              stagingPrixVente={panierCommande.stagingPrixVente}
+              onPrixVenteChange={panierCommande.setStagingPrixVente}
+              stagingQuantiteTotale={panierCommande.stagingQuantiteTotale}
+              stagingBenefice={panierCommande.stagingBenefice}
+              stagingProduit={panierCommande.stagingProduit}
+              stagingHorsFourchette={panierCommande.stagingHorsFourchette}
+              onAjouter={panierCommande.ajouterAuPanier}
+              imageParVariante={imageParVariante}
+              observation={observation}
+              onObservationChange={setObservation}
+            />
+          )}
+
+          <ClientCard
+            clientNom={clientNom}
+            onClientNomChange={setClientNom}
+            clientTelephone={clientTelephone}
+            onClientTelephoneChange={setClientTelephone}
+            commune={commune}
+            onCommuneChange={handleCommuneChange}
+            clientAdresse={clientAdresse}
+            onClientAdresseChange={setClientAdresse}
+          />
+
+          <LivraisonCard
+            zone={zone}
+            onZoneChange={setZone}
+            prixLivraison={prixLivraison}
+            onPrixLivraisonChange={(v) => { setPrixLivraison(v); setLivraisonModifieeManuellement(true); }}
+            gare={gare}
+            onGareChange={setGare}
+            villeExpedition={villeExpedition}
+            onVilleExpeditionChange={setVilleExpedition}
+          />
+
+          <RecapitulatifCommande
+            nombreProduits={panierCommande.panier.length}
+            quantiteTotale={panierCommande.quantiteTotalePanier}
+            modeTarification={modeTarification}
+            zone={zone}
+            prixLivraison={prixLivraison}
+            prixTotalCommande={prixTotalCommande}
+            onChangePrixTotalCommande={setPrixTotalCommande}
+            prixVenteTotalPanier={panierCommande.prixVenteTotalPanier}
+            prixTotalAvecLivraison={panierCommande.prixTotalAvecLivraison}
+            beneficeTotalPanier={panierCommande.beneficeTotalPanier}
+          />
+
+          {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+          <Button
+            type="submit"
+            disabled={pending || panierCommande.panier.length === 0 || (modeTarification === "total" && panierCommande.prixProduitsSeuls <= 0)}
+            className="w-full"
+            size="lg"
+          >
+            {pending
+              ? "Création en cours..."
+              : !enLigne
+                ? "Enregistrer (envoi dès la reconnexion)"
+                : panierCommande.panier.length === 0
+                  ? "Ajoute au moins un produit"
+                  : modeTarification === "total" && panierCommande.prixProduitsSeuls <= 0
+                    ? prixTotalCommande <= 0
+                      ? "Renseigne le prix total"
+                      : "Le prix total doit dépasser la livraison"
+                    : "Valider la commande"}
+          </Button>
+        </>
       )}
-
-      <AjouterProduitCard
-        panierNonVide={panierCommande.panier.length > 0}
-        productsDisponibles={panierCommande.productsDisponibles}
-        stagingProductId={panierCommande.stagingProductId}
-        onSelectionnerProduit={panierCommande.selectionnerProduit}
-        stagingVariantes={panierCommande.stagingVariantes}
-        stagingQuantites={panierCommande.stagingQuantites}
-        onQuantiteChange={panierCommande.setStagingQuantite}
-        modeTarification={modeTarification}
-        stagingPrixVente={panierCommande.stagingPrixVente}
-        onPrixVenteChange={panierCommande.setStagingPrixVente}
-        stagingQuantiteTotale={panierCommande.stagingQuantiteTotale}
-        stagingBenefice={panierCommande.stagingBenefice}
-        stagingProduit={panierCommande.stagingProduit}
-        stagingHorsFourchette={panierCommande.stagingHorsFourchette}
-        onAjouter={panierCommande.ajouterAuPanier}
-        imageParVariante={imageParVariante}
-        observation={observation}
-        onObservationChange={setObservation}
-      />
-
-      <ClientCard
-        clientNom={clientNom}
-        onClientNomChange={setClientNom}
-        clientTelephone={clientTelephone}
-        onClientTelephoneChange={setClientTelephone}
-        commune={commune}
-        onCommuneChange={handleCommuneChange}
-        clientAdresse={clientAdresse}
-        onClientAdresseChange={setClientAdresse}
-      />
-
-      <LivraisonCard
-        zone={zone}
-        onZoneChange={setZone}
-        prixLivraison={prixLivraison}
-        onPrixLivraisonChange={(v) => { setPrixLivraison(v); setLivraisonModifieeManuellement(true); }}
-        gare={gare}
-        onGareChange={setGare}
-        villeExpedition={villeExpedition}
-        onVilleExpeditionChange={setVilleExpedition}
-      />
-
-      <RecapitulatifCommande
-        nombreProduits={panierCommande.panier.length}
-        quantiteTotale={panierCommande.quantiteTotalePanier}
-        modeTarification={modeTarification}
-        zone={zone}
-        prixLivraison={prixLivraison}
-        prixTotalCommande={prixTotalCommande}
-        onChangePrixTotalCommande={setPrixTotalCommande}
-        prixVenteTotalPanier={panierCommande.prixVenteTotalPanier}
-        prixTotalAvecLivraison={panierCommande.prixTotalAvecLivraison}
-        beneficeTotalPanier={panierCommande.beneficeTotalPanier}
-      />
-
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      <Button
-        type="submit"
-        disabled={pending || panierCommande.panier.length === 0 || (modeTarification === "total" && panierCommande.prixProduitsSeuls <= 0)}
-        className="w-full"
-        size="lg"
-      >
-        {pending
-          ? "Création en cours..."
-          : !enLigne
-            ? "Enregistrer (envoi dès la reconnexion)"
-            : panierCommande.panier.length === 0
-              ? "Ajoute au moins un produit"
-              : modeTarification === "total" && panierCommande.prixProduitsSeuls <= 0
-                ? prixTotalCommande <= 0
-                  ? "Renseigne le prix total"
-                  : "Le prix total doit dépasser la livraison"
-                : "Valider la commande"}
-      </Button>
     </form>
   );
 }
