@@ -29,6 +29,9 @@ export default async function BonDeCommandePage({
 
   const prixTotal = o.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0) + o.frais_livraison;
   const dateLivraison = o.statut === "relance" && o.date_relance ? o.date_relance : o.date_livraison_prevue;
+  // Toutes les lignes d'une même commande partagent la même observation
+  // (renseignée une seule fois à la création) — on prend la première non vide.
+  const observation = o.order_items.find((i) => i.observation)?.observation;
 
   return (
     <>
@@ -89,6 +92,13 @@ export default async function BonDeCommandePage({
                 })}
               </ul>
             </div>
+
+            {observation && (
+              <div className="mb-4 border-t-2 border-dashed border-ink-900 pt-4">
+                <p className="mb-1 text-xs font-bold uppercase text-ink-900">Note du commercial</p>
+                <p className="rounded-lg bg-ink-900/5 p-2 text-sm font-bold text-ink-900">{observation}</p>
+              </div>
+            )}
 
             <div className="border-t-2 border-dashed border-ink-900 pt-4">
               <div className="rounded-2xl border-2 border-ink-900 px-4 py-3">
