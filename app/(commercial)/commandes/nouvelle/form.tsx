@@ -203,6 +203,7 @@ export function NouvelleCommandeForm({
               stagingHorsFourchette={panierCommande.stagingHorsFourchette}
               onAjouter={panierCommande.ajouterAuPanier}
               imageParVariante={imageParVariante}
+              imageParProduit={imageParProduit}
               observation={observation}
               onObservationChange={setObservation}
             />

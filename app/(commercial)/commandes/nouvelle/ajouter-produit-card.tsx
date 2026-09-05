@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { Input, Label } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -30,6 +31,7 @@ export function AjouterProduitCard({
   stagingHorsFourchette,
   onAjouter,
   imageParVariante,
+  imageParProduit,
   observation,
   onObservationChange,
 }: {
@@ -49,9 +51,22 @@ export function AjouterProduitCard({
   stagingHorsFourchette: boolean;
   onAjouter: () => void;
   imageParVariante?: Record<string, string>;
+  imageParProduit?: Record<string, string>;
   observation: string;
   onObservationChange: (valeur: string) => void;
 }) {
+  const [rechercheProduit, setRechercheProduit] = useState("");
+  const [listeOuverte, setListeOuverte] = useState(false);
+
+  const produitsFiltres = productsDisponibles.filter((p) =>
+    p.nom.toLowerCase().includes(rechercheProduit.trim().toLowerCase())
+  );
+
+  function choisir(id: string) {
+    onSelectionnerProduit(id);
+    setListeOuverte(false);
+    setRechercheProduit("");
+  }
   return (
     <Card>
       <h2 className="mb-4 font-medium">{panierNonVide ? "Ajouter un autre produit" : "Produit"}</h2>
@@ -60,18 +75,47 @@ export function AjouterProduitCard({
         <p className="text-sm text-ink-900/50">Tous les produits actifs sont déjà dans cette commande.</p>
       ) : (
         <div className="space-y-3">
-          <div>
-            <Label htmlFor="productIdSelect">Produit</Label>
-            <select
-              id="productIdSelect"
-              value={stagingProductId}
-              onChange={(e) => onSelectionnerProduit(e.target.value)}
-              className="h-10 w-full rounded-xl border border-ink-900/10 bg-surface px-3 text-sm"
-            >
-              {productsDisponibles.map((p) => (
-                <option key={p.id} value={p.id}>{p.nom} — {formatFCFA(p.prix_fournisseur)}</option>
-              ))}
-            </select>
+          <div className="relative">
+            <Label htmlFor="rechercheProduitInput">Produit</Label>
+            <Input
+              id="rechercheProduitInput"
+              value={listeOuverte ? rechercheProduit : (stagingProduit?.nom ?? "")}
+              onChange={(e) => { setRechercheProduit(e.target.value); setListeOuverte(true); }}
+              onFocus={() => { setListeOuverte(true); setRechercheProduit(""); }}
+              onBlur={() => { setTimeout(() => setListeOuverte(false), 150); }}
+              placeholder="Rechercher un produit par son nom..."
+              autoComplete="off"
+            />
+            {listeOuverte && (
+              <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-ink-900/10 bg-surface shadow-lg">
+                {produitsFiltres.length === 0 && (
+                  <p className="p-3 text-sm text-ink-900/50">Aucun produit ne correspond.</p>
+                )}
+                {produitsFiltres.map((p) => {
+                  const photoProduit = imageParProduit?.[p.id];
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => choisir(p.id)}
+                      className="flex w-full items-center gap-3 p-2.5 text-left hover:bg-beige-100"
+                    >
+                      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-beige-100">
+                        {photoProduit ? (
+                          <Image src={photoProduit} alt="" fill sizes="40px" className="object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-ink-900/30">📦</div>
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{p.nom}</p>
+                        <p className="text-xs text-ink-900/50">{formatFCFA(p.prix_fournisseur)}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {stagingVariantes.length > 0 ? (

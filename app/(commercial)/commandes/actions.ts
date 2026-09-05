@@ -111,7 +111,7 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
     return { error: itemsError.message };
   }
 
-  redirect(`/commandes/${order.id}`);
+  redirect(`/commandes`);
 }
 
 const STATUTS_MODIFIABLES = ["confirmation", "traitement"];
