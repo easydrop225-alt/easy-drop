@@ -227,16 +227,22 @@ export function CommandesGroupeesAdmin({
       {groupes.length === 0 && <p className="text-ink-900/60">Aucune commande pour cette période.</p>}
 
       {groupes.map(([commercialId, groupe]) => {
-        const ouvert = groupeOuvert[commercialId] ?? true;
+        const ouvert = groupeOuvert[commercialId] ?? false;
+        const nouvelles = groupe.commandes.filter((o) => o.statut === "confirmation").length;
         return (
           <div key={commercialId}>
             <button
               onClick={() => setGroupeOuvert((s) => ({ ...s, [commercialId]: !ouvert }))}
               className="mb-2 flex w-full items-center justify-between rounded-xl bg-beige-100 px-4 py-2 text-left"
             >
-              <span className="font-medium">
+              <span className="flex items-center gap-2 font-medium">
                 {groupe.nom} <span className="font-normal text-ink-900/50">— {groupe.telephone}</span>
-                {groupe.nomBoutique && <span className="ml-2 rounded-full bg-surface px-2 py-0.5 text-xs font-normal text-ink-900/60">🏪 {groupe.nomBoutique}</span>}
+                {groupe.nomBoutique && <span className="rounded-full bg-surface px-2 py-0.5 text-xs font-normal text-ink-900/60">🏪 {groupe.nomBoutique}</span>}
+                {nouvelles > 0 && (
+                  <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
+                    {nouvelles} nouvelle{nouvelles > 1 ? "s" : ""}
+                  </span>
+                )}
               </span>
               <span className="text-sm text-ink-900/50">{groupe.commandes.length} commande(s) {ouvert ? "▲" : "▼"}</span>
             </button>
