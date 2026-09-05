@@ -93,17 +93,15 @@ export default async function BonDeCommandePage({
               </ul>
             </div>
 
-            {observation && (
-              <div className="mb-4 border-t-2 border-dashed border-ink-900 pt-4">
-                <p className="mb-1 text-xs font-bold uppercase text-ink-900">Note du commercial</p>
-                <p className="rounded-lg bg-ink-900/5 p-2 text-sm font-bold text-ink-900">{observation}</p>
-              </div>
-            )}
-
             <div className="border-t-2 border-dashed border-ink-900 pt-4">
               <div className="rounded-2xl border-2 border-ink-900 px-4 py-3">
                 <p className="text-sm font-bold text-ink-900">Prix total (livraison incluse)</p>
                 <p className="text-2xl font-bold text-ink-900">{formatFCFA(prixTotal)}</p>
+                {observation && (
+                  <p className="mt-2 border-t border-ink-900/20 pt-2 text-xs font-bold text-ink-900">
+                    Note : {observation}
+                  </p>
+                )}
               </div>
             </div>
 
