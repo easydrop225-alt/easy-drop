@@ -82,9 +82,9 @@ export function RecapitulatifCommande({
         </>
       )}
 
-      <div className="flex justify-between border-t border-ink-900/10 pt-2 font-medium">
-        <span>Prix total (payé par le client)</span>
-        <span>{formatFCFA(prixTotalAvecLivraison)}</span>
+      <div className="mt-1 flex items-center justify-between rounded-xl bg-terracotta-500 px-3 py-2.5 text-white">
+        <span className="text-sm font-medium">Prix total (payé par le client)</span>
+        <span className="text-lg font-bold">{formatFCFA(prixTotalAvecLivraison)}</span>
       </div>
       <div className="mt-3 border-t border-ink-900/10 pt-3">
         <p className="text-sm text-ink-900/60">Bénéfice estimé pour cette commande</p>

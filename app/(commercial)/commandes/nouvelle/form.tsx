@@ -12,7 +12,8 @@ import { ModeTarificationCard } from "./mode-tarification-card";
 import { TypeCommandeCard, type TypeCommande } from "./type-commande-card";
 import { AjouterProduitCard } from "./ajouter-produit-card";
 import { ClientCard } from "./client-card";
-import { LivraisonCard } from "./livraison-card";
+import { LieuLivraisonCard } from "./lieu-livraison-card";
+import { ObservationCard } from "./observation-card";
 import { usePanierCommande, type VariantAvecStock } from "./use-panier-commande";
 import { useBrouillonCommande } from "./use-brouillon-commande";
 import { useConnexionCommande } from "./use-connexion-commande";
@@ -204,31 +205,31 @@ export function NouvelleCommandeForm({
               onAjouter={panierCommande.ajouterAuPanier}
               imageParVariante={imageParVariante}
               imageParProduit={imageParProduit}
-              observation={observation}
-              onObservationChange={setObservation}
             />
           )}
 
-          <ClientCard
-            clientNom={clientNom}
-            onClientNomChange={setClientNom}
-            clientTelephone={clientTelephone}
-            onClientTelephoneChange={setClientTelephone}
+          <LieuLivraisonCard
+            zone={zone}
+            onZoneChange={setZone}
             commune={commune}
             onCommuneChange={handleCommuneChange}
             clientAdresse={clientAdresse}
             onClientAdresseChange={setClientAdresse}
-          />
-
-          <LivraisonCard
-            zone={zone}
-            onZoneChange={setZone}
             prixLivraison={prixLivraison}
             onPrixLivraisonChange={(v) => { setPrixLivraison(v); setLivraisonModifieeManuellement(true); }}
             gare={gare}
             onGareChange={setGare}
             villeExpedition={villeExpedition}
             onVilleExpeditionChange={setVilleExpedition}
+          />
+
+          <ObservationCard observation={observation} onObservationChange={setObservation} />
+
+          <ClientCard
+            clientNom={clientNom}
+            onClientNomChange={setClientNom}
+            clientTelephone={clientTelephone}
+            onClientTelephoneChange={setClientTelephone}
           />
 
           <RecapitulatifCommande

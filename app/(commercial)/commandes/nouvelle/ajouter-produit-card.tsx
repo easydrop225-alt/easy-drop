@@ -32,8 +32,6 @@ export function AjouterProduitCard({
   onAjouter,
   imageParVariante,
   imageParProduit,
-  observation,
-  onObservationChange,
 }: {
   panierNonVide: boolean;
   productsDisponibles: Product[];
@@ -52,8 +50,6 @@ export function AjouterProduitCard({
   onAjouter: () => void;
   imageParVariante?: Record<string, string>;
   imageParProduit?: Record<string, string>;
-  observation: string;
-  onObservationChange: (valeur: string) => void;
 }) {
   const [rechercheProduit, setRechercheProduit] = useState("");
   const [listeOuverte, setListeOuverte] = useState(false);
@@ -208,19 +204,6 @@ export function AjouterProduitCard({
           </button>
         </div>
       )}
-
-      <div className="mt-4">
-        <Label htmlFor="observation">Observation (précisions supplémentaires)</Label>
-        <textarea
-          id="observation"
-          name="observation"
-          rows={2}
-          value={observation}
-          onChange={(e) => onObservationChange(e.target.value)}
-          placeholder="Ex : préférence du client, remarque particulière..."
-          className="w-full rounded-xl border border-ink-900/10 bg-surface p-3 text-sm"
-        />
-      </div>
     </Card>
   );
 }
