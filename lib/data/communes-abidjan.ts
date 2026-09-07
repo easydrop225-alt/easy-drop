@@ -38,7 +38,7 @@ export const COMMUNES_ABIDJAN: CommuneTarif[] = [
   { commune: "Marcory", tarif: 1500 },
   { commune: "Plateau", tarif: 2000 },
   { commune: "Port-Bouët", tarif: 2000 },
-  { commune: "Songon", tarif: 2500 },
+  { commune: "Songon", tarif: 2000 },
   { commune: "Treichville", tarif: 1500 },
   { commune: "Yopougon", tarif: 2000 },
 ];
