@@ -98,7 +98,7 @@ export default async function BonDeCommandePage({
                 <p className="text-sm font-bold text-ink-900">Prix total (livraison incluse)</p>
                 <p className="text-2xl font-bold text-ink-900">{formatFCFA(prixTotal)}</p>
                 {observation && (
-                  <p className="mt-2 border-t border-ink-900/20 pt-2 text-right text-sm font-bold text-ink-900">
+                  <p className="mt-2 border-t border-ink-900/20 pt-2 text-sm font-bold text-ink-900">
                     * {observation}
                   </p>
                 )}
