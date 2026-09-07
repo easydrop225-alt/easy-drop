@@ -61,9 +61,12 @@ export default async function BonDeCommandePage({
               </div>
             </div>
 
-            {/* Bandeau "INFOS DU CLIENT" */}
-            <div className="mb-3 rounded-xl bg-ink-900 py-1.5 text-center">
-              <p className="text-sm font-bold uppercase tracking-wide text-white">Infos du client</p>
+            {/* Bandeau "INFOS DU CLIENT" — texte noir sur fond blanc avec
+                simple encadré (pas de fond noir plein) : un aplat noir avec
+                texte blanc "en creux" imprime souvent gris/flou sur une
+                imprimante thermique au lieu d'un vrai noir net. */}
+            <div className="mb-3 rounded-xl border-2 border-ink-900 py-1.5 text-center">
+              <p className="text-sm font-bold uppercase tracking-wide text-ink-900">Infos du client</p>
             </div>
 
             <div className="mb-4 border-t-2 border-dashed border-ink-900 pt-4">
