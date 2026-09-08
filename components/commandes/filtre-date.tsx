@@ -35,8 +35,39 @@ export function FiltreDate({
     return new Date(valeur.annee, valeur.mois + 1, 0).getDate();
   }, [valeur.annee, valeur.mois]);
 
+  const aujourdhui = new Date();
+  const hier = new Date();
+  hier.setDate(hier.getDate() - 1);
+
+  function estActif(date: Date) {
+    return valeur.annee === date.getFullYear() && valeur.mois === date.getMonth() && valeur.jour === date.getDate();
+  }
+
+  function choisirJour(date: Date) {
+    onChange({ annee: date.getFullYear(), mois: date.getMonth(), jour: date.getDate() });
+  }
+
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={() => choisirJour(aujourdhui)}
+        className={`h-9 rounded-lg px-3 text-sm font-medium transition ${
+          estActif(aujourdhui) ? "bg-terracotta-500 text-white" : "bg-beige-100 text-ink-900/70"
+        }`}
+      >
+        Aujourd&apos;hui
+      </button>
+      <button
+        type="button"
+        onClick={() => choisirJour(hier)}
+        className={`h-9 rounded-lg px-3 text-sm font-medium transition ${
+          estActif(hier) ? "bg-terracotta-500 text-white" : "bg-beige-100 text-ink-900/70"
+        }`}
+      >
+        Hier
+      </button>
+
       <select
         value={valeur.annee}
         onChange={(e) => onChange({ annee: Number(e.target.value), mois: valeur.mois, jour: null })}
