@@ -62,19 +62,40 @@ const produitCommandeSchema = z.object({
   prixVente: z.coerce.number().positive("Le prix de vente doit être supérieur à 0."),
 });
 
-export const nouvelleCommandeSchema = z.object({
-  produits: z.array(produitCommandeSchema).min(1, "Ajoute au moins un produit à la commande."),
-  clientNom: z.string().min(2),
-  clientTelephone: z.string().min(8),
-  clientCommune: z.string().min(2),
-  clientAdresse: z.string().min(5),
-  zone: z.enum(["abidjan", "hors_abidjan"]),
-  modeLivraison: z.enum(["normal", "yango_urgent"]).default("normal"),
-  fraisLivraison: z.coerce.number().min(0),
-  observation: z.string().max(500).optional(),
-  gare: z.string().max(200).optional(),
-  villeExpedition: z.string().max(200).optional(),
-});
+// Le lieu de livraison n'a pas la même forme selon la zone : commune +
+// quartier pour une livraison à Abidjan, ville + gare pour une expédition —
+// un seul des deux couples est donc réellement requis, selon `zone`.
+export const nouvelleCommandeSchema = z
+  .object({
+    produits: z.array(produitCommandeSchema).min(1, "Ajoute au moins un produit à la commande."),
+    clientNom: z.string().min(2),
+    clientTelephone: z.string().min(8),
+    clientCommune: z.string().optional(),
+    clientAdresse: z.string().optional(),
+    zone: z.enum(["abidjan", "hors_abidjan"]),
+    modeLivraison: z.enum(["normal", "yango_urgent"]).default("normal"),
+    fraisLivraison: z.coerce.number().min(0),
+    observation: z.string().max(500).optional(),
+    gare: z.string().max(200).optional(),
+    villeExpedition: z.string().max(200).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.zone === "abidjan") {
+      if (!data.clientCommune || data.clientCommune.trim().length < 2) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Commune requise.", path: ["clientCommune"] });
+      }
+      if (!data.clientAdresse || data.clientAdresse.trim().length < 2) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Quartier requis.", path: ["clientAdresse"] });
+      }
+    } else {
+      if (!data.villeExpedition || data.villeExpedition.trim().length < 2) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Ville de destination requise.", path: ["villeExpedition"] });
+      }
+      if (!data.gare || data.gare.trim().length < 2) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Gare requise.", path: ["gare"] });
+      }
+    }
+  });
 export type NouvelleCommandeInput = z.infer<typeof nouvelleCommandeSchema>;
 
 export const paiementSchema = z.object({

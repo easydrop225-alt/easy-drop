@@ -12,8 +12,8 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
     produits: JSON.parse(String(formData.get("produitsJson") ?? "[]")),
     clientNom: formData.get("clientNom"),
     clientTelephone: formData.get("clientTelephone"),
-    clientCommune: formData.get("clientCommune"),
-    clientAdresse: formData.get("clientAdresse"),
+    clientCommune: formData.get("clientCommune") || undefined,
+    clientAdresse: formData.get("clientAdresse") || undefined,
     zone: formData.get("zone"),
     modeLivraison: formData.get("modeLivraison") || "normal",
     fraisLivraison: formData.get("fraisLivraison"),
@@ -56,6 +56,13 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
 
   const { dateLivraison } = calculDateLivraisonPrevue();
 
+  // Le lieu de livraison n'a pas la même forme selon la zone (voir
+  // nouvelleCommandeSchema) : pour une expédition, il n'y a ni commune ni
+  // quartier au sens propre — colonnes obligatoires en base, on y range
+  // donc la ville et la gare, qui sont le vrai lieu de livraison ici.
+  const clientCommune = parsed.data.zone === "hors_abidjan" ? parsed.data.villeExpedition! : parsed.data.clientCommune!;
+  const clientAdresse = parsed.data.zone === "hors_abidjan" ? parsed.data.gare! : parsed.data.clientAdresse!;
+
   // Un seul frais de livraison pour toute la commande, quel que soit le
   // nombre de produits différents commandés (stocké une seule fois sur la
   // commande elle-même, jamais dupliqué par ligne de produit).
@@ -65,8 +72,8 @@ export async function creerCommande(_prevState: unknown, formData: FormData) {
       commercial_id: user.id,
       client_nom: parsed.data.clientNom,
       client_telephone: parsed.data.clientTelephone,
-      client_commune: parsed.data.clientCommune,
-      client_adresse: parsed.data.clientAdresse,
+      client_commune: clientCommune,
+      client_adresse: clientAdresse,
       zone: parsed.data.zone,
       mode_livraison: parsed.data.modeLivraison,
       frais_livraison: parsed.data.fraisLivraison,

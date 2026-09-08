@@ -12,7 +12,6 @@ import { ModeTarificationCard } from "./mode-tarification-card";
 import { TypeCommandeCard, type TypeCommande } from "./type-commande-card";
 import { AjouterProduitCard } from "./ajouter-produit-card";
 import { ClientCard } from "./client-card";
-import { LivraisonCard } from "./livraison-card";
 import { usePanierCommande, type VariantAvecStock } from "./use-panier-commande";
 import { useBrouillonCommande } from "./use-brouillon-commande";
 import { useConnexionCommande } from "./use-connexion-commande";
@@ -214,15 +213,12 @@ export function NouvelleCommandeForm({
             onClientNomChange={setClientNom}
             clientTelephone={clientTelephone}
             onClientTelephoneChange={setClientTelephone}
+            zone={zone}
+            onZoneChange={setZone}
             commune={commune}
             onCommuneChange={handleCommuneChange}
             clientAdresse={clientAdresse}
             onClientAdresseChange={setClientAdresse}
-          />
-
-          <LivraisonCard
-            zone={zone}
-            onZoneChange={setZone}
             prixLivraison={prixLivraison}
             onPrixLivraisonChange={(v) => { setPrixLivraison(v); setLivraisonModifieeManuellement(true); }}
             gare={gare}
