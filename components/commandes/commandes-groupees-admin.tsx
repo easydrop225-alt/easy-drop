@@ -6,12 +6,13 @@ import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { StatutRapideSelect } from "./statut-rapide-select";
+import { LivreurSelect } from "./livreur-select";
 import { BarreActionGroupee } from "./barre-action-groupee";
 import { formatDate, formatFCFA } from "@/lib/utils";
 import { exporterCSV } from "@/lib/export-csv";
 import { Button } from "@/components/ui/button";
 import { FiltreDate, correspondAuFiltre, type FiltreDateValeur } from "./filtre-date";
-import type { Order, Profile, OrderItem, Product, ProductVariant } from "@/types/database";
+import type { Order, Profile, OrderItem, Product, ProductVariant, Livreur } from "@/types/database";
 
 export type OrderComplete = Order & {
   profiles: Pick<Profile, "nom" | "prenom" | "telephone" | "nom_boutique">;
@@ -97,10 +98,12 @@ export function CommandesGroupeesAdmin({
   orders,
   imageParProduit,
   profitParOrderId = {},
+  livreurs = [],
 }: {
   orders: OrderComplete[];
   imageParProduit: Record<string, string | undefined>;
   profitParOrderId?: Record<string, { montant: number; statut: string }>;
+  livreurs?: Livreur[];
 }) {
   const [filtre, setFiltre] = useState<FiltreDateValeur>({ annee: new Date().getFullYear(), mois: null, jour: null });
   const [groupeOuvert, setGroupeOuvert] = useState<Record<string, boolean>>({});
@@ -294,6 +297,7 @@ export function CommandesGroupeesAdmin({
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         <StatutRapideSelect orderId={order.id} statutActuel={order.statut} />
+                        <LivreurSelect orderId={order.id} livreurActuelId={order.livreur_id} livreurs={livreurs} />
                         <Link
                           href={`/admin/commandes/${order.id}/bon`}
                           target="_blank"
@@ -323,6 +327,7 @@ export function CommandesGroupeesAdmin({
                         <th className="p-2">Date</th>
                         <th className="p-2">Statut</th>
                         <th className="p-2">Bénéfice</th>
+                        <th className="p-2">Livreur</th>
                         <th className="p-2"></th>
                       </tr>
                     </thead>
@@ -389,6 +394,9 @@ export function CommandesGroupeesAdmin({
                                   </div>
                                 );
                               })()}
+                            </td>
+                            <td className="p-2">
+                              <LivreurSelect orderId={order.id} livreurActuelId={order.livreur_id} livreurs={livreurs} />
                             </td>
                             <td className="p-2">
                               <Link

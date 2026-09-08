@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { CommandesGroupeesAdmin, type OrderComplete } from "@/components/commandes/commandes-groupees-admin";
-import type { Media } from "@/types/database";
+import type { Media, Livreur } from "@/types/database";
 
 import type { Metadata } from "next";
 
@@ -42,14 +42,16 @@ export default async function AdminCommandesPage({
 
   const orderIds = list.map((o) => o.id);
   const productIds = Array.from(new Set(list.flatMap((o) => o.order_items.map((i) => i.product_id))));
-  const [{ data: media }, { data: profits }] = await Promise.all([
+  const [{ data: media }, { data: profits }, { data: livreursData }] = await Promise.all([
     productIds.length
       ? supabase.from("media").select("*").in("product_id", productIds).eq("type", "image").order("ordre")
       : Promise.resolve({ data: [] as Media[] }),
     orderIds.length
       ? supabase.from("profits").select("order_id, montant_benefice, statut").in("order_id", orderIds)
       : Promise.resolve({ data: [] as { order_id: string; montant_benefice: number; statut: string }[] }),
+    supabase.from("livreurs").select("*").eq("actif", true).order("nom"),
   ]);
+  const livreurs = (livreursData ?? []) as Livreur[];
 
   const imageParProduit: Record<string, string | undefined> = {};
   for (const m of (media ?? []) as Media[]) {
@@ -77,7 +79,7 @@ export default async function AdminCommandesPage({
         <h1 className="text-2xl font-semibold">Toutes les commandes</h1>
         <p className="text-sm text-ink-900/50">{total} commande{total !== 1 ? "s" : ""} au total</p>
       </div>
-      <CommandesGroupeesAdmin orders={list} imageParProduit={imageParProduit} profitParOrderId={profitParOrderId} />
+      <CommandesGroupeesAdmin orders={list} imageParProduit={imageParProduit} profitParOrderId={profitParOrderId} livreurs={livreurs} />
 
       {totalPages > 1 && (
         <div className="mt-6 flex items-center justify-center gap-3 text-sm">

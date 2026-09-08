@@ -5,7 +5,9 @@ import { SonNotificationUploader } from "@/components/shared/son-notification-up
 import { AccueilCommercialForm } from "./accueil-commercial-form";
 import { ComptesLiesForm } from "../comptes-lies/comptes-lies-form";
 import { listerComptesLies } from "../comptes-lies/actions";
+import { LivreursForm } from "./livreurs-form";
 import { Card } from "@/components/ui/card";
+import type { Livreur } from "@/types/database";
 
 import type { Metadata } from "next";
 
@@ -14,10 +16,12 @@ export const metadata: Metadata = { title: "Paramètres" };
 
 export default async function ParametresPage() {
   const supabase = await createClient();
-  const [{ data: settings }, { data: produits }] = await Promise.all([
+  const [{ data: settings }, { data: produits }, { data: livreursData }] = await Promise.all([
     supabase.from("settings").select("*"),
     supabase.from("products").select("*").eq("actif", true).order("nom"),
+    supabase.from("livreurs").select("*").eq("actif", true).order("nom"),
   ]);
+  const livreurs = (livreursData ?? []) as Livreur[];
   const list = (settings ?? []) as Setting[];
   const get = (cle: string) => list.find((s) => s.cle === cle)?.valeur;
 
@@ -52,6 +56,11 @@ export default async function ParametresPage() {
       <Card>
         <h2 className="mb-3 font-medium">Son de notification (nouvelle commande)</h2>
         <SonNotificationUploader sonActuelUrl={get("son_notification_url") as string | undefined ?? null} />
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-medium">Livreurs</h2>
+        <LivreursForm livreurs={livreurs} />
       </Card>
 
       {estSuperAdmin && (

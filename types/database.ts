@@ -139,6 +139,7 @@ export interface Order {
   gare: string | null;
   ville_expedition: string | null;
   recu_expedition_url: string | null;
+  livreur_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -183,6 +184,14 @@ export interface Notification {
   message: string | null;
   lu: boolean;
   lien: string | null;
+  created_at: string;
+}
+
+export interface Livreur {
+  id: string;
+  nom: string;
+  telephone: string | null;
+  actif: boolean;
   created_at: string;
 }
 

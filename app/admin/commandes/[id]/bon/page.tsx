@@ -47,7 +47,7 @@ export default async function BonDeCommandePage({
 
       <div className="mx-auto max-w-md p-6 print:w-[72mm] print:max-w-none print:p-0">
         <div className="mb-4 flex justify-end print:hidden">
-          <ImprimerBouton />
+          <ImprimerBouton orderId={o.id} statutActuel={o.statut} />
         </div>
 
         <BonAutoEchelle>
