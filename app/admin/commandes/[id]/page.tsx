@@ -90,9 +90,9 @@ export default async function DetailCommandeAdminPage({
           <span className="text-ink-900/60">Prix de la livraison</span>
           <span>{formatFCFA(o.frais_livraison)}</span>
         </div>
-        <div className="flex justify-between border-t border-ink-900/10 pt-2 font-medium">
-          <span>Prix total (client)</span>
-          <span>{formatFCFA(prixTotal)}</span>
+        <div className="mt-1 flex items-center justify-between rounded-xl bg-green-600 px-3 py-2.5 text-white">
+          <span className="text-sm font-medium">Prix total (client)</span>
+          <span className="text-2xl font-bold">{formatFCFA(prixTotal)}</span>
         </div>
         <div className="mt-3 border-t border-ink-900/10 pt-3">
           <p className="text-sm text-ink-900/60">Bénéfice du commercial (non affecté par la livraison)</p>
