@@ -27,7 +27,13 @@ export default async function BonDeCommandePage({
     order_items: (OrderItem & { products: Product; product_variants: ProductVariant | null })[];
   };
 
-  const prixTotal = o.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0) + o.frais_livraison;
+  // Pour une expédition (hors Abidjan, envoi via gare), le commercial a déjà
+  // transmis l'argent du client avant l'expédition : les frais de livraison
+  // ne concernent pas ce qui part au colis, donc le bon n'affiche que le
+  // prix de la marchandise, jamais le total livraison incluse.
+  const estExpedition = o.zone === "hors_abidjan";
+  const prixMarchandise = o.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0);
+  const prixAffiche = estExpedition ? prixMarchandise : prixMarchandise + o.frais_livraison;
   const dateLivraison = o.statut === "relance" && o.date_relance ? o.date_relance : o.date_livraison_prevue;
   // Toutes les lignes d'une même commande partagent la même observation
   // (renseignée une seule fois à la création) — on prend la première non vide.
@@ -98,8 +104,8 @@ export default async function BonDeCommandePage({
 
             <div className="border-t-2 border-dashed border-ink-900 pt-4">
               <div className="rounded-2xl border-2 border-ink-900 px-4 py-3">
-                <p className="text-sm font-bold text-ink-900">Prix total (livraison incluse)</p>
-                <p className="text-2xl font-bold text-ink-900">{formatFCFA(prixTotal)}</p>
+                <p className="text-sm font-bold text-ink-900">Prix total{!estExpedition && " (livraison incluse)"}</p>
+                <p className="text-2xl font-bold text-ink-900">{formatFCFA(prixAffiche)}</p>
                 {observation && (
                   <p className="mt-2 border-t border-ink-900/20 pt-2 text-sm font-bold text-ink-900">
                     * {observation}
