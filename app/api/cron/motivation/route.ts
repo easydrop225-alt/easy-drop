@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
  * nouveautés du catalogue, et télécharger des photos pour leurs publicités
  * Facebook/TikTok. Ton : jargon ivoirien, motivant, jamais moralisateur.
  *
- * Appelée automatiquement chaque jour à 12h (heure d'Abidjan = UTC) par
+ * Appelée automatiquement chaque jour à 8h et 19h (heure d'Abidjan = UTC) par
  * Vercel Cron (voir vercel.json) — mais n'envoie réellement qu'un jour sur
  * deux (voir estJourDenvoi ci-dessous), sans avoir besoin de retenir un
  * état entre deux exécutions : le calcul est basé uniquement sur la date du
@@ -84,7 +84,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const admin = createAdminClient();
-    const message = MESSAGES[jourEpoque() % MESSAGES.length];
+    // Le matin et le soir reçoivent chacun un message différent (pas deux
+    // fois le même le même jour) — déterminé par l'heure UTC de l'appel,
+    // qui correspond à l'heure d'Abidjan (UTC+0, pas de décalage).
+    const estAppelDuSoir = new Date().getUTCHours() >= 12;
+    const decalage = estAppelDuSoir ? Math.floor(MESSAGES.length / 2) : 0;
+    const message = MESSAGES[(jourEpoque() + decalage) % MESSAGES.length];
 
     const { data: commerciaux, error: erreurLecture } = await admin
       .from("profiles")
