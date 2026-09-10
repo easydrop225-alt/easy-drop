@@ -74,6 +74,8 @@ export interface Product {
   couleurs: string[];
   tailles: string[];
   actif: boolean;
+  type_offre: "unique" | "lot";
+  quantite_par_lot: number | null;
   created_at: string;
   updated_at: string;
 }

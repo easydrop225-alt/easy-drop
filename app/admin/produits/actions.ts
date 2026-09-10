@@ -22,6 +22,8 @@ function parseProduitForm(formData: FormData) {
     couleurs: String(formData.get("couleurs") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
     tailles: String(formData.get("tailles") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
     actif: formData.get("actif") === "on",
+    typeOffre: formData.get("typeOffre") || "unique",
+    quantiteParLot: formData.get("quantiteParLot") || undefined,
   };
   return produitSchema.safeParse(raw);
 }
@@ -46,6 +48,8 @@ export async function creerProduit(_prevState: unknown, formData: FormData) {
       couleurs: parsed.data.couleurs,
       tailles: parsed.data.tailles,
       actif: parsed.data.actif,
+      type_offre: parsed.data.typeOffre,
+      quantite_par_lot: parsed.data.typeOffre === "lot" ? parsed.data.quantiteParLot : null,
     })
     .select()
     .single();
@@ -86,6 +90,8 @@ export async function modifierProduit(productId: string, _prevState: unknown, fo
       couleurs: parsed.data.couleurs,
       tailles: parsed.data.tailles,
       actif: parsed.data.actif,
+      type_offre: parsed.data.typeOffre,
+      quantite_par_lot: parsed.data.typeOffre === "lot" ? parsed.data.quantiteParLot : null,
     })
     .eq("id", productId);
 

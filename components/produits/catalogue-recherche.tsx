@@ -21,6 +21,7 @@ export interface ProduitPourRecherche {
   tailles?: string[];
   createdAt: string;
   stockTotal: number;
+  quantiteParLot?: number | null;
 }
 
 type TriValeur = "nom" | "date_recent" | "date_ancien" | "stock";
@@ -166,6 +167,7 @@ export function CatalogueRecherche({
                   prix_max_conseille: p.prixMaxConseille,
                   couleurs: p.couleurs,
                   tailles: p.tailles,
+                  quantite_par_lot: p.quantiteParLot,
                 }}
                 prixFournisseur={p.prixFournisseur}
                 imageUrl={p.imageUrl}

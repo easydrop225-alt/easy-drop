@@ -48,6 +48,11 @@ export const produitSchema = z.object({
   couleurs: z.array(z.string()).default([]),
   tailles: z.array(z.string()).default([]),
   actif: z.boolean().default(true),
+  typeOffre: z.enum(["unique", "lot"]).default("unique"),
+  quantiteParLot: z.coerce.number().int().min(2).optional(),
+}).refine((v) => v.typeOffre === "unique" || v.quantiteParLot !== undefined, {
+  message: "Indique le nombre de pièces par lot.",
+  path: ["quantiteParLot"],
 });
 export type ProduitInput = z.infer<typeof produitSchema>;
 

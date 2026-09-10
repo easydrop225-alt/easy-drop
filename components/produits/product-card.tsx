@@ -16,6 +16,7 @@ interface ProductCardProps {
   product: Pick<Product, "id" | "nom" | "slug" | "prix_min_conseille" | "prix_max_conseille"> & {
     couleurs?: string[];
     tailles?: string[];
+    quantite_par_lot?: number | null;
   };
   imageUrl?: string;
   prixFournisseur?: number; // affiché uniquement côté commercial
@@ -102,6 +103,11 @@ export function ProductCard({ product, imageUrl, prixFournisseur, href, disponib
         </div>
         <div className="p-3">
           <h3 className="truncate text-sm font-medium">{product.nom}</h3>
+          {product.quantite_par_lot && (
+            <p className="mt-0.5 inline-block rounded-full bg-beige-100 px-1.5 py-0.5 text-[10px] font-medium text-ink-900/60">
+              📦 Lot de {product.quantite_par_lot}
+            </p>
+          )}
           {prixFournisseur != null && (
             <p className="mt-1 truncate text-[11px] text-ink-900/50">
               Fourn. : <span className="font-medium text-ink-900/70">{formatCompact(prixFournisseur)}</span>
