@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { formatFCFA, formatDate } from "@/lib/utils";
-import type { Order, OrderItem, Product, Profile } from "@/types/database";
+import type { Order, OrderItem, Product, Profile, ProductVariant } from "@/types/database";
 import { StatutForm } from "./statut-form";
 import { LivraisonForm } from "./livraison-form";
 import { InfosCommandeForm } from "./infos-form";
+import { ChangerProduitForm } from "./changer-produit-form";
 import { RecuExpeditionUploader } from "@/components/commandes/recu-expedition-uploader";
 import { DemandeSuppressionForm } from "./demande-suppression-form";
 
@@ -24,9 +25,11 @@ export default async function DetailCommandeAdminPage({
 
   // Les 2 requêtes ci-dessous ne dépendent que de l'id de la commande (déjà
   // connu via les params), pas les unes des autres — on les lance en parallèle.
-  const [{ data: order }, { data: items }] = await Promise.all([
+  const [{ data: order }, { data: items }, { data: produitsDisponibles }, { data: variantesDisponibles }] = await Promise.all([
     supabase.from("orders").select("*, profiles(nom, prenom, telephone, nom_boutique)").eq("id", id).single(),
     supabase.from("order_items").select("*, products(*)").eq("order_id", id),
+    supabase.from("products").select("*").eq("actif", true).order("nom"),
+    supabase.from("product_variants").select("*"),
   ]);
   if (!order) notFound();
 
@@ -64,6 +67,17 @@ export default async function DetailCommandeAdminPage({
       <Card>
         <h2 className="mb-3 font-medium">Informations de la commande (modifiables)</h2>
         {itemList[0] && <InfosCommandeForm order={o} item={itemList[0]} />}
+        {itemList[0] && (
+          <div className="mt-3 border-t border-ink-900/5 pt-3">
+            <ChangerProduitForm
+              itemId={itemList[0].id}
+              productActuelId={itemList[0].product_id}
+              variantActuelId={itemList[0].product_variant_id}
+              produits={(produitsDisponibles ?? []) as Product[]}
+              variantes={(variantesDisponibles ?? []) as ProductVariant[]}
+            />
+          </div>
+        )}
       </Card>
 
       <Card>

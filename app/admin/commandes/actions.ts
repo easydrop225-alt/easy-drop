@@ -39,6 +39,104 @@ async function resynchroniserProfitsCommande(supabase: SupabaseServerClient, ord
   }
 }
 
+/**
+ * Permet à l'admin de corriger le produit d'une ligne de commande après
+ * coup (ex : le commercial s'est trompé de produit à l'enregistrement) —
+ * sans avoir à supprimer/recréer toute la commande. Met à jour le prix
+ * fournisseur (donc le bénéfice, automatiquement via le trigger SQL) et
+ * corrige le stock : restitue celui de l'ancien produit/variante, déduit
+ * celui du nouveau — sauf si la commande est déjà annulée (le stock a déjà
+ * été traité par ailleurs dans ce cas).
+ */
+export async function changerProduitCommande(
+  itemId: string,
+  nouveauProductId: string,
+  nouveauVariantId: string | null
+) {
+  const supabase = await createClient();
+
+  const { data: item, error: itemLectureError } = await supabase
+    .from("order_items")
+    .select("order_id, product_variant_id, quantite, orders(statut)")
+    .eq("id", itemId)
+    .single();
+
+  if (itemLectureError || !item) return { error: "Ligne de commande introuvable." };
+
+  const ancienVariantId = item.product_variant_id;
+  const commandeAnnulee = (item.orders as unknown as { statut: string } | null)?.statut === "annulee";
+
+  if (ancienVariantId === nouveauVariantId) {
+    // Même variante (ou aucune variante des deux côtés) : rien à toucher
+    // côté stock, juste le produit/prix à corriger le cas échéant.
+  } else if (!commandeAnnulee && nouveauVariantId) {
+    // Vérifie le stock disponible AVANT de toucher à quoi que ce soit —
+    // en cas de stock insuffisant, on annule proprement sans rien changer.
+    const { data: inv } = await supabase
+      .from("inventory")
+      .select("quantite_disponible")
+      .eq("product_variant_id", nouveauVariantId)
+      .single();
+    if (!inv || inv.quantite_disponible < item.quantite) {
+      return { error: `Stock insuffisant pour cette variante (${inv?.quantite_disponible ?? 0} disponible(s), ${item.quantite} nécessaire(s)).` };
+    }
+  }
+
+  // Nouveau prix fournisseur : celui de la variante si elle en a un propre,
+  // sinon celui du produit — même règle que partout ailleurs dans l'app.
+  const { data: nouveauProduit } = await supabase.from("products").select("prix_fournisseur").eq("id", nouveauProductId).single();
+  if (!nouveauProduit) return { error: "Produit introuvable." };
+
+  let prixFournisseurUnitaire = nouveauProduit.prix_fournisseur;
+  if (nouveauVariantId) {
+    const { data: variante } = await supabase.from("product_variants").select("prix_fournisseur").eq("id", nouveauVariantId).single();
+    if (variante?.prix_fournisseur != null) prixFournisseurUnitaire = variante.prix_fournisseur;
+  }
+
+  const { error: updateError } = await supabase
+    .from("order_items")
+    .update({
+      product_id: nouveauProductId,
+      product_variant_id: nouveauVariantId,
+      prix_fournisseur_unitaire: prixFournisseurUnitaire,
+    })
+    .eq("id", itemId);
+
+  if (updateError) return { error: updateError.message };
+
+  // Ajuste le stock uniquement si la variante a réellement changé, et que
+  // la commande n'est pas annulée (stock déjà neutre dans ce cas).
+  if (!commandeAnnulee && ancienVariantId !== nouveauVariantId) {
+    if (ancienVariantId) {
+      const { data: ancienInv } = await supabase.from("inventory").select("id, quantite_disponible, stock_ecoule").eq("product_variant_id", ancienVariantId).single();
+      if (ancienInv) {
+        await supabase.from("inventory").update({
+          quantite_disponible: ancienInv.quantite_disponible + item.quantite,
+          stock_ecoule: Math.max(ancienInv.stock_ecoule - item.quantite, 0),
+        }).eq("id", ancienInv.id);
+      }
+    }
+    if (nouveauVariantId) {
+      const { data: nouvelInv } = await supabase.from("inventory").select("id, quantite_disponible, stock_ecoule").eq("product_variant_id", nouveauVariantId).single();
+      if (nouvelInv) {
+        await supabase.from("inventory").update({
+          quantite_disponible: Math.max(nouvelInv.quantite_disponible - item.quantite, 0),
+          stock_ecoule: nouvelInv.stock_ecoule + item.quantite,
+        }).eq("id", nouvelInv.id);
+      }
+    }
+  }
+
+  await resynchroniserProfitsCommande(supabase, item.order_id);
+
+  revalidatePath("/admin/commandes");
+  revalidatePath(`/admin/commandes/${item.order_id}`);
+  revalidatePath(`/commandes/${item.order_id}`);
+  revalidatePath("/admin/stocks");
+  revalidatePath("/admin/paiements");
+  return { success: true };
+}
+
 export async function changerStatutCommande(
   orderId: string,
   statut: OrderStatut,
