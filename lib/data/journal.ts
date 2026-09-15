@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /**
  * Récupère l'adresse IP du visiteur depuis les en-têtes de la requête.
@@ -19,6 +19,16 @@ export async function recupererIP(): Promise<string | null> {
  * d'activité (table `activity_logs`), avec l'adresse IP — voir
  * cahier des charges §25 ("Qui ? Quelle action ? Quand ? Adresse IP ?").
  *
+ * Passe par le client admin (service_role) plutôt que le client normal :
+ * la fonction SQL `journaliser_connexion` était appelable directement via
+ * l'API REST publique de Supabase avec la seule clé anon (visible de tous),
+ * ce qui permettait à n'importe qui d'insérer de faux "connexion_echouee"
+ * pour n'importe quel identifiant et de déclencher le blocage de 15 min
+ * (voir compterEchecsRecents) sur le compte de quelqu'un d'autre, sans
+ * authentification. Le droit d'exécution a été retiré à anon/authenticated
+ * en base (voir migration) : seul ce client, côté serveur uniquement, peut
+ * désormais l'appeler.
+ *
  * Ne bloque jamais le flux de connexion en cas d'erreur d'écriture du
  * journal : la sécurité fonctionnelle prime sur la traçabilité.
  */
@@ -28,7 +38,7 @@ export async function journaliserConnexion(
   details?: Record<string, unknown>
 ) {
   try {
-    const supabase = await createClient();
+    const supabase = createAdminClient();
     const ip = await recupererIP();
     await supabase.rpc("journaliser_connexion", {
       p_user_id: userId,
