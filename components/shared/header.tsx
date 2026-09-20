@@ -123,6 +123,7 @@ export function HeaderAdmin({
       groupe: "Équipe",
       items: [
         { href: "/admin/commerciaux", label: "Commerciaux", badge: counts?.commerciauxRecents },
+        { href: "/admin/fournisseurs", label: "Fournisseurs" },
         { href: "/admin/formations", label: "Formations" },
         { href: "/admin/journal", label: "Journal" },
       ],

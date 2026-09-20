@@ -28,6 +28,24 @@ function parseProduitForm(formData: FormData) {
   return produitSchema.safeParse(raw);
 }
 
+export async function validerProduitFournisseur(id: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("products").update({ statut_validation: "valide", motif_refus: null }).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/produits");
+  revalidatePath("/fournisseur/produits");
+  return { success: true };
+}
+
+export async function refuserProduitFournisseur(id: string, motif: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.from("products").update({ statut_validation: "refuse", motif_refus: motif || null }).eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/produits");
+  revalidatePath("/fournisseur/produits");
+  return { success: true };
+}
+
 export async function creerProduit(_prevState: unknown, formData: FormData) {
   const parsed = parseProduitForm(formData);
   if (!parsed.success) {

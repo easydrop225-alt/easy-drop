@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CatalogueRecherche, type ProduitPourRecherche } from "@/components/produits/catalogue-recherche";
+import { ValidationFournisseurCard } from "./validation-fournisseur-card";
 import type { Product, Category, ProductVariant, Inventory, Media } from "@/types/database";
 
 import type { Metadata } from "next";
@@ -76,6 +77,8 @@ export default async function AdminProduitsPage() {
           Nouveau produit
         </Link>
       </div>
+
+      <ValidationFournisseurCard produits={list.filter((p) => p.statut_validation === "en_attente")} />
 
       <CatalogueRecherche
         produits={produitsPourRecherche}

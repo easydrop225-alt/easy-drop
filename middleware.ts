@@ -105,6 +105,29 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // Espace fournisseur externe : réservé à ce rôle (+ admin, par précaution).
+  if (pathname.startsWith("/fournisseur")) {
+    if (!user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/connexion";
+      return NextResponse.redirect(url);
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.role !== "fournisseur_externe" && profile?.role !== "admin" && profile?.role !== "super_admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/connexion";
+      return NextResponse.redirect(url);
+    }
+
+    return response;
+  }
+
   // Espace commercial : nécessite juste une session valide.
   if (estRouteCommerciale(pathname)) {
     if (!user) {

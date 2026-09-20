@@ -6,7 +6,7 @@
  * réel existe : npx supabase gen types typescript --project-id <ID>
  */
 
-export type UserRole = "super_admin" | "admin" | "commercial";
+export type UserRole = "super_admin" | "admin" | "commercial" | "fournisseur_externe";
 export type ProfileStatut = "en_attente" | "valide" | "refuse" | "desactive";
 export type OrderStatut = "confirmation" | "traitement" | "livraison" | "livree" | "annulee" | "relance";
 export type ModeLivraison = "normal" | "yango_urgent";
@@ -76,6 +76,10 @@ export interface Product {
   actif: boolean;
   type_offre: "unique" | "lot";
   quantite_par_lot: number | null;
+  fournisseur_id: string | null;
+  statut_validation: "en_attente" | "valide" | "refuse";
+  prix_fournisseur_externe_brut: number | null;
+  motif_refus: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -155,6 +159,7 @@ export interface OrderItem {
   prix_vente_unitaire: number;
   prix_fournisseur_unitaire: number;
   benefice_ligne: number;
+  statut_preparation_fournisseur: "en_attente" | "pret" | "expedie" | null;
   observation: string | null;
 }
 
