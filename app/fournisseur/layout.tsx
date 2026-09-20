@@ -12,10 +12,18 @@ export default function FournisseurLayout({ children }: { children: React.ReactN
             <Image src="/logo-easy-drop.png" alt="Easy Drop" width={32} height={32} className="rounded-lg" />
             <span className="font-semibold">Espace fournisseur</span>
           </Link>
+          <nav className="hidden items-center gap-4 text-sm font-medium sm:flex">
+            <Link href="/fournisseur/produits" className="text-ink-900/70 hover:text-ink-900">Mes produits</Link>
+            <Link href="/fournisseur/commandes" className="text-ink-900/70 hover:text-ink-900">Mes commandes</Link>
+          </nav>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <LogoutButton />
           </div>
+        </div>
+        <div className="flex gap-4 border-t border-ink-900/5 px-4 py-2 text-sm font-medium sm:hidden">
+          <Link href="/fournisseur/produits" className="text-ink-900/70 hover:text-ink-900">Mes produits</Link>
+          <Link href="/fournisseur/commandes" className="text-ink-900/70 hover:text-ink-900">Mes commandes</Link>
         </div>
       </header>
       <div className="mx-auto max-w-4xl px-4 py-6">{children}</div>
