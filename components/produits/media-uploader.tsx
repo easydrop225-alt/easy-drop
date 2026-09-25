@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { compresserImage } from "@/lib/media/image-compression";
+import { ImagesReordonnables } from "./images-reordonnables";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Media, ProductVariant } from "@/types/database";
@@ -85,18 +85,12 @@ export function MediaUploader({ productId }: { productId: string }) {
     await loadMedia();
   }
 
-  // Échange la position (colonne "ordre") de cette photo avec sa voisine
-  // DANS LA VUE ACTUELLE (respecte le filtre par variante en cours) —
-  // permet à l'admin de réagencer librement l'ordre d'affichage.
-  async function deplacerImage(imagesVisibles: Media[], img: Media, direction: -1 | 1) {
-    const index = imagesVisibles.findIndex((m) => m.id === img.id);
-    const voisine = imagesVisibles[index + direction];
-    if (!voisine) return;
-
-    await Promise.all([
-      supabase.from("media").update({ ordre: voisine.ordre }).eq("id", img.id),
-      supabase.from("media").update({ ordre: img.ordre }).eq("id", voisine.id),
-    ]);
+  // Enregistre le nouvel ordre après un glisser-déposer — réattribue des
+  // valeurs 0, 1, 2... aux photos concernées, dans leur nouvel ordre.
+  async function persisterOrdre(nouvelOrdreIds: string[]) {
+    await Promise.all(
+      nouvelOrdreIds.map((id, index) => supabase.from("media").update({ ordre: index }).eq("id", id))
+    );
     await loadMedia();
   }
 
@@ -181,49 +175,14 @@ export function MediaUploader({ productId }: { productId: string }) {
 
       {images.length > 0 && (
         <div>
-          <p className="mb-2 text-sm text-ink-900/60">Photos ({images.length})</p>
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {images.map((img, i) => {
-              const variante = variants.find((v) => v.id === img.product_variant_id);
-              return (
-                <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl bg-beige-100">
-                  <Image src={img.url} alt="" fill sizes="(max-width: 640px) 33vw, 25vw" className="object-cover" />
-                  {variante && (
-                    <span className="absolute bottom-1 left-1 rounded-full bg-surface/90 px-2 py-0.5 text-[10px] font-medium">
-                      {labelVariante(variante)}
-                    </span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => supprimerMedia(img)}
-                    className="absolute right-1 top-1 rounded-full bg-surface/90 px-2 py-0.5 text-xs opacity-0 transition group-hover:opacity-100"
-                  >
-                    Suppr.
-                  </button>
-                  <div className="absolute inset-x-1 bottom-1 flex items-center justify-between">
-                    <button
-                      type="button"
-                      onClick={() => deplacerImage(images, img, -1)}
-                      disabled={i === 0}
-                      className="rounded-full bg-surface/90 px-2 py-0.5 text-xs disabled:opacity-0"
-                      aria-label="Déplacer avant"
-                    >
-                      ◀
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deplacerImage(images, img, 1)}
-                      disabled={i === images.length - 1}
-                      className="rounded-full bg-surface/90 px-2 py-0.5 text-xs disabled:opacity-0"
-                      aria-label="Déplacer après"
-                    >
-                      ▶
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <p className="mb-2 text-sm text-ink-900/60">Photos ({images.length}) — maintiens et fais glisser pour réorganiser</p>
+          <ImagesReordonnables
+            images={images}
+            variants={variants}
+            labelVariante={labelVariante}
+            onSupprimer={supprimerMedia}
+            onReordonner={persisterOrdre}
+          />
         </div>
       )}
 
