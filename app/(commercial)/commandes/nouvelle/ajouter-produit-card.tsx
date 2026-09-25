@@ -138,7 +138,7 @@ export function AjouterProduitCard({
                         <div>
                           <p className="text-sm font-medium">{label}</p>
                           <p className={`text-xs ${stock > 0 ? "text-ink-900/50" : "text-red-600"}`}>
-                            {stock > 0 ? `${stock} en stock` : "Rupture de stock"}
+                            {stock > 0 ? "En stock" : "Rupture de stock"}
                           </p>
                         </div>
                       </div>

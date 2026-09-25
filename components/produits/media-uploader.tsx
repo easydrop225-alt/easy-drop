@@ -85,6 +85,21 @@ export function MediaUploader({ productId }: { productId: string }) {
     await loadMedia();
   }
 
+  // Échange la position (colonne "ordre") de cette photo avec sa voisine
+  // DANS LA VUE ACTUELLE (respecte le filtre par variante en cours) —
+  // permet à l'admin de réagencer librement l'ordre d'affichage.
+  async function deplacerImage(imagesVisibles: Media[], img: Media, direction: -1 | 1) {
+    const index = imagesVisibles.findIndex((m) => m.id === img.id);
+    const voisine = imagesVisibles[index + direction];
+    if (!voisine) return;
+
+    await Promise.all([
+      supabase.from("media").update({ ordre: voisine.ordre }).eq("id", img.id),
+      supabase.from("media").update({ ordre: img.ordre }).eq("id", voisine.id),
+    ]);
+    await loadMedia();
+  }
+
   const mediaFiltre =
     filtreVariante === "toutes"
       ? media
@@ -168,7 +183,7 @@ export function MediaUploader({ productId }: { productId: string }) {
         <div>
           <p className="mb-2 text-sm text-ink-900/60">Photos ({images.length})</p>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-            {images.map((img) => {
+            {images.map((img, i) => {
               const variante = variants.find((v) => v.id === img.product_variant_id);
               return (
                 <div key={img.id} className="group relative aspect-square overflow-hidden rounded-xl bg-beige-100">
@@ -185,6 +200,26 @@ export function MediaUploader({ productId }: { productId: string }) {
                   >
                     Suppr.
                   </button>
+                  <div className="absolute inset-x-1 bottom-1 flex items-center justify-between">
+                    <button
+                      type="button"
+                      onClick={() => deplacerImage(images, img, -1)}
+                      disabled={i === 0}
+                      className="rounded-full bg-surface/90 px-2 py-0.5 text-xs disabled:opacity-0"
+                      aria-label="Déplacer avant"
+                    >
+                      ◀
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deplacerImage(images, img, 1)}
+                      disabled={i === images.length - 1}
+                      className="rounded-full bg-surface/90 px-2 py-0.5 text-xs disabled:opacity-0"
+                      aria-label="Déplacer après"
+                    >
+                      ▶
+                    </button>
+                  </div>
                 </div>
               );
             })}
