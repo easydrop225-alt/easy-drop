@@ -22,6 +22,9 @@ Plateforme de dropshipping interne pour la Côte d'Ivoire. Yann (le propriétair
 6. RLS (Row Level Security) est la vraie barrière de sécurité de l'app — toute vérification d'auth applicative (middleware, pages) est un confort UX, pas la protection ultime. Utiliser `getSession()` (lit le cookie, pas d'appel réseau) plutôt que `getUser()` dans les pages/layouts pour la vitesse ; réserver `getUser()` aux Server Actions qui font de vraies écritures sensibles.
 7. **Fluidité = priorité constante.** Toujours paralléliser les requêtes indépendantes (`Promise.all`), jamais de balises `<a href="/...">` pour la navigation interne (toujours `next/link`), toujours vérifier qu'un nouveau composant n'ajoute pas de requête réseau évitable.
 
+8. **Sessions automatisées (audit quotidien, routines Claude Code on the web) : ne jamais pousser sur `main`.** Chaque push sur `main` est déployé en production sur Vercel, sans validation humaine. Une session automatisée pousse sur une branche `claude/audit-AAAA-MM-JJ` et ouvre une pull request (les branches `claude/*` sont toujours acceptées, aucun réglage spécial requis). Si un push est refusé : s'arrêter, ne rien contourner (pas de token GitHub en variable d'environnement, pas de force push, pas d'autre remote), laisser le diff dans la sortie de la session et signaler le blocage clairement.
+9. **Base de données et code vont ensemble.** Une migration Supabase appliquée par une session est active en production immédiatement, avant tout merge. Ne jamais appliquer une migration qui casse le code actuellement en ligne (ex : retirer un droit d'exécution, renommer une colonne) sans que le code correspondant soit dans la même pull request, et décrire chaque migration (nom + effet) dans la description de la PR.
+
 ## Schéma de base de données — points clés à connaître
 
 - `products` : produits, avec `prix_fournisseur`, `prix_min_conseille`/`prix_max_conseille`, `couleurs[]`, `tailles[]`, `actif`. RLS : `actif = true OR auth.uid() IS NOT NULL` (tout utilisateur connecté voit tout, y compris désactivés — affichés grisés côté UI).
@@ -67,12 +70,25 @@ Plateforme de dropshipping interne pour la Côte d'Ivoire. Yann (le propriétair
 11. Nettoyage technique : fichiers volumineux découpés (`form.tsx` commande, `variantes-manager.tsx`), calcul de prix fournisseur centralisé et testé, page fantôme supprimée.
 12. Nouveau logo/icône appliqué partout (favicon, PWA, badge notification).
 
+### Ajouts récents (septembre 2026)
+
+- Rôle `fournisseur_externe` : comptes créés par l'admin (Admin > Fournisseurs), espace `/fournisseur` (produits + commandes contenant leurs produits, sans jamais voir le commercial). Produits soumis en attente puis validés/refusés par l'admin ; +10 % de marge ajoutés automatiquement à `prix_fournisseur` (le prix brut du fournisseur est conservé dans `prix_fournisseur_externe_brut`). Statut de commande pilotable par le fournisseur uniquement si la commande est 100 % à lui, sinon seulement `statut_preparation_fournisseur` sur ses lignes.
+- Livreurs (Admin > Paramètres, assignation dans Admin > Commandes, jamais visible côté commercial) ; impression du bon fait passer `confirmation` → `traitement`.
+- Produit vendu à la pièce ou par lot (`type_offre`, `quantite_par_lot`) ; produit désactivé automatiquement quand le stock de toutes ses variantes tombe à 0 ; le stock exact n'est jamais montré aux commerciaux (seulement En stock / Rupture).
+- Articles de commande affichés « Produit — Variante » partout (helper `lib/produits/libelle-variante.ts`) ; le bon imprimable n'affiche pas le prix détaillé par ligne, seulement le prix global.
+- Notifications de motivation automatiques (`/api/cron/motivation`, 8h et 19h, un jour sur deux) ; des tâches ponctuelles peuvent être programmées via `pg_cron` dans Supabase.
+- Parrainage supprimé de l'interface (tables et données conservées en base volontairement).
+- Migrations numérotées jusqu'à 37 + celles de l'audit du 15/09.
+
 ## Pièges déjà rencontrés (ne pas refaire)
 
 - Le tarball GitHub extrait avec `--strip-components=1` donne le code à la racine — ne pas chercher un dossier `frontend/` qui n'existe pas (a cassé le pipeline CI une fois).
 - `next/dynamic` avec `ssr: false` est interdit dans un Server Component.
 - `cookies().set()` ne peut s'exécuter que dans une Server Action ou un Route Handler, jamais dans le rendu d'une page classique — d'où la nécessité de `/auth/callback` en Route Handler pour la réinitialisation de mot de passe.
 - Un upload GitHub par interface web est limité à ~100 fichiers par lot, et glisser plusieurs dossiers sans valider entre chaque fait tout planter (fichiers imbriqués au mauvais endroit) — plus un souci depuis qu'on pousse directement via `git` avec le token.
+- **Boucle RLS** : deux tables dont les policies se référencent mutuellement (ex : `orders` ↔ `order_items`) déclenchent « infinite recursion detected in policy » et bloquent TOUTES les écritures (création de commande bloquée le 21/09/2026). Toute policy qui interroge une autre table protégée par RLS doit passer par une fonction `SECURITY DEFINER` (modèles : `is_admin()`, `fournisseur_a_acces_commande()`). Le build et les tests ne détectent pas ce problème : après toute modification de policy, vérifier un vrai parcours d'écriture.
+- Postgres : `ALTER TYPE ... ADD VALUE` doit être dans une migration séparée de celle qui utilise la nouvelle valeur ; `ADD CONSTRAINT IF NOT EXISTS` n'existe pas.
+- Le build local a besoin de `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY` dans `.env.local` (sinon des pages échouent à la génération) — jamais committé (voir règle 3).
 
 ## Ce qui reste ouvert / non fait
 
