@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { StatutRapideSelect } from "./statut-rapide-select";
 import { LivreurSelect } from "./livreur-select";
+import { libelleArticle } from "@/lib/produits/libelle-variante";
 import { BarreActionGroupee } from "./barre-action-groupee";
 import { formatDate, formatFCFA } from "@/lib/utils";
 import { exporterCSV } from "@/lib/export-csv";
@@ -25,18 +26,12 @@ function prixTotal(order: OrderComplete): number {
   return order.order_items.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0) + order.frais_livraison;
 }
 
-function labelVariante(item: OrderComplete["order_items"][number]): string {
-  const v = item.product_variants;
-  const variante = v ? [v.couleur, v.taille].filter(Boolean).join(" / ") : "";
-  return variante ? `(${variante})` : "";
-}
-
 function RecapitulatifArticles({ order }: { order: OrderComplete }) {
   return (
     <ul className="space-y-0.5">
       {order.order_items.map((item) => (
         <li key={item.id}>
-          <span className="font-medium">{item.quantite}×</span> {item.products?.nom ?? "—"} {labelVariante(item)}
+          <span className="font-medium">{item.quantite}×</span> {libelleArticle(item.products?.nom ?? "—", item.product_variants)}
           {item.observation && <span className="italic text-ink-900/40"> — {item.observation}</span>}
         </li>
       ))}
