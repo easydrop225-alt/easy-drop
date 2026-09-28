@@ -3,7 +3,8 @@ import { OrderTimeline } from "@/components/commandes/order-timeline";
 import { Card } from "@/components/ui/card";
 import { formatFCFA, formatDate } from "@/lib/utils";
 import { notFound } from "next/navigation";
-import type { Order, OrderItem, Product } from "@/types/database";
+import { libelleArticle } from "@/lib/produits/libelle-variante";
+import type { Order, OrderItem, Product, ProductVariant } from "@/types/database";
 import { MesInfosCommandeForm } from "./infos-form";
 import { SuppressionBanner } from "./suppression-banner";
 import { AnnulerCommandeBouton } from "./annuler-bouton";
@@ -22,11 +23,11 @@ export default async function DetailCommandePage({
 
   const [{ data: order }, { data: items }] = await Promise.all([
     supabase.from("orders").select("*").eq("id", id).single(),
-    supabase.from("order_items").select("*, products(*)").eq("order_id", id),
+    supabase.from("order_items").select("*, products(*), product_variants(*)").eq("order_id", id),
   ]);
   if (!order) notFound();
 
-  const itemList = ((items ?? []) as (OrderItem & { products: Product })[]);
+  const itemList = ((items ?? []) as (OrderItem & { products: Product; product_variants: ProductVariant | null })[]);
   const o = order as Order;
 
   const prixVente = itemList.reduce((a, i) => a + i.prix_vente_unitaire * i.quantite, 0);
@@ -83,7 +84,7 @@ export default async function DetailCommandePage({
           {itemList.map((item) => (
             <li key={item.id} className="border-b border-ink-900/5 pb-2 last:border-0">
               <div className="flex justify-between">
-                <span>{item.products?.nom} × {item.quantite}</span>
+                <span>{libelleArticle(item.products?.nom, item.product_variants)} × {item.quantite}</span>
                 <span>{formatFCFA(item.prix_vente_unitaire * item.quantite)}</span>
               </div>
               {item.observation && (

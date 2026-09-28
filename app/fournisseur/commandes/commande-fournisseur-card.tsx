@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import { Card } from "@/components/ui/card";
 import { formatFCFA, formatDate } from "@/lib/utils";
 import { changerStatutCommandeFournisseur, mettreAJourPreparationFournisseur } from "./actions";
-import type { Order, OrderItem, Product, OrderStatut } from "@/types/database";
+import { libelleArticle } from "@/lib/produits/libelle-variante";
+import type { Order, OrderItem, Product, ProductVariant, OrderStatut } from "@/types/database";
 
 const LABEL_STATUT: Record<OrderStatut, string> = {
   confirmation: "🟡 Confirmation",
@@ -25,7 +26,7 @@ export function CommandeFournisseurCard({
   order,
   monId,
 }: {
-  order: Order & { order_items: (OrderItem & { products: Product })[] };
+  order: Order & { order_items: (OrderItem & { products: Product; product_variants: ProductVariant | null })[] };
   monId: string;
 }) {
   const [pending, startTransition] = useTransition();
@@ -54,7 +55,7 @@ export function CommandeFournisseurCard({
         <p className="text-xs uppercase text-ink-900/50">Tes produits dans cette commande</p>
         {mesLignes.map((l) => (
           <p key={l.id} className="text-sm">
-            <span className="font-medium">{l.quantite}×</span> {l.products?.nom}
+            <span className="font-medium">{l.quantite}×</span> {libelleArticle(l.products?.nom, l.product_variants)}
           </p>
         ))}
       </div>
@@ -83,7 +84,7 @@ export function CommandeFournisseurCard({
         <div className="space-y-2">
           {mesLignes.map((l) => (
             <div key={l.id} className="flex items-center justify-between gap-2">
-              <span className="text-sm">{l.products?.nom}</span>
+              <span className="text-sm">{libelleArticle(l.products?.nom, l.product_variants)}</span>
               <select
                 value={l.statut_preparation_fournisseur ?? "en_attente"}
                 disabled={pending}

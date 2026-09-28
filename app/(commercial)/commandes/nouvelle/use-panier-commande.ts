@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { formatFCFA } from "@/lib/utils";
 import { coutFournisseurLignes as coutFournisseurLignesPartage } from "@/lib/calculs/prix-variante";
+import { libelleVariante } from "@/lib/produits/libelle-variante";
 import type { LignePanierAffichage } from "./panier-commande";
 import type { Product, ProductVariant, Inventory } from "@/types/database";
 
@@ -179,7 +180,23 @@ export function usePanierCommande({
         : prixTotalCommande > 0
           ? ` · part du prix total : ${formatFCFA(prixVenteLigne)}`
           : " · en attente du prix total");
-    return { cle: `${ligne.productId}-${index}`, nomProduit: produit?.nom ?? "Produit", quantite: qte, photo, detail };
+    // "Produit — Variante" (ou "Produit — Rouge ×1, Bleu ×2" quand plusieurs
+    // variantes du même produit sont commandées ensemble) : on voit d'un
+    // coup d'œil ce qui a été réellement choisi, pas seulement le produit.
+    const variantesChoisies = lignesDuProduit
+      .map((l) => {
+        const v = l.productVariantId ? variants.find((x) => x.id === l.productVariantId) : undefined;
+        return v ? { libelle: libelleVariante(v), quantite: l.quantite } : null;
+      })
+      .filter((v): v is { libelle: string; quantite: number } => v !== null);
+    const nomBase = produit?.nom ?? "Produit";
+    const nomProduit =
+      variantesChoisies.length === 0
+        ? nomBase
+        : variantesChoisies.length === 1
+          ? `${nomBase} — ${variantesChoisies[0]!.libelle}`
+          : `${nomBase} — ${variantesChoisies.map((v) => `${v.libelle} ×${v.quantite}`).join(", ")}`;
+    return { cle: `${ligne.productId}-${index}`, nomProduit, quantite: qte, photo, detail };
   });
 
   return {

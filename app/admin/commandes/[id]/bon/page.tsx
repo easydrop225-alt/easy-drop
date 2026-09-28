@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { formatFCFA, formatDate } from "@/lib/utils";
+import { libelleArticle } from "@/lib/produits/libelle-variante";
 import { ImprimerBouton } from "./imprimer-bouton";
 import { BonAutoEchelle } from "./bon-auto-echelle";
 import { ShoppingBag } from "lucide-react";
@@ -88,17 +89,16 @@ export default async function BonDeCommandePage({
             <div className="mb-4 border-t-2 border-dashed border-ink-900 pt-4">
               <p className="mb-1 text-xs font-bold uppercase text-ink-900">Articles</p>
               <ul className="space-y-1 text-sm font-bold text-ink-900">
-                {o.order_items.map((item) => {
-                  const variante = item.product_variants
-                    ? [item.product_variants.couleur, item.product_variants.taille].filter(Boolean).join(" / ")
-                    : "";
-                  return (
-                    <li key={item.id}>
-                      <span className="font-bold">{item.quantite}×</span> {item.products?.nom}
-                      {variante && ` (${variante})`}
-                    </li>
-                  );
-                })}
+                {o.order_items.map((item) => (
+                  // Produit + variante précise + prix de la ligne : on sait
+                  // exactement, depuis le bon seul, ce qui doit être préparé.
+                  <li key={item.id} className="flex items-start justify-between gap-2">
+                    <span>
+                      {item.quantite}× {libelleArticle(item.products?.nom, item.product_variants)}
+                    </span>
+                    <span className="shrink-0 whitespace-nowrap">{formatFCFA(item.prix_vente_unitaire * item.quantite)}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 

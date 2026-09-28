@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { CommandeFournisseurCard } from "./commande-fournisseur-card";
-import type { Order, OrderItem, Product } from "@/types/database";
+import type { Order, OrderItem, Product, ProductVariant } from "@/types/database";
 
 import type { Metadata } from "next";
 
@@ -14,10 +14,10 @@ export default async function FournisseurCommandesPage() {
   // ce fournisseur — inutile de refiltrer manuellement.
   const { data: orders } = await supabase
     .from("orders")
-    .select("*, order_items(*, products(*))")
+    .select("*, order_items(*, products(*), product_variants(*))")
     .order("created_at", { ascending: false });
 
-  const list = (orders ?? []) as (Order & { order_items: (OrderItem & { products: Product })[] })[];
+  const list = (orders ?? []) as (Order & { order_items: (OrderItem & { products: Product; product_variants: ProductVariant | null })[] })[];
   const monId = session?.user.id ?? "";
 
   return (

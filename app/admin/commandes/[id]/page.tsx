@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { StatutBadge } from "@/components/ui/badge";
 import { formatFCFA, formatDate } from "@/lib/utils";
+import { libelleArticle } from "@/lib/produits/libelle-variante";
 import type { Order, OrderItem, Product, Profile, ProductVariant } from "@/types/database";
 import { StatutForm } from "./statut-form";
 import { LivraisonForm } from "./livraison-form";
@@ -62,6 +63,21 @@ export default async function DetailCommandeAdminPage({
       <Card>
         <h2 className="mb-3 font-medium">Changer le statut</h2>
         <StatutForm orderId={o.id} statutActuel={o.statut} dateRelanceActuelle={o.date_relance} />
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 font-medium">Articles commandés</h2>
+        <ul className="space-y-2 text-sm">
+          {itemList.map((item) => {
+            const variante = ((variantesDisponibles ?? []) as ProductVariant[]).find((v) => v.id === item.product_variant_id);
+            return (
+              <li key={item.id} className="flex justify-between gap-3 border-b border-ink-900/5 pb-2 last:border-0">
+                <span>{libelleArticle(item.products?.nom, variante)} × {item.quantite}</span>
+                <span className="shrink-0">{formatFCFA(item.prix_vente_unitaire * item.quantite)}</span>
+              </li>
+            );
+          })}
+        </ul>
       </Card>
 
       <Card>

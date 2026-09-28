@@ -10,9 +10,10 @@ import type { ProductVariant, Inventory, Media } from "@/types/database";
 
 type VariantAvecStock = ProductVariant & { inventory: Inventory[] };
 
-export function libelleVariante(v: Pick<ProductVariant, "nom" | "couleur" | "taille">) {
-  return v.nom || [v.couleur, v.taille].filter(Boolean).join(" / ") || "Standard";
-}
+// Le helper vit dans lib/ (utilisable aussi côté serveur) — ré-exporté ici
+// pour ne pas casser les imports existants.
+import { libelleVariante } from "@/lib/produits/libelle-variante";
+export { libelleVariante };
 
 export function LigneVariante({
   productId,
