@@ -4,6 +4,7 @@ import { OnboardingTutoriel } from "@/components/shared/onboarding-tutoriel";
 import { createClient } from "@/lib/supabase/server";
 import { PushNotificationSetup } from "@/components/shared/push-notification-setup";
 import { listerComptesLies } from "@/app/admin/comptes-lies/actions";
+import { BoutonRetour } from "@/components/shared/bouton-retour";
 
 export default async function CommercialLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -28,7 +29,10 @@ export default async function CommercialLayout({ children }: { children: React.R
       {user?.id && <PushNotificationSetup />}
       {profile && !profile.onboarding_termine && <OnboardingTutoriel />}
       <HeaderCommercial notificationsNonLues={notificationsNonLues ?? 0} comptesLies={liens} />
-      <div className="mx-auto max-w-6xl px-6 py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8">{children}</div>
+      <div className="mx-auto max-w-6xl px-6 py-8 pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-8">
+        <BoutonRetour accueil="/accueil" />
+        {children}
+      </div>
       <BottomNavCommercial />
     </div>
   );

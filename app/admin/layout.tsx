@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SonNouvelleCommande } from "@/components/shared/son-nouvelle-commande";
 import { PushNotificationSetup } from "@/components/shared/push-notification-setup";
 import { listerComptesLies } from "./comptes-lies/actions";
+import { BoutonRetour } from "@/components/shared/bouton-retour";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -39,7 +40,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         }}
         comptesLies={liens}
       />
-      <div className="mx-auto max-w-7xl px-6 py-8 print:p-0">{children}</div>
+      <div className="mx-auto max-w-7xl px-6 py-8 print:p-0">
+        <BoutonRetour accueil="/admin/dashboard" />
+        {children}
+      </div>
     </div>
   );
 }

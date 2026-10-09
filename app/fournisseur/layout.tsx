@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { LogoutButton } from "@/components/shared/logout-button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { BoutonRetour } from "@/components/shared/bouton-retour";
 
 export default function FournisseurLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,7 +27,10 @@ export default function FournisseurLayout({ children }: { children: React.ReactN
           <Link href="/fournisseur/commandes" className="text-ink-900/70 hover:text-ink-900">Mes commandes</Link>
         </div>
       </header>
-      <div className="mx-auto max-w-4xl px-4 py-6">{children}</div>
+      <div className="mx-auto max-w-4xl px-4 py-6">
+        <BoutonRetour accueil="/fournisseur/produits" />
+        {children}
+      </div>
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { dateIlYA3Mois } from "@/lib/utils";
 import type { Payment, Profile, Profit } from "@/types/database";
 import { FiltreCommercialPaiements } from "./filtre-commercial-paiements";
+import { PaiementsParCommercial, type PaiementEffectue } from "./paiements-par-commercial";
 
 import type { Metadata } from "next";
 
@@ -27,7 +28,7 @@ export default async function AdminPaiementsPage() {
 
   // Historique affiché limité aux 3 derniers mois (performance) — n'affecte
   // pas les paiements en attente ci-dessous, calculés sur tout l'historique.
-  const [{ data: payments }, { data: profitsEnAttente }] = await Promise.all([
+  const [{ data: payments }, { data: profitsEnAttente }, { data: tousPaiements }] = await Promise.all([
     supabase
       .from("payments")
       .select("*, profiles(nom, prenom, nom_boutique)")
@@ -39,6 +40,13 @@ export default async function AdminPaiementsPage() {
       .eq("statut", "en_attente")
       .eq("orders.statut", "livree")
       .order("created_at"),
+    // Tous les paiements effectués, sans limite de date : pour le menu
+    // « Paiements effectués par commercial » (depuis l'inscription).
+    supabase
+      .from("payments")
+      .select("id, commercial_id, montant, mode, date_paiement, reference_paiement, preuve_url, profiles(nom, prenom, nom_boutique, created_at)")
+      .eq("statut", "paye")
+      .order("date_paiement", { ascending: false }),
   ]);
 
   const list = (payments ?? []) as (Payment & { profiles: Pick<Profile, "nom" | "prenom" | "nom_boutique"> })[];
@@ -75,6 +83,7 @@ export default async function AdminPaiementsPage() {
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-semibold">Paiements des gains</h1>
+      <PaiementsParCommercial paiements={(tousPaiements ?? []) as unknown as PaiementEffectue[]} />
       <FiltreCommercialPaiements commerciauxDus={commerciauxDus} payments={list} />
     </div>
   );

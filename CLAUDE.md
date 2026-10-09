@@ -76,6 +76,7 @@ Plateforme de dropshipping interne pour la Côte d'Ivoire. Yann (le propriétair
 - Livreurs (Admin > Paramètres, assignation dans Admin > Commandes, jamais visible côté commercial) ; impression du bon fait passer `confirmation` ou `traitement` → `livraison` (En cours de livraison).
 - Produit vendu à la pièce ou par lot (`type_offre`, `quantite_par_lot`) ; produit désactivé automatiquement quand le stock de toutes ses variantes tombe à 0 ; le stock exact n'est jamais montré aux commerciaux (seulement En stock / Rupture).
 - Articles de commande affichés « Produit — Variante » partout (helper `lib/produits/libelle-variante.ts`) ; le bon imprimable n'affiche pas le prix détaillé par ligne, seulement le prix global.
+- Admin > Paiements : menu déroulant « Paiements effectués par commercial » (tous les paiements depuis l'inscription, sans limite de 3 mois). Bouton « ← Retour » sur toutes les pages des 3 espaces (`components/shared/bouton-retour.tsx`), masqué sur la page d'accueil de l'espace et à l'impression.
 - Notifications de motivation automatiques (`/api/cron/motivation`, 8h et 19h, un jour sur deux) ; des tâches ponctuelles peuvent être programmées via `pg_cron` dans Supabase.
 - Parrainage supprimé de l'interface (tables et données conservées en base volontairement).
 - Migrations numérotées jusqu'à 37 + celles de l'audit du 15/09.
