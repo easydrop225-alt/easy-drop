@@ -6,11 +6,12 @@ import type { OrderStatut } from "@/types/database";
 
 export function ImprimerBouton({ orderId, statutActuel }: { orderId: string; statutActuel: OrderStatut }) {
   function handleImprimer() {
-    // Tirer le bon vaut confirmation que la commande passe en traitement —
-    // uniquement depuis "confirmation" (une commande déjà avancée, relancée
-    // ou annulée ne doit pas reculer/changer juste parce qu'on réimprime).
-    if (statutActuel === "confirmation") {
-      changerStatutCommande(orderId, "traitement");
+    // Tirer le bon = le colis part avec le livreur : la commande passe
+    // directement "En cours de livraison". Seulement depuis "confirmation"
+    // ou "traitement" — une commande déjà livrée, relancée ou annulée ne
+    // doit pas changer juste parce qu'on réimprime le bon.
+    if (statutActuel === "confirmation" || statutActuel === "traitement") {
+      changerStatutCommande(orderId, "livraison");
     }
     window.print();
   }

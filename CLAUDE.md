@@ -73,7 +73,7 @@ Plateforme de dropshipping interne pour la Côte d'Ivoire. Yann (le propriétair
 ### Ajouts récents (septembre 2026)
 
 - Rôle `fournisseur_externe` : comptes créés par l'admin (Admin > Fournisseurs), espace `/fournisseur` (produits + commandes contenant leurs produits, sans jamais voir le commercial). Produits soumis en attente puis validés/refusés par l'admin ; +10 % de marge ajoutés automatiquement à `prix_fournisseur` (le prix brut du fournisseur est conservé dans `prix_fournisseur_externe_brut`). Statut de commande pilotable par le fournisseur uniquement si la commande est 100 % à lui, sinon seulement `statut_preparation_fournisseur` sur ses lignes.
-- Livreurs (Admin > Paramètres, assignation dans Admin > Commandes, jamais visible côté commercial) ; impression du bon fait passer `confirmation` → `traitement`.
+- Livreurs (Admin > Paramètres, assignation dans Admin > Commandes, jamais visible côté commercial) ; impression du bon fait passer `confirmation` ou `traitement` → `livraison` (En cours de livraison).
 - Produit vendu à la pièce ou par lot (`type_offre`, `quantite_par_lot`) ; produit désactivé automatiquement quand le stock de toutes ses variantes tombe à 0 ; le stock exact n'est jamais montré aux commerciaux (seulement En stock / Rupture).
 - Articles de commande affichés « Produit — Variante » partout (helper `lib/produits/libelle-variante.ts`) ; le bon imprimable n'affiche pas le prix détaillé par ligne, seulement le prix global.
 - Notifications de motivation automatiques (`/api/cron/motivation`, 8h et 19h, un jour sur deux) ; des tâches ponctuelles peuvent être programmées via `pg_cron` dans Supabase.
