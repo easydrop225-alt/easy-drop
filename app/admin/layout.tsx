@@ -4,6 +4,7 @@ import { SonNouvelleCommande } from "@/components/shared/son-nouvelle-commande";
 import { PushNotificationSetup } from "@/components/shared/push-notification-setup";
 import { listerComptesLies } from "./comptes-lies/actions";
 import { BoutonRetour } from "@/components/shared/bouton-retour";
+import { filtreNouvellesSupabase } from "@/lib/commandes/est-nouvelle";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -25,7 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // l'autre.
   const [{ count: commerciauxRecents }, { count: commandesNouvelles }, liens] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }).eq("role", "commercial").gte("created_at", septJoursAvant.toISOString()),
-    supabase.from("orders").select("*", { count: "exact", head: true }).eq("statut", "confirmation"),
+    supabase.from("orders").select("*", { count: "exact", head: true }).or(filtreNouvellesSupabase()),
     listerComptesLies(),
   ]);
 

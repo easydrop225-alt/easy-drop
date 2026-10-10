@@ -1,22 +1,59 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { Suspense, useEffect } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+const CLE = "easydrop-historique";
+const MAX = 60;
+
+function lire(): string[] {
+  try {
+    return JSON.parse(sessionStorage.getItem(CLE) ?? "[]");
+  } catch {
+    return [];
+  }
+}
+function ecrire(pile: string[]) {
+  try {
+    sessionStorage.setItem(CLE, JSON.stringify(pile.slice(-MAX)));
+  } catch {
+    /* stockage indisponible : le bouton retombera sur l'accueil */
+  }
+}
 
 /**
- * Bouton « Retour » : l'appli installée sur téléphone (PWA) n'a pas de
- * bouton retour du navigateur. Revient à la page précédente ; s'il n'y en
- * a pas (appli ouverte directement sur cette page), renvoie à l'accueil
- * de l'espace. Masqué sur la page d'accueil elle-même et à l'impression.
+ * Bouton « Retour » précis : l'appli garde elle-même la liste des pages
+ * visitées dans l'onglet (pile), au lieu de dépendre de l'historique du
+ * navigateur — qui, dans l'appli installée sur téléphone, est souvent vide
+ * ou incomplet (ouverture depuis une notification, redirections…). Un appui
+ * ramène exactement à la page d'avant, avec ses filtres (paramètres d'URL).
+ * Masqué sur la page d'accueil de l'espace et à l'impression.
  */
-export function BoutonRetour({ accueil }: { accueil: string }) {
+function BoutonRetourInterne({ accueil }: { accueil: string }) {
   const router = useRouter();
   const pathname = usePathname();
+  const params = useSearchParams();
+  const qs = params.toString();
+  const ici = qs ? `${pathname}?${qs}` : pathname;
+
+  // Enregistre chaque page visitée. Si on arrive sur la page juste avant
+  // la courante (retour), on dépile au lieu d'empiler.
+  useEffect(() => {
+    const pile = lire();
+    if (pile[pile.length - 1] === ici) return;
+    if (pile[pile.length - 2] === ici) pile.pop();
+    else pile.push(ici);
+    ecrire(pile);
+  }, [ici]);
 
   if (pathname === accueil || ["/", "/admin", "/fournisseur"].includes(pathname)) return null;
 
   function retour() {
-    if (typeof window !== "undefined" && window.history.length > 1) router.back();
-    else router.push(accueil);
+    const pile = lire();
+    while (pile.length && pile[pile.length - 1] === ici) pile.pop();
+    const precedente = pile[pile.length - 1];
+    ecrire(pile);
+    router.push(precedente ?? accueil);
   }
 
   return (
@@ -28,5 +65,13 @@ export function BoutonRetour({ accueil }: { accueil: string }) {
     >
       <span aria-hidden>←</span> Retour
     </button>
+  );
+}
+
+export function BoutonRetour({ accueil }: { accueil: string }) {
+  return (
+    <Suspense fallback={null}>
+      <BoutonRetourInterne accueil={accueil} />
+    </Suspense>
   );
 }

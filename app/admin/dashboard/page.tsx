@@ -1,3 +1,4 @@
+import { estNouvelle } from "@/lib/commandes/est-nouvelle";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardTitle, CardValue } from "@/components/ui/card";
@@ -112,7 +113,7 @@ export default async function DashboardAdminPage() {
   const itemList = items;
   const commerciauxList = (commerciaux ?? []) as Profile[];
 
-  const nouvellesCommandes = list.filter((o) => o.statut === "confirmation").length;
+  const nouvellesCommandes = list.filter((o) => estNouvelle(o)).length;
   const stockFaible = (inventaire ?? []).filter((i) => i.quantite_disponible <= i.seuil_alerte).length;
   const commerciauxAPayer = new Set(
     (profitsEnAttente ?? [])

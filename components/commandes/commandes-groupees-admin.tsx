@@ -1,5 +1,7 @@
 "use client";
 
+import { estNouvelle } from "@/lib/commandes/est-nouvelle";
+
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -117,7 +119,7 @@ export function CommandesGroupeesAdmin({
   const dates = useMemo(() => orders.map((o) => o.created_at), [orders]);
   const compteParStatut = useMemo(() => ({
     actives: orders.filter((o) => o.statut !== "livree" && o.statut !== "annulee").length,
-    nouvelles: orders.filter((o) => o.statut === "confirmation").length,
+    nouvelles: orders.filter((o) => estNouvelle(o)).length,
     livraison: orders.filter((o) => o.statut === "livraison").length,
     annulees: orders.filter((o) => o.statut === "annulee").length,
     livrees: orders.filter((o) => o.statut === "livree").length,
@@ -129,7 +131,7 @@ export function CommandesGroupeesAdmin({
     const parDate = orders.filter((o) => correspondAuFiltre(o.created_at, filtre));
     switch (ongletActif) {
       case "actives": return parDate.filter((o) => o.statut !== "livree" && o.statut !== "annulee");
-      case "nouvelles": return parDate.filter((o) => o.statut === "confirmation");
+      case "nouvelles": return orders.filter((o) => estNouvelle(o));
       case "livraison": return parDate.filter((o) => o.statut === "livraison");
       case "annulees": return parDate.filter((o) => o.statut === "annulee");
       case "livrees": return parDate.filter((o) => o.statut === "livree");
@@ -226,7 +228,7 @@ export function CommandesGroupeesAdmin({
 
       {groupes.map(([commercialId, groupe]) => {
         const ouvert = groupeOuvert[commercialId] ?? false;
-        const nouvelles = groupe.commandes.filter((o) => o.statut === "confirmation").length;
+        const nouvelles = groupe.commandes.filter((o) => estNouvelle(o)).length;
         return (
           <div key={commercialId}>
             <button
