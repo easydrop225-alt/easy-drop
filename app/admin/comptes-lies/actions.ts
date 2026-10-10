@@ -184,7 +184,10 @@ export async function basculerVersCompte(compteCibleId: string) {
   });
 
   if (error || !nouvelleSession.session) {
-    return { error: "Impossible de basculer — relie ce compte à nouveau depuis Paramètres." };
+    return {
+      error:
+        "La session mémorisée de ce compte a été fermée (par exemple après une déconnexion). Relie-le à nouveau une seule fois dans Admin > Paramètres > Comptes liés.",
+    };
   }
 
   // Le jeton change à chaque utilisation (rotation de sécurité normale) :

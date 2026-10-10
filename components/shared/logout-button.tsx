@@ -13,7 +13,11 @@ export function LogoutButton() {
     // Journalisé côté serveur AVANT la déconnexion effective, sinon la
     // session ne serait plus valide pour identifier qui se déconnecte.
     await journaliserDeconnexionAction();
-    await supabase.auth.signOut();
+    // scope "local" : ne ferme QUE la session de cet appareil. Par défaut
+    // Supabase ferme toutes les sessions du compte (tous les téléphones,
+    // et la session gardée pour la bascule entre comptes liés), ce qui
+    // cassait la bascule admin <-> compte lié après une déconnexion.
+    await supabase.auth.signOut({ scope: "local" });
     router.push("/connexion");
     router.refresh();
   }
