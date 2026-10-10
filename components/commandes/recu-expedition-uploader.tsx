@@ -26,7 +26,7 @@ export function RecuExpeditionUploader({
 
       const { error: uploadError } = await supabase.storage
         .from("shipment-receipts")
-        .upload(path, file, { cacheControl: "3600", upsert: true });
+        .upload(path, file, { cacheControl: "31536000", upsert: true });
       if (uploadError) throw uploadError;
 
       const { data: publicUrlData } = supabase.storage.from("shipment-receipts").getPublicUrl(path);

@@ -20,7 +20,7 @@ export function AvatarUploader({ userId, photoUrl }: { userId: string; photoUrl:
 
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(path, file, { cacheControl: "3600", upsert: true });
+        .upload(path, file, { cacheControl: "31536000", upsert: true });
       if (uploadError) throw uploadError;
 
       const { data: publicUrlData } = supabase.storage.from("avatars").getPublicUrl(path);

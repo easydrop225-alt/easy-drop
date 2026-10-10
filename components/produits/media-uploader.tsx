@@ -46,12 +46,23 @@ export function MediaUploader({ productId }: { productId: string }) {
 
     try {
       for (const file of Array.from(files)) {
+        // Les vidéos lourdes consomment très vite le quota de bande passante
+        // gratuit de Supabase (chaque lecture / téléchargement par un
+        // commercial = le fichier entier). On prévient au-delà de 15 Mo.
+        if (type === "video" && file.size > 15 * 1024 * 1024) {
+          const mo = Math.round(file.size / 1024 / 1024);
+          const ok = window.confirm(
+            `Cette vidéo pèse ${mo} Mo. Au-delà de 15 Mo, elle consomme beaucoup de bande passante à chaque lecture. ` +
+              `Conseil : exporte-la en 720p (CapCut, InShot…) pour qu'elle pèse moins de 15 Mo. Envoyer quand même ?`
+          );
+          if (!ok) continue;
+        }
         const fichierAEnvoyer = type === "image" ? await compresserImage(file) : file;
         const path = `${productId}/${type}/${Date.now()}-${fichierAEnvoyer.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
         const { error: uploadError } = await supabase.storage
           .from("product-media")
-          .upload(path, fichierAEnvoyer, { cacheControl: "3600", upsert: false });
+          .upload(path, fichierAEnvoyer, { cacheControl: "31536000", upsert: false });
 
         if (uploadError) throw uploadError;
 

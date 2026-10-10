@@ -82,6 +82,13 @@ Plateforme de dropshipping interne pour la Côte d'Ivoire. Yann (le propriétair
 - Parrainage supprimé de l'interface (tables et données conservées en base volontairement).
 - Migrations numérotées jusqu'à 37 + celles de l'audit du 15/09.
 
+## Quotas gratuits (Vercel Hobby + Supabase Free) — à préserver
+
+- Images : `next.config.js` fixe `minimumCacheTTL` à 31 jours, WebP seul, tailles limitées — ne pas revenir aux valeurs par défaut (recalcul toutes les heures = quota « Image Optimization » Vercel épuisé).
+- Uploads Storage : `cacheControl: "31536000"` (noms de fichiers horodatés, jamais réécrits).
+- Vidéos : `preload="none"` + poster sur la fiche produit ; avertissement à l'upload au-delà de 15 Mo. Les vidéos lourdes sont la 1re source d'egress Supabase (3,5 Go en 24 h mesurés le 10/10/2026, quota gratuit 5 Go/mois).
+- Déconnexion en `scope: "local"` (sinon la bascule entre comptes liés casse).
+
 ## Pièges déjà rencontrés (ne pas refaire)
 
 - Le tarball GitHub extrait avec `--strip-components=1` donne le code à la racine — ne pas chercher un dossier `frontend/` qui n'existe pas (a cassé le pipeline CI une fois).

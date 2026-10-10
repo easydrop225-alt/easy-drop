@@ -35,6 +35,9 @@ export default async function MediasProduitPage({
   // variante précise), puis une section par variante qui a ses propres
   // médias — utile quand les couleurs sont visuellement très différentes.
   const imagesGenerales = list.filter((m) => m.type === "image" && !m.product_variant_id);
+  // Image affichée sur la vidéo avant lecture (version optimisée et légère).
+  const premiereImage = list.find((m) => m.type === "image")?.url;
+  const posterVideo = premiereImage ? `/_next/image?url=${encodeURIComponent(premiereImage)}&w=640&q=75` : undefined;
   const videosGenerales = list.filter((m) => m.type === "video" && !m.product_variant_id);
   const variantesAvecMedia = listeVariantes
     .map((v) => ({
@@ -65,7 +68,10 @@ export default async function MediasProduitPage({
           <div className="mt-3 space-y-3">
             {videos.map((v) => (
               <div key={v.id} className="space-y-2 rounded-xl bg-beige-100 p-3">
-                <video src={v.url} controls className="w-full rounded-lg" />
+                {/* preload="none" : la vidéo ne se télécharge que si on appuie sur
+                    lecture (avant, chaque ouverture de la fiche en chargeait une
+                    partie — c'était la 1re source de bande passante Supabase). */}
+                <video src={v.url} controls preload="none" playsInline poster={posterVideo} className="w-full rounded-lg bg-black" />
                 <a href={v.url} download target="_blank" rel="noreferrer">
                   <Button size="sm" variant="secondary" className="w-full">Télécharger</Button>
                 </a>
