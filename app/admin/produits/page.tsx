@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CatalogueRecherche, type ProduitPourRecherche } from "@/components/produits/catalogue-recherche";
 import { ValidationFournisseurCard } from "./validation-fournisseur-card";
+import { VideosLourdesCard } from "@/components/produits/videos-lourdes-card";
 import type { Product, Category, ProductVariant, Inventory, Media } from "@/types/database";
 
 import type { Metadata } from "next";
@@ -24,13 +25,14 @@ export default async function AdminProduitsPage() {
   // Même logique que le catalogue commercial : disponibilité déduite du
   // stock des variantes, et une photo par produit — pour afficher des
   // cartes identiques, avec les mêmes informations résumées.
-  const [{ data: variants }, { data: media }] = await Promise.all([
+  const [{ data: variants }, { data: media }, { data: videos }] = await Promise.all([
     productIds.length
       ? supabase.from("product_variants").select("*, inventory(*)").in("product_id", productIds)
       : Promise.resolve({ data: [] as (ProductVariant & { inventory: Inventory[] })[] }),
     productIds.length
       ? supabase.from("media").select("*").in("product_id", productIds).eq("type", "image").order("ordre")
       : Promise.resolve({ data: [] as Media[] }),
+    supabase.from("media").select("id, product_id, url").eq("type", "video"),
   ]);
 
   const stockParProduit = new Map<string, number>();
@@ -79,6 +81,13 @@ export default async function AdminProduitsPage() {
       </div>
 
       <ValidationFournisseurCard produits={list.filter((p) => p.statut_validation === "en_attente")} />
+
+      <VideosLourdesCard
+        videos={((videos ?? []) as { id: string; product_id: string; url: string }[]).map((v) => ({
+          ...v,
+          produit: list.find((p) => p.id === v.product_id)?.nom ?? "Produit",
+        }))}
+      />
 
       <CatalogueRecherche
         produits={produitsPourRecherche}

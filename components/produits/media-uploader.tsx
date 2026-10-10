@@ -3,6 +3,8 @@
 import { useState, useCallback, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { compresserImage } from "@/lib/media/image-compression";
+import { compresserVideo, enMo } from "@/lib/media/compresser-video";
+import { LigneVideo } from "./ligne-video";
 import { ImagesReordonnables } from "./images-reordonnables";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -15,6 +17,7 @@ export function MediaUploader({ productId }: { productId: string }) {
   const [filtreVariante, setFiltreVariante] = useState<string>("toutes");
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progression, setProgression] = useState<string | null>(null);
 
   const supabase = createClient();
 
@@ -46,18 +49,29 @@ export function MediaUploader({ productId }: { productId: string }) {
 
     try {
       for (const file of Array.from(files)) {
-        // Les vidéos lourdes consomment très vite le quota de bande passante
-        // gratuit de Supabase (chaque lecture / téléchargement par un
-        // commercial = le fichier entier). On prévient au-delà de 15 Mo.
-        if (type === "video" && file.size > 15 * 1024 * 1024) {
-          const mo = Math.round(file.size / 1024 / 1024);
-          const ok = window.confirm(
-            `Cette vidéo pèse ${mo} Mo. Au-delà de 15 Mo, elle consomme beaucoup de bande passante à chaque lecture. ` +
-              `Conseil : exporte-la en 720p (CapCut, InShot…) pour qu'elle pèse moins de 15 Mo. Envoyer quand même ?`
+        // Vidéo : compression automatique en 720p dans le navigateur (les
+        // vidéos lourdes usent très vite le quota de bande passante gratuit
+        // de Supabase). Si le navigateur ne sait pas compresser, on garde
+        // l'original et on prévient au-delà de 15 Mo.
+        let fichierAEnvoyer: File = file;
+        if (type === "image") {
+          fichierAEnvoyer = await compresserImage(file);
+        } else {
+          setProgression(`Compression de la vidéo (${enMo(file.size)})…`);
+          const legere = await compresserVideo(file, file.name, (p) =>
+            setProgression(`Compression de la vidéo… ${Math.round(p * 100)} %`),
           );
-          if (!ok) continue;
+          setProgression(null);
+          if (legere) {
+            fichierAEnvoyer = legere;
+          } else if (file.size > 15 * 1024 * 1024) {
+            const ok = window.confirm(
+              `Cette vidéo pèse ${enMo(file.size)} et ce navigateur ne peut pas la compresser automatiquement (essaie Chrome ou un iPhone à jour). ` +
+                `Au-delà de 15 Mo, elle consomme beaucoup de bande passante à chaque lecture. Envoyer quand même ?`
+            );
+            if (!ok) continue;
+          }
         }
-        const fichierAEnvoyer = type === "image" ? await compresserImage(file) : file;
         const path = `${productId}/${type}/${Date.now()}-${fichierAEnvoyer.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
         const { error: uploadError } = await supabase.storage
@@ -164,7 +178,7 @@ export function MediaUploader({ productId }: { productId: string }) {
         />
       </div>
 
-      {uploading && <p className="text-sm text-ink-900/60">Compression et envoi en cours...</p>}
+      {uploading && <p className="text-sm text-ink-900/60">{progression ?? "Compression et envoi en cours..."} (garde cette page ouverte)</p>}
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {variants.length > 0 && media.length > 0 && (
@@ -202,12 +216,13 @@ export function MediaUploader({ productId }: { productId: string }) {
           <p className="mb-2 text-sm text-ink-900/60">Vidéos ({videos.length})</p>
           <div className="space-y-2">
             {videos.map((v) => (
-              <div key={v.id} className="flex items-center justify-between rounded-xl bg-beige-100 px-3 py-2 text-sm">
-                <a href={v.url} target="_blank" rel="noreferrer" className="truncate text-terracotta-600 underline">
-                  {v.url.split("/").pop()}
-                </a>
-                <Button size="sm" variant="danger" onClick={() => supprimerMedia(v)}>Supprimer</Button>
-              </div>
+              <LigneVideo
+                key={v.id}
+                video={v}
+                titre={decodeURIComponent(v.url.split("/").pop() ?? "vidéo")}
+                onSupprimer={() => supprimerMedia(v)}
+                onAllegee={loadMedia}
+              />
             ))}
           </div>
         </div>

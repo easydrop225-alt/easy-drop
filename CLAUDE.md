@@ -86,7 +86,7 @@ Plateforme de dropshipping interne pour la Côte d'Ivoire. Yann (le propriétair
 
 - Images : `next.config.js` fixe `minimumCacheTTL` à 31 jours, WebP seul, tailles limitées — ne pas revenir aux valeurs par défaut (recalcul toutes les heures = quota « Image Optimization » Vercel épuisé).
 - Uploads Storage : `cacheControl: "31536000"` (noms de fichiers horodatés, jamais réécrits).
-- Vidéos : `preload="none"` + poster sur la fiche produit ; avertissement à l'upload au-delà de 15 Mo. Les vidéos lourdes sont la 1re source d'egress Supabase (3,5 Go en 24 h mesurés le 10/10/2026, quota gratuit 5 Go/mois).
+- Vidéos : `preload="none"` + poster sur la fiche produit ; compression automatique 720p / 1,5 Mb/s dans le navigateur à l'upload (`lib/media/compresser-video.ts`, mediabunny/WebCodecs, H.264 — indisponible dans le Chromium de test, testé en VP9) ; bouton « Alléger » / « Tout alléger » (Admin > Produits) pour remplacer les vidéos déjà en ligne ; avertissement au-delà de 15 Mo si le navigateur ne sait pas compresser. Les vidéos lourdes sont la 1re source d'egress Supabase (3,5 Go en 24 h mesurés le 10/10/2026, quota gratuit 5 Go/mois).
 - Déconnexion en `scope: "local"` (sinon la bascule entre comptes liés casse).
 
 ## Pièges déjà rencontrés (ne pas refaire)
