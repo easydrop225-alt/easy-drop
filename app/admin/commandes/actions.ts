@@ -168,6 +168,34 @@ export async function changerStatutCommande(
 }
 
 /**
+ * Impression du bon = le colis part : la commande passe tout de suite
+ * « En cours de livraison » (depuis confirmation, traitement ou relance).
+ * Pour une relance, la date de relance devient la date de livraison prévue,
+ * pour qu'elle reste juste sur le bon et dans les listes.
+ */
+export async function marquerBonImprime(orderId: string) {
+  const supabase = await createClient();
+  const { data: o, error: e1 } = await supabase
+    .from("orders")
+    .select("statut, date_relance")
+    .eq("id", orderId)
+    .single();
+  if (e1 || !o) return { error: e1?.message ?? "Commande introuvable." };
+  if (!["confirmation", "traitement", "relance"].includes(o.statut)) return { success: true, inchange: true };
+
+  const maj: Record<string, unknown> = { statut: "livraison", motif_annulation: null, date_relance: null };
+  if (o.statut === "relance" && o.date_relance) maj.date_livraison_prevue = o.date_relance;
+  const { error } = await supabase.from("orders").update(maj).eq("id", orderId);
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/commandes");
+  revalidatePath(`/admin/commandes/${orderId}`);
+  revalidatePath(`/commandes/${orderId}`);
+  revalidatePath("/admin/dashboard");
+  return { success: true };
+}
+
+/**
  * Action groupée : applique le même statut à plusieurs commandes en une
  * seule requête, plutôt que de forcer l'admin à les changer une par une.
  */
