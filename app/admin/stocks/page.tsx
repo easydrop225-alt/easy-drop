@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { libelleVariante } from "@/lib/produits/libelle-variante";
 import { AjouterStockInline } from "@/components/produits/ajouter-stock-inline";
 import type { ProductVariant, Inventory as InventoryType, Product } from "@/types/database";
 
@@ -18,7 +19,12 @@ export default async function StocksPage() {
     .from("inventory")
     .select("*, product_variants(*, products(*))");
 
-  const rows = (inventory ?? []) as unknown as InventoryRow[];
+  // Trié par produit puis par variante, pour retrouver d'un coup d'œil
+  // toutes les variantes d'un même produit regroupées.
+  const rows = ((inventory ?? []) as unknown as InventoryRow[]).sort((a, b) =>
+    (a.product_variants?.products?.nom ?? "").localeCompare(b.product_variants?.products?.nom ?? "", "fr") ||
+    libelleVariante(a.product_variants ?? {}).localeCompare(libelleVariante(b.product_variants ?? {}), "fr"),
+  );
 
   return (
     <div>
@@ -49,7 +55,11 @@ export default async function StocksPage() {
                     {row.product_variants?.products?.nom}
                   </Link>
                 </td>
-                <td className="p-3">{[row.product_variants?.couleur, row.product_variants?.taille].filter(Boolean).join(" / ") || "—"}</td>
+                <td className="p-3">
+                  {row.product_variants ? (
+                    <span className="inline-block rounded-full bg-beige-100 px-2.5 py-0.5 font-medium">{libelleVariante(row.product_variants)}</span>
+                  ) : "—"}
+                </td>
                 <td className={cn("p-3 font-medium", row.quantite_disponible <= row.seuil_alerte && "text-red-600")}>
                   {row.quantite_disponible}
                 </td>
