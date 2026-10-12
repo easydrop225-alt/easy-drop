@@ -99,6 +99,8 @@ Plateforme de dropshipping interne pour la Côte d'Ivoire. Yann (le propriétair
 - Postgres : `ALTER TYPE ... ADD VALUE` doit être dans une migration séparée de celle qui utilise la nouvelle valeur ; `ADD CONSTRAINT IF NOT EXISTS` n'existe pas.
 - Le build local a besoin de `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY` dans `.env.local` (sinon des pages échouent à la génération) — jamais committé (voir règle 3).
 
+- Un CI GitHub vert ne garantit pas que Vercel a déployé : vérifier l'état du déploiement Vercel (MCP `list_deployments`). Erreur `git_info_fail` (construction jamais lancée) = passagère, se relance avec un commit vide.
+
 ## Ce qui reste ouvert / non fait
 
 - Export PDF/Excel (seul CSV existe).
