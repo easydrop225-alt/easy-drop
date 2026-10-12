@@ -59,50 +59,50 @@ export function HistoriqueVersementsGroupe({ payments }: { payments: PaymentAvec
         const total = groupe.versements.reduce((a, p) => a + Number(p.montant), 0);
         return (
           <Card key={commercialId} className="p-0">
-            <div className="flex items-center justify-between border-b border-ink-900/5 px-4 py-3">
-              <p className="font-medium">
-                {groupe.nom}
-                {groupe.nomBoutique && <span className="ml-2 rounded-full bg-beige-100 px-2 py-0.5 text-xs font-normal">🏪 {groupe.nomBoutique}</span>}
-              </p>
-              <p className="text-sm text-ink-900/60">{groupe.versements.length} versement(s) — Déjà payé : <span className="font-medium text-emerald-600">{formatFCFA(total)}</span></p>
-            </div>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-ink-900/5 text-left text-ink-900/50">
-                  <th className="p-3">Date</th>
-                  <th className="p-3">Montant</th>
-                  <th className="p-3">Mode</th>
-                  <th className="p-3">Référence</th>
-                  <th className="p-3">Preuve</th>
-                  <th className="p-3">Statut</th>
-                </tr>
-              </thead>
-              <tbody>
+            {/* Menu déroulant : fermé par défaut, un appui sur le nom ouvre la liste des versements */}
+            <details className="group">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                <div className="min-w-0">
+                  <p className="font-medium">
+                    {groupe.nom}
+                    {groupe.nomBoutique && <span className="ml-2 rounded-full bg-beige-100 px-2 py-0.5 text-xs font-normal">🏪 {groupe.nomBoutique}</span>}
+                  </p>
+                  <p className="mt-0.5 text-xs text-ink-900/60">
+                    {groupe.versements.length} versement(s) · dernier le {formatDate(groupe.versements[0]?.date_paiement ?? "")}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-sm font-semibold text-emerald-600">{formatFCFA(total)}</span>
+                  <span aria-hidden className="text-ink-900/40 transition-transform group-open:rotate-180">▾</span>
+                </div>
+              </summary>
+              <ul className="border-t border-ink-900/5">
                 {groupe.versements.map((p) => (
-                  <tr key={p.id} className="border-b border-ink-900/5 last:border-0">
-                    <td className="p-3">{formatDate(p.date_paiement)}</td>
-                    <td className="p-3">{formatFCFA(p.montant)}</td>
-                    <td className="p-3">{p.mode}</td>
-                    <td className="p-3">{p.reference_paiement ?? "—"}</td>
-                    <td className="p-3">
-                      {p.preuve_url ? (
-                        <a href={p.preuve_url} target="_blank" rel="noreferrer" className="text-terracotta-600 underline">Voir</a>
-                      ) : "—"}
-                    </td>
-                    <td className="p-3">
-                      <span className={p.statut === "paye" ? "font-medium text-emerald-600" : "text-ink-900/60"}>
-                        {p.statut === "paye" ? "✓ Payé" : p.statut}
+                  <li key={p.id} className="space-y-1.5 border-b border-ink-900/5 px-4 py-3 text-sm last:border-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-ink-900/70">{formatDate(p.date_paiement)}</span>
+                      <span className="font-semibold">{formatFCFA(p.montant)}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-900/60">
+                      <span>
+                        {p.mode} · {p.reference_paiement ?? "—"}
                       </span>
-                      {p.statut === "paye" && (
-                        <div className="mt-1">
-                          <VoirCommandesVersementBouton paymentId={p.id} />
-                        </div>
-                      )}
-                    </td>
-                  </tr>
+                      <span className="flex items-center gap-3">
+                        {p.preuve_url && (
+                          <a href={p.preuve_url} target="_blank" rel="noreferrer" className="text-terracotta-600 underline">
+                            Preuve
+                          </a>
+                        )}
+                        <span className={p.statut === "paye" ? "font-medium text-emerald-600" : ""}>
+                          {p.statut === "paye" ? "✓ Payé" : p.statut}
+                        </span>
+                      </span>
+                    </div>
+                    {p.statut === "paye" && <VoirCommandesVersementBouton paymentId={p.id} />}
+                  </li>
                 ))}
-              </tbody>
-            </table>
+              </ul>
+            </details>
           </Card>
         );
       })}
