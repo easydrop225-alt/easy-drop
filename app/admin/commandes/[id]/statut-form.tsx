@@ -19,16 +19,18 @@ const STATUTS: { value: OrderStatut; label: string }[] = [
 // livrée avec succès, annulée, et à relancer.
 const STATUTS_AVEC_MOTIF: OrderStatut[] = ["livree", "annulee", "relance"];
 
-const MOTIFS = ["Client absent", "Adresse incorrecte", "Téléphone injoignable", "Refus colis", "Erreur commande", "Livraison confirmée par le client", "Autre"];
+const MOTIFS = ["Client absent", "Adresse incorrecte", "Téléphone injoignable", "Client demande un report", "Refus colis", "Erreur commande", "Livraison confirmée par le client", "Autre"];
 
 export function StatutForm({
   orderId,
   statutActuel,
   dateRelanceActuelle,
+  nbRelances = 0,
 }: {
   orderId: string;
   statutActuel: OrderStatut;
   dateRelanceActuelle?: string | null;
+  nbRelances?: number;
 }) {
   const [statut, setStatut] = useState<OrderStatut>(statutActuel);
   const [motif, setMotif] = useState("");
@@ -87,6 +89,14 @@ export function StatutForm({
         </div>
       )}
 
+      {nbRelances > 0 && (
+        <p className={`rounded-xl px-3 py-2 text-xs ${nbRelances >= 2 ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-800"}`}>
+          {nbRelances >= 2
+            ? `⚠️ Déjà relancée ${nbRelances} fois : si cette livraison échoue encore, passe la commande en « Annulée ».`
+            : `🟠 Déjà relancée 1 fois (maximum 2 relances avant annulation).`}
+        </p>
+      )}
+
       {statut === "relance" && (
         <div>
           <Label htmlFor="dateRelance">Nouvelle date de relance</Label>
@@ -99,6 +109,7 @@ export function StatutForm({
           <p className="mt-1 text-xs text-ink-900/50">
             Cette date remplace la date de livraison prévue : la commande réapparaîtra
             automatiquement dans le résumé du jour du commercial à cette date-là.
+            Le commercial reçoit une notification lui demandant d&apos;appeler son client pour confirmer cette date.
           </p>
         </div>
       )}

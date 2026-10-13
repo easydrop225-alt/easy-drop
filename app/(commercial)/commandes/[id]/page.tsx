@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { lienWhatsApp } from "@/lib/contact/whatsapp";
 import { OrderTimeline } from "@/components/commandes/order-timeline";
 import { Card } from "@/components/ui/card";
 import { formatFCFA, formatDate } from "@/lib/utils";
@@ -49,6 +50,30 @@ export default async function DetailCommandePage({
       </div>
 
       {o.demande_suppression && <SuppressionBanner orderId={o.id} motif={o.demande_suppression_motif} />}
+
+      {o.statut === "relance" && (
+        <Card className="border-amber-300 bg-amber-50">
+          <p className="font-medium text-amber-900">🟠 Appelle ton client</p>
+          <p className="mt-1 text-sm text-amber-900/80">
+            La livraison n&apos;a pas pu se faire{o.motif_annulation ? ` (${o.motif_annulation})` : ""}. Appelle {o.client_nom} pour confirmer
+            {o.date_relance ? ` la nouvelle livraison du ${formatDate(o.date_relance)}` : " une nouvelle date de livraison"} et le motiver à recevoir son colis.
+            Après 2 relances sans livraison, la commande est annulée.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a href={`tel:${o.client_telephone}`} className="rounded-full bg-amber-600 px-4 py-2 text-sm font-medium text-white">
+              📞 Appeler {o.client_telephone}
+            </a>
+            <a
+              href={lienWhatsApp(o.client_telephone)}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full border border-amber-600 px-4 py-2 text-sm font-medium text-amber-800"
+            >
+              💬 WhatsApp
+            </a>
+          </div>
+        </Card>
+      )}
 
       <Card>
         <h2 className="mb-3 font-medium">Statut</h2>

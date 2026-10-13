@@ -26,12 +26,17 @@ export default async function DetailCommandeAdminPage({
 
   // Les 2 requêtes ci-dessous ne dépendent que de l'id de la commande (déjà
   // connu via les params), pas les unes des autres — on les lance en parallèle.
-  const [{ data: order }, { data: items }, { data: produitsDisponibles }, { data: variantesDisponibles }] = await Promise.all([
+  const [{ data: order }, { data: items }, { data: produitsDisponibles }, { data: variantesDisponibles }, { data: logsRelance }] = await Promise.all([
     supabase.from("orders").select("*, profiles(nom, prenom, telephone, nom_boutique)").eq("id", id).single(),
     supabase.from("order_items").select("*, products(*)").eq("order_id", id),
     supabase.from("products").select("*").eq("actif", true).order("nom"),
     supabase.from("product_variants").select("*"),
+    // Passages en « à relancer » (une simple correction de date relance -> relance ne compte pas)
+    supabase.from("activity_logs").select("details").eq("enregistrement_id", id).eq("action", "changement_statut_relance"),
   ]);
+  const nbRelances = (logsRelance ?? []).filter(
+    (l) => (l.details as { ancien_statut?: string } | null)?.ancien_statut !== "relance"
+  ).length;
   if (!order) notFound();
 
   const itemList = ((items ?? []) as (OrderItem & { products: Product })[]);
@@ -62,7 +67,7 @@ export default async function DetailCommandeAdminPage({
 
       <Card>
         <h2 className="mb-3 font-medium">Changer le statut</h2>
-        <StatutForm orderId={o.id} statutActuel={o.statut} dateRelanceActuelle={o.date_relance} />
+        <StatutForm orderId={o.id} statutActuel={o.statut} dateRelanceActuelle={o.date_relance} nbRelances={nbRelances} />
       </Card>
 
       <Card>
