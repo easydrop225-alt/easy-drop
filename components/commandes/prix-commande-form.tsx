@@ -53,6 +53,8 @@ export function PrixCommandeForm({
   // directement (pas ceux recalculés), pour garder les proportions stables.
   const [poids, setPoids] = useState<LignePrix[]>(initiales);
   const [total, setTotal] = useState(initiales.reduce((a, l) => a + l.totalLigne, 0) + fraisLivraison);
+  // Produits retirés de la commande (admin) : exclus des calculs, supprimés à l'enregistrement.
+  const [retires, setRetires] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -60,15 +62,39 @@ export function PrixCommandeForm({
 
   const partProduits = total - livraison;
   const benefice = useMemo(
-    () => valeurs.reduce((a, v, i) => a + v.totalLigne - (lignes[i]?.prixFournisseurUnitaire ?? 0) * v.quantite, 0),
-    [valeurs, lignes]
+    () =>
+      valeurs.reduce(
+        (a, v, i) => (retires.has(v.id) ? a : a + v.totalLigne - (lignes[i]?.prixFournisseurUnitaire ?? 0) * v.quantite),
+        0
+      ),
+    [valeurs, lignes, retires]
   );
+  const nbActifs = valeurs.length - retires.size;
 
-  function appliquerTotal(nouveauTotal: number, nouvelleLivraison = livraison) {
+  function sommeActive(liste: LignePrix[], exclus: Set<string>) {
+    return liste.reduce((a, l) => (exclus.has(l.id) ? a : a + l.totalLigne), 0);
+  }
+
+  function appliquerTotal(nouveauTotal: number, nouvelleLivraison = livraison, exclus = retires) {
     setSaved(false);
     setTotal(nouveauTotal);
     const part = nouveauTotal - nouvelleLivraison;
-    if (part >= 0) setValeurs(repartirPartProduits(poids, part));
+    if (part < 0) return;
+    const reparties = repartirPartProduits(poids.filter((l) => !exclus.has(l.id)), part);
+    setValeurs((actuelles) => actuelles.map((l) => reparties.find((x) => x.id === l.id) ?? l));
+  }
+
+  /** Retirer / remettre un produit : le total est recalculé avec les produits restants. */
+  function basculerRetrait(id: string) {
+    setSaved(false);
+    const suivants = new Set(retires);
+    if (suivants.has(id)) suivants.delete(id);
+    else {
+      if (nbActifs <= 1) return; // une commande garde au moins un produit
+      suivants.add(id);
+    }
+    setRetires(suivants);
+    setTotal(sommeActive(valeurs, suivants) + livraison);
   }
 
   function changerLivraison(v: number) {
@@ -87,7 +113,7 @@ export function PrixCommandeForm({
     });
     setValeurs(suivantes);
     setPoids(suivantes);
-    setTotal(suivantes.reduce((a, l) => a + l.totalLigne, 0) + livraison);
+    setTotal(sommeActive(suivantes, retires) + livraison);
   }
 
   function enregistrer() {
@@ -98,13 +124,13 @@ export function PrixCommandeForm({
       return;
     }
     startTransition(async () => {
-      const payload = valeurs.map((v) => ({
+      const payload = valeurs.filter((v) => !retires.has(v.id)).map((v) => ({
         itemId: v.id,
         quantite: v.quantite,
         prixVenteUnitaire: prixUnitaireDepuisTotal(v.totalLigne, v.quantite),
       }));
       const res = estAdmin
-        ? await modifierPrixCommandeAdmin(orderId, { fraisLivraison: livraison, lignes: payload })
+        ? await modifierPrixCommandeAdmin(orderId, { fraisLivraison: livraison, lignes: payload, lignesSupprimees: [...retires] })
         : await modifierPrixMaCommande(orderId, payload.map(({ itemId, prixVenteUnitaire }) => ({ itemId, prixVenteUnitaire })));
       if (res?.error) setError(res.error);
       else {
@@ -117,9 +143,30 @@ export function PrixCommandeForm({
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        {lignes.map((l, i) => (
+        {lignes.map((l, i) =>
+          retires.has(l.id) ? (
+            <div key={l.id} className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-red-300 bg-red-50 p-3">
+              <p className="text-sm text-red-700 line-through">{l.libelle}</p>
+              <button type="button" onClick={() => basculerRetrait(l.id)} className="shrink-0 text-sm font-medium text-ink-900/70 underline">
+                Remettre
+              </button>
+            </div>
+          ) : (
           <div key={l.id} className="rounded-xl border border-ink-900/10 p-3">
-            <p className="mb-2 text-sm font-medium">{l.libelle}</p>
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <p className="text-sm font-medium">{l.libelle}</p>
+              {estAdmin && lignes.length > 1 && (
+                <button
+                  type="button"
+                  disabled={nbActifs <= 1}
+                  onClick={() => basculerRetrait(l.id)}
+                  className="shrink-0 rounded-full border border-red-300 px-3 py-1 text-xs font-medium text-red-600 disabled:opacity-40"
+                  title={nbActifs <= 1 ? "Une commande doit garder au moins un produit" : undefined}
+                >
+                  🗑 Retirer
+                </button>
+              )}
+            </div>
             <div className={`grid gap-3 ${estAdmin ? "grid-cols-2" : "grid-cols-1"}`}>
               {estAdmin ? (
                 <div>
@@ -147,8 +194,15 @@ export function PrixCommandeForm({
               </div>
             </div>
           </div>
-        ))}
+          )
+        )}
       </div>
+      {retires.size > 0 && (
+        <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          {retires.size} produit{retires.size > 1 ? "s" : ""} sera retiré{retires.size > 1 ? "s" : ""} de la commande à l&apos;enregistrement
+          (stock remis en rayon). Le prix total a été recalculé : ajuste-le si le client paie un autre montant.
+        </p>
+      )}
 
       <div>
         <p className="mb-2 text-sm font-medium">Livraison</p>

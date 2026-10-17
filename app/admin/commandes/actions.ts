@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { repartirProportionnellement } from "@/lib/calculs/repartition-proportionnelle";
 import type { OrderStatut } from "@/types/database";
@@ -308,6 +309,8 @@ export async function modifierInfosCommandeAdmin(orderId: string, infos: InfosCo
 export interface PrixCommandeAdminInput {
   fraisLivraison: number;
   lignes: { itemId: string; quantite: number; prixVenteUnitaire: number }[];
+  /** Produits retirés de la commande (ex : le client n'en a pris qu'une partie). */
+  lignesSupprimees?: string[];
 }
 
 /**
@@ -334,6 +337,47 @@ export async function modifierPrixCommandeAdmin(orderId: string, input: PrixComm
   if (lectureError || !order) return { error: lectureError?.message ?? "Commande introuvable." };
 
   const actuels = order.order_items as { id: string; quantite: number; prix_vente_unitaire: number; product_variant_id: string | null }[];
+
+  // --- Produits retirés de la commande
+  const aSupprimer = actuels.filter((a) => (input.lignesSupprimees ?? []).includes(a.id));
+  if (aSupprimer.length > 0) {
+    if (actuels.length - aSupprimer.length < 1) return { error: "Une commande doit garder au moins un produit." };
+
+    // Suppression réservée à l'admin : vérifiée ici, puis faite avec le client
+    // service role (aucune policy RLS ne permet de supprimer une ligne de commande).
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: moi } = user ? await supabase.from("profiles").select("role").eq("id", user.id).single() : { data: null };
+    if (moi?.role !== "admin" && moi?.role !== "super_admin") return { error: "Action réservée à l'administrateur." };
+
+    const { data: payes } = await supabase
+      .from("profits")
+      .select("order_item_id")
+      .in("order_item_id", aSupprimer.map((a) => a.id))
+      .eq("statut", "paye");
+    if ((payes ?? []).length > 0) {
+      return { error: "Un des produits à retirer a déjà été payé au commercial : impossible de le supprimer." };
+    }
+
+    const admin = createAdminClient();
+    for (const ligne of aSupprimer) {
+      if (ligne.product_variant_id && order.statut !== "annulee") {
+        const { data: inv } = await admin
+          .from("inventory")
+          .select("id, quantite_disponible, stock_ecoule")
+          .eq("product_variant_id", ligne.product_variant_id)
+          .single();
+        if (inv) {
+          await admin.from("inventory").update({
+            quantite_disponible: inv.quantite_disponible + ligne.quantite,
+            stock_ecoule: Math.max(inv.stock_ecoule - ligne.quantite, 0),
+          }).eq("id", inv.id);
+        }
+      }
+      // le bénéfice en attente de cette ligne part avec elle (clé étrangère en cascade)
+      const { error: delError } = await admin.from("order_items").delete().eq("id", ligne.id);
+      if (delError) return { error: delError.message };
+    }
+  }
 
   for (const ligne of input.lignes) {
     const actuel = actuels.find((a) => a.id === ligne.itemId);
