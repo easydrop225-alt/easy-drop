@@ -117,6 +117,11 @@ export function NouvelleCommandeForm({
     effacerBrouillon();
   }
 
+  function modifierPrixLivraison(v: number) {
+    setPrixLivraison(v);
+    setLivraisonModifieeManuellement(true);
+  }
+
   function handleCommuneChange(valeur: string) {
     setCommune(valeur);
     const tarif = tarifPourCommune(valeur);
@@ -220,7 +225,8 @@ export function NouvelleCommandeForm({
             clientAdresse={clientAdresse}
             onClientAdresseChange={setClientAdresse}
             prixLivraison={prixLivraison}
-            onPrixLivraisonChange={(v) => { setPrixLivraison(v); setLivraisonModifieeManuellement(true); }}
+            onPrixLivraisonChange={modifierPrixLivraison}
+            livraisonDansRecapitulatif={modeTarification === "total"}
             gare={gare}
             onGareChange={setGare}
             villeExpedition={villeExpedition}
@@ -233,6 +239,7 @@ export function NouvelleCommandeForm({
             modeTarification={modeTarification}
             zone={zone}
             prixLivraison={prixLivraison}
+            onChangePrixLivraison={modifierPrixLivraison}
             prixTotalCommande={prixTotalCommande}
             onChangePrixTotalCommande={setPrixTotalCommande}
             prixVenteTotalPanier={panierCommande.prixVenteTotalPanier}

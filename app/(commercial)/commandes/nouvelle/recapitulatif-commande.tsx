@@ -17,6 +17,7 @@ export function RecapitulatifCommande({
   modeTarification,
   zone,
   prixLivraison,
+  onChangePrixLivraison,
   prixTotalCommande,
   onChangePrixTotalCommande,
   prixVenteTotalPanier,
@@ -28,6 +29,7 @@ export function RecapitulatifCommande({
   modeTarification: "parProduit" | "total";
   zone: ZoneLivraison;
   prixLivraison: number;
+  onChangePrixLivraison: (valeur: number) => void;
   prixTotalCommande: number;
   onChangePrixTotalCommande: (valeur: number) => void;
   prixVenteTotalPanier: number;
@@ -47,12 +49,24 @@ export function RecapitulatifCommande({
 
       {modeTarification === "total" ? (
         <>
-          <div className="flex justify-between text-sm">
-            <span className="text-ink-900/60">Prix de la livraison ({zone === "abidjan" ? "selon la commune" : "hors Abidjan"})</span>
-            <span>{formatFCFA(prixLivraison)}</span>
+          <div className="py-1">
+            <Label htmlFor="prixLivraisonRecap">Prix de la livraison (FCFA)</Label>
+            <Input
+              id="prixLivraisonRecap"
+              type="number"
+              min={0}
+              value={prixLivraison || ""}
+              onChange={(e) => onChangePrixLivraison(Number(e.target.value))}
+              required
+            />
+            <p className="mt-1 text-xs text-ink-900/50">
+              {zone === "abidjan"
+                ? "Pré-rempli selon la commune choisie. Tu peux le modifier."
+                : "Renseigne le prix de la livraison hors Abidjan."}
+            </p>
           </div>
           <div className="py-1">
-            <Label htmlFor="prixTotalCommandeInput">Prix total de la commande (produits + livraison, FCFA)</Label>
+            <Label htmlFor="prixTotalCommandeInput">Prix total de la commande, livraison comprise (FCFA)</Label>
             <Input
               id="prixTotalCommandeInput"
               type="number"
@@ -61,7 +75,7 @@ export function RecapitulatifCommande({
               onChange={(e) => onChangePrixTotalCommande(Number(e.target.value))}
             />
             <p className="mt-1 text-xs text-ink-900/50">
-              C&apos;est le montant total que le client paie, livraison comprise. La part &quot;produits&quot; est calculée automatiquement en retirant la livraison ci-dessus, puis répartie entre les {nombreProduits || "..."} produit(s) au prorata des quantités.
+              C&apos;est le montant total que le client paie, livraison comprise. La part &quot;produits&quot; est calculée automatiquement en retirant le prix de la livraison saisi juste au-dessus, puis répartie entre les {nombreProduits || "..."} produit(s) au prorata des quantités.
             </p>
           </div>
           <div className="flex justify-between text-sm">

@@ -28,6 +28,7 @@ export function ClientCard({
   onClientAdresseChange,
   prixLivraison,
   onPrixLivraisonChange,
+  livraisonDansRecapitulatif = false,
   gare,
   onGareChange,
   villeExpedition,
@@ -45,6 +46,8 @@ export function ClientCard({
   onClientAdresseChange: (v: string) => void;
   prixLivraison: number;
   onPrixLivraisonChange: (v: number) => void;
+  /** Mode « un seul prix total » : la livraison se saisit dans le récapitulatif, juste au-dessus du prix total. */
+  livraisonDansRecapitulatif?: boolean;
   gare: string;
   onGareChange: (v: string) => void;
   villeExpedition: string;
@@ -164,23 +167,27 @@ export function ClientCard({
           )}
         </div>
 
-        <div>
-          <Label htmlFor="fraisLivraison">Prix de la livraison (FCFA)</Label>
-          <Input
-            id="fraisLivraison"
-            name="fraisLivraison"
-            type="number"
-            min={0}
-            value={prixLivraison || ""}
-            onChange={(e) => onPrixLivraisonChange(Number(e.target.value))}
-            required
-          />
-          <p className="mt-1 text-xs text-ink-900/50">
-            {zone === "abidjan"
-              ? "Le tarif se met à jour automatiquement selon la commune choisie ci-dessus. Tu peux aussi l'ajuster manuellement."
-              : `Suggestion hors Abidjan : ${formatFCFA(fourchetteFraisParDefaut(zone).min)} – ${formatFCFA(fourchetteFraisParDefaut(zone).max)}.`}
-          </p>
-        </div>
+        {livraisonDansRecapitulatif ? (
+          <input type="hidden" name="fraisLivraison" value={prixLivraison} />
+        ) : (
+          <div>
+            <Label htmlFor="fraisLivraison">Prix de la livraison (FCFA)</Label>
+            <Input
+              id="fraisLivraison"
+              name="fraisLivraison"
+              type="number"
+              min={0}
+              value={prixLivraison || ""}
+              onChange={(e) => onPrixLivraisonChange(Number(e.target.value))}
+              required
+            />
+            <p className="mt-1 text-xs text-ink-900/50">
+              {zone === "abidjan"
+                ? "Le tarif se met à jour automatiquement selon la commune choisie ci-dessus. Tu peux aussi l'ajuster manuellement."
+                : `Suggestion hors Abidjan : ${formatFCFA(fourchetteFraisParDefaut(zone).min)} – ${formatFCFA(fourchetteFraisParDefaut(zone).max)}.`}
+            </p>
+          </div>
+        )}
       </div>
     </Card>
   );
