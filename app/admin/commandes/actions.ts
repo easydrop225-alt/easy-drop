@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { repartirProportionnellement } from "@/lib/calculs/repartition-proportionnelle";
-import { repartirCorrectionLivraison } from "@/lib/calculs/calcul-livraison";
 import type { OrderStatut } from "@/types/database";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -262,81 +261,12 @@ export async function annulerDemandeSuppression(orderId: string) {
   return { success: true };
 }
 
-/**
- * Corrige les frais de livraison SANS changer le prix total de la commande
- * (déjà annoncé/payé par le client) : l'écart est absorbé par le prix de
- * vente des lignes de la commande, réparti au prorata si plusieurs produits.
- * Le bénéfice du commercial (Prix vente - Prix fournisseur) diminue ou
- * augmente automatiquement en conséquence — voir resynchroniserProfitsCommande
- * pour la répercussion sur "Paiements en attente".
- */
-export async function modifierFraisLivraison(orderId: string, nouveauFrais: number) {
-  const supabase = await createClient();
-
-  const { data: order, error: lectureError } = await supabase
-    .from("orders")
-    .select("frais_livraison, order_items(id, quantite, prix_vente_unitaire)")
-    .eq("id", orderId)
-    .single();
-
-  if (lectureError) return { error: lectureError.message };
-  if (!order) return { error: "Commande introuvable." };
-
-  const items = order.order_items as { id: string; quantite: number; prix_vente_unitaire: number }[];
-  const lignes = items.map((i) => ({ quantite: i.quantite, prixVenteUnitaire: i.prix_vente_unitaire }));
-
-  // Si le prix de la livraison augmente (ou diminue), le prix total payé
-  // par le client ne doit pas bouger : la différence est compensée sur le
-  // prix de vente, répartie au prorata des quantités (même logique que le
-  // mode "un seul prix total" du formulaire de commande) — jamais ajoutée
-  // en plus du prix déjà convenu avec le client.
-  const resultat = repartirCorrectionLivraison(lignes, order.frais_livraison, nouveauFrais);
-  if (!resultat) {
-    return {
-      error: "Cette correction ferait passer le prix de vente d'un produit sous 0 FCFA — ajuste manuellement le prix de vente d'abord.",
-    };
-  }
-
-  for (const [i, item] of items.entries()) {
-    const ligneResultat = resultat[i];
-    if (!ligneResultat || ligneResultat.prixVenteUnitaire === lignes[i]?.prixVenteUnitaire) continue;
-    const { error: itemError } = await supabase
-      .from("order_items")
-      .update({ prix_vente_unitaire: ligneResultat.prixVenteUnitaire })
-      .eq("id", item.id);
-    if (itemError) return { error: itemError.message };
-  }
-
-  const { error } = await supabase
-    .from("orders")
-    .update({ frais_livraison: nouveauFrais })
-    .eq("id", orderId);
-
-  if (error) return { error: error.message };
-
-  // Note : le prix total (Prix de vente + Prix de la livraison) reste donc
-  // inchangé après cette correction — seule sa répartition entre "vente" et
-  // "livraison" change, ce qui répercute automatiquement le bon montant
-  // sur le bénéfice du commercial (Bénéfice = Prix vente - Prix fournisseur).
-  await resynchroniserProfitsCommande(supabase, orderId);
-
-  revalidatePath("/admin/commandes");
-  revalidatePath(`/admin/commandes/${orderId}`);
-  revalidatePath(`/commandes/${orderId}`);
-  revalidatePath("/admin/paiements");
-  revalidatePath("/admin/dashboard");
-  revalidatePath("/gains");
-  return { success: true };
-}
-
 export interface InfosCommandeInput {
   clientNom: string;
   clientTelephone: string;
   clientCommune: string;
   clientAdresse: string;
   itemId: string;
-  quantite: number;
-  prixVenteUnitaire: number;
   observation: string;
 }
 
@@ -359,11 +289,7 @@ export async function modifierInfosCommandeAdmin(orderId: string, infos: InfosCo
 
   const { error: itemError } = await supabase
     .from("order_items")
-    .update({
-      quantite: infos.quantite,
-      prix_vente_unitaire: infos.prixVenteUnitaire,
-      observation: infos.observation || null,
-    })
+    .update({ observation: infos.observation || null })
     .eq("id", infos.itemId);
 
   if (itemError) return { error: itemError.message };
@@ -375,6 +301,78 @@ export async function modifierInfosCommandeAdmin(orderId: string, infos: InfosCo
   revalidatePath(`/commandes/${orderId}`);
   revalidatePath("/admin/paiements");
   revalidatePath("/admin/dashboard");
+  revalidatePath("/gains");
+  return { success: true };
+}
+
+export interface PrixCommandeAdminInput {
+  fraisLivraison: number;
+  lignes: { itemId: string; quantite: number; prixVenteUnitaire: number }[];
+}
+
+/**
+ * L'admin recale les prix d'une commande à tout moment, quel que soit son
+ * statut (ex : le client a commandé 3 produits et n'en a pris que 2 à la
+ * livraison) : prix de la livraison, quantités et prix de vente de chaque
+ * ligne. Le prix total = somme des lignes + livraison. Le bénéfice suit
+ * automatiquement (colonne calculée + trigger sur profits). Une quantité
+ * modifiée corrige aussi le stock de la variante, sauf commande annulée
+ * (son stock a déjà été restitué).
+ */
+export async function modifierPrixCommandeAdmin(orderId: string, input: PrixCommandeAdminInput) {
+  if (!Number.isFinite(input.fraisLivraison) || input.fraisLivraison < 0) return { error: "Prix de la livraison invalide." };
+  if (input.lignes.some((l) => !Number.isInteger(l.quantite) || l.quantite < 1 || !Number.isFinite(l.prixVenteUnitaire) || l.prixVenteUnitaire < 0)) {
+    return { error: "Chaque produit doit avoir une quantité d'au moins 1 et un prix de vente positif." };
+  }
+
+  const supabase = await createClient();
+  const { data: order, error: lectureError } = await supabase
+    .from("orders")
+    .select("statut, order_items(id, quantite, prix_vente_unitaire, product_variant_id)")
+    .eq("id", orderId)
+    .single();
+  if (lectureError || !order) return { error: lectureError?.message ?? "Commande introuvable." };
+
+  const actuels = order.order_items as { id: string; quantite: number; prix_vente_unitaire: number; product_variant_id: string | null }[];
+
+  for (const ligne of input.lignes) {
+    const actuel = actuels.find((a) => a.id === ligne.itemId);
+    if (!actuel) return { error: "Un produit de la commande est introuvable — recharge la page." };
+    if (actuel.quantite === ligne.quantite && Number(actuel.prix_vente_unitaire) === ligne.prixVenteUnitaire) continue;
+
+    const { error: itemError } = await supabase
+      .from("order_items")
+      .update({ quantite: ligne.quantite, prix_vente_unitaire: ligne.prixVenteUnitaire })
+      .eq("id", ligne.itemId);
+    if (itemError) return { error: itemError.message };
+
+    const ecart = ligne.quantite - actuel.quantite;
+    if (ecart !== 0 && actuel.product_variant_id && order.statut !== "annulee") {
+      const { data: inv } = await supabase
+        .from("inventory")
+        .select("id, quantite_disponible, stock_ecoule")
+        .eq("product_variant_id", actuel.product_variant_id)
+        .single();
+      if (inv) {
+        await supabase.from("inventory").update({
+          quantite_disponible: Math.max(inv.quantite_disponible - ecart, 0),
+          stock_ecoule: Math.max(inv.stock_ecoule + ecart, 0),
+        }).eq("id", inv.id);
+      }
+    }
+  }
+
+  const { error } = await supabase.from("orders").update({ frais_livraison: input.fraisLivraison }).eq("id", orderId);
+  if (error) return { error: error.message };
+
+  await resynchroniserProfitsCommande(supabase, orderId);
+
+  revalidatePath("/admin/commandes");
+  revalidatePath(`/admin/commandes/${orderId}`);
+  revalidatePath(`/commandes/${orderId}`);
+  revalidatePath("/admin/paiements");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/stocks");
   revalidatePath("/gains");
   return { success: true };
 }

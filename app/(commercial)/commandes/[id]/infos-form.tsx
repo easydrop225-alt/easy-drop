@@ -12,8 +12,6 @@ export function MesInfosCommandeForm({ order, item }: { order: Order; item: Orde
   const [clientTelephone, setClientTelephone] = useState(order.client_telephone);
   const [clientCommune, setClientCommune] = useState(order.client_commune);
   const [clientAdresse, setClientAdresse] = useState(order.client_adresse);
-  const [quantite, setQuantite] = useState(item.quantite);
-  const [prixVenteUnitaire, setPrixVenteUnitaire] = useState(item.prix_vente_unitaire);
   const [observation, setObservation] = useState(item.observation ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +23,7 @@ export function MesInfosCommandeForm({ order, item }: { order: Order; item: Orde
     startTransition(async () => {
       const res = await modifierMaCommande(order.id, {
         clientNom, clientTelephone, clientCommune, clientAdresse,
-        itemId: item.id, quantite, prixVenteUnitaire, observation,
+        itemId: item.id, observation,
       });
       if (res?.error) setError(res.error);
       else setSaved(true);
@@ -46,10 +44,6 @@ export function MesInfosCommandeForm({ order, item }: { order: Order; item: Orde
         </datalist>
       </div>
       <div><Label htmlFor="clientAdresse">Adresse</Label><Input id="clientAdresse" value={clientAdresse} onChange={(e) => setClientAdresse(e.target.value)} /></div>
-      <div className="grid grid-cols-2 gap-3">
-        <div><Label htmlFor="quantite">Quantité</Label><Input id="quantite" type="number" min={1} value={quantite} onChange={(e) => setQuantite(Number(e.target.value))} /></div>
-        <div><Label htmlFor="prixVenteUnitaire">Prix de vente unitaire</Label><Input id="prixVenteUnitaire" type="number" min={0} value={prixVenteUnitaire} onChange={(e) => setPrixVenteUnitaire(Number(e.target.value))} /></div>
-      </div>
       <div>
         <Label htmlFor="observation">Observation (couleur, taille...)</Label>
         <textarea

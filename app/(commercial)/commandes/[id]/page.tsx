@@ -8,6 +8,7 @@ import type { Order, OrderItem, Product, ProductVariant } from "@/types/database
 import { MesInfosCommandeForm } from "./infos-form";
 import { SuppressionBanner } from "./suppression-banner";
 import { AnnulerCommandeBouton } from "./annuler-bouton";
+import { PrixCommandeForm } from "@/components/commandes/prix-commande-form";
 
 const STATUTS_MODIFIABLES = ["confirmation", "traitement"];
 const STATUTS_ANNULABLES = ["confirmation", "traitement", "relance"];
@@ -110,6 +111,28 @@ export default async function DetailCommandePage({
           ))}
         </ul>
       </Card>
+
+      {STATUTS_MODIFIABLES.includes(o.statut) && (
+        <Card>
+          <h2 className="mb-1 font-medium">Modifier le prix</h2>
+          <p className="mb-3 text-xs text-ink-900/50">
+            Possible tant que la commande n&apos;est pas en cours de livraison. Le prix de la livraison est fixé par l&apos;administration.
+          </p>
+          <PrixCommandeForm
+            key={itemList.map((i) => `${i.id}:${i.prix_vente_unitaire}`).join("|")}
+            orderId={o.id}
+            mode="commercial"
+            fraisLivraison={o.frais_livraison}
+            lignes={itemList.map((i) => ({
+              id: i.id,
+              libelle: libelleArticle(i.products?.nom, i.product_variants),
+              quantite: i.quantite,
+              prixVenteUnitaire: Number(i.prix_vente_unitaire),
+              prixFournisseurUnitaire: Number(i.prix_fournisseur_unitaire),
+            }))}
+          />
+        </Card>
+      )}
 
       {o.zone === "hors_abidjan" && (
         <Card>

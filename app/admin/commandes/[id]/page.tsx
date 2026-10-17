@@ -6,7 +6,7 @@ import { formatFCFA, formatDate } from "@/lib/utils";
 import { libelleArticle } from "@/lib/produits/libelle-variante";
 import type { Order, OrderItem, Product, Profile, ProductVariant } from "@/types/database";
 import { StatutForm } from "./statut-form";
-import { LivraisonForm } from "./livraison-form";
+import { PrixCommandeForm } from "@/components/commandes/prix-commande-form";
 import { InfosCommandeForm } from "./infos-form";
 import { ChangerProduitForm } from "./changer-produit-form";
 import { RecuExpeditionUploader } from "@/components/commandes/recu-expedition-uploader";
@@ -102,8 +102,23 @@ export default async function DetailCommandeAdminPage({
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-medium">Prix de la livraison</h2>
-        <LivraisonForm orderId={o.id} fraisActuel={o.frais_livraison} />
+        <h2 className="mb-1 font-medium">Prix de la commande</h2>
+        <p className="mb-3 text-xs text-ink-900/50">
+          Modifiable à tout moment, même en cours de livraison (ex : le client ne prend que 2 produits sur 3).
+        </p>
+        <PrixCommandeForm
+          key={`${o.frais_livraison}-${itemList.map((i) => `${i.id}:${i.quantite}:${i.prix_vente_unitaire}`).join("|")}`}
+          orderId={o.id}
+          mode="admin"
+          fraisLivraison={o.frais_livraison}
+          lignes={itemList.map((i) => ({
+            id: i.id,
+            libelle: libelleArticle(i.products?.nom, ((variantesDisponibles ?? []) as ProductVariant[]).find((v) => v.id === i.product_variant_id)),
+            quantite: i.quantite,
+            prixVenteUnitaire: Number(i.prix_vente_unitaire),
+            prixFournisseurUnitaire: Number(i.prix_fournisseur_unitaire),
+          }))}
+        />
       </Card>
 
       {o.zone === "hors_abidjan" && (

@@ -129,8 +129,6 @@ export interface InfosCommandeCommercialInput {
   clientCommune: string;
   clientAdresse: string;
   itemId: string;
-  quantite: number;
-  prixVenteUnitaire: number;
   observation: string;
 }
 
@@ -162,16 +160,50 @@ export async function modifierMaCommande(orderId: string, infos: InfosCommandeCo
 
   const { error: itemError } = await supabase
     .from("order_items")
-    .update({
-      quantite: infos.quantite,
-      prix_vente_unitaire: infos.prixVenteUnitaire,
-      observation: infos.observation || null,
-    })
+    .update({ observation: infos.observation || null })
     .eq("id", infos.itemId);
 
   if (itemError) return { error: itemError.message };
 
   revalidatePath(`/commandes/${orderId}`);
+  return { success: true };
+}
+
+/**
+ * Le commercial corrige le prix de vente de ses produits (donc le prix total,
+ * livraison comprise) tant que la commande n'est pas partie en livraison.
+ * Il ne touche JAMAIS au prix de la livraison ni aux quantités (réservés à
+ * l'admin) — un déclencheur en base bloque aussi la livraison côté serveur.
+ */
+export async function modifierPrixMaCommande(orderId: string, lignes: { itemId: string; prixVenteUnitaire: number }[]) {
+  if (lignes.some((l) => !Number.isFinite(l.prixVenteUnitaire) || l.prixVenteUnitaire < 0)) {
+    return { error: "Le prix de vente ne peut pas être négatif." };
+  }
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Session expirée, merci de te reconnecter." };
+
+  const { data: order } = await supabase
+    .from("orders")
+    .select("statut, commercial_id, order_items(id)")
+    .eq("id", orderId)
+    .single();
+  if (!order || order.commercial_id !== user.id) return { error: "Commande introuvable." };
+  if (!STATUTS_MODIFIABLES.includes(order.statut)) {
+    return { error: "Cette commande est déjà en cours de livraison : seul l'administrateur peut encore modifier ses prix." };
+  }
+  const ids = new Set((order.order_items as { id: string }[]).map((i) => i.id));
+
+  for (const ligne of lignes) {
+    if (!ids.has(ligne.itemId)) return { error: "Un produit de la commande est introuvable — recharge la page." };
+    const { error } = await supabase.from("order_items").update({ prix_vente_unitaire: ligne.prixVenteUnitaire }).eq("id", ligne.itemId);
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath(`/commandes/${orderId}`);
+  revalidatePath("/gains");
+  revalidatePath("/admin/commandes");
+  revalidatePath(`/admin/commandes/${orderId}`);
   return { success: true };
 }
 
