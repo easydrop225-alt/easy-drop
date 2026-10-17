@@ -8,7 +8,6 @@ import { fourchetteFraisParDefaut } from "@/lib/calculs/calcul-livraison";
 import { tarifPourCommune } from "@/lib/data/communes-abidjan";
 import { PanierCommande } from "./panier-commande";
 import { RecapitulatifCommande } from "./recapitulatif-commande";
-import { ModeTarificationCard } from "./mode-tarification-card";
 import { TypeCommandeCard, type TypeCommande } from "./type-commande-card";
 import { AjouterProduitCard } from "./ajouter-produit-card";
 import { ClientCard } from "./client-card";
@@ -37,17 +36,16 @@ export function NouvelleCommandeForm({
   // formulaire selon qu'il s'agit d'un seul produit ou de plusieurs.
   const [typeCommande, setTypeCommande] = useState<TypeCommande | null>(null);
 
-  // Deux façons de fixer le prix quand plusieurs produits différents sont
-  // commandés ensemble : soit un prix propre à chaque produit (par défaut),
-  // soit un seul prix pour toute la commande, réparti automatiquement.
-  // Pour un produit unique, le mode "par produit" s'impose de lui-même
-  // (prix de vente et prix de livraison saisis séparément).
-  const [modeTarification, setModeTarification] = useState<"parProduit" | "total">("parProduit");
+  // Décision de Yann (17/10/2026) : plus jamais de prix saisi sans la
+  // livraison. Le commercial choisit le tarif de livraison puis saisit le
+  // PRIX TOTAL de la commande (produits + livraison) ; la part produits est
+  // calculée et répartie automatiquement. Le mode « prix par produit » n'est
+  // plus proposé (gardé dans le code du panier, mais jamais activé).
+  const [modeTarification, setModeTarification] = useState<"parProduit" | "total">("total");
   const [prixTotalCommande, setPrixTotalCommande] = useState(0);
 
   function choisirTypeCommande(v: TypeCommande) {
     setTypeCommande(v);
-    if (v === "unique") setModeTarification("parProduit");
   }
 
   const [zone, setZone] = useState<ZoneLivraison>("abidjan");
@@ -90,7 +88,8 @@ export function NouvelleCommandeForm({
     },
     {
       setPanier: panierCommande.setPanier,
-      setModeTarification,
+      // un ancien brouillon « prix par produit » repasse en prix total
+      setModeTarification: () => setModeTarification("total"),
       setPrixTotalCommande,
       setZone,
       setCommune,
@@ -175,14 +174,6 @@ export function NouvelleCommandeForm({
 
       {typeCommande && (
         <>
-          {typeCommande === "multiple" && (
-            <ModeTarificationCard
-              modeTarification={modeTarification}
-              onChange={setModeTarification}
-              panierNonVide={panierCommande.panier.length > 0}
-            />
-          )}
-
           {panierCommande.panier.length > 0 && (
             <Card>
               <PanierCommande lignes={panierCommande.lignesPanierAffichage} onRetirer={panierCommande.retirerDuPanier} />
@@ -226,7 +217,7 @@ export function NouvelleCommandeForm({
             onClientAdresseChange={setClientAdresse}
             prixLivraison={prixLivraison}
             onPrixLivraisonChange={modifierPrixLivraison}
-            livraisonDansRecapitulatif={modeTarification === "total"}
+            livraisonDansRecapitulatif
             gare={gare}
             onGareChange={setGare}
             villeExpedition={villeExpedition}

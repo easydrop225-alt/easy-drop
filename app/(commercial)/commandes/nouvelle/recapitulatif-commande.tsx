@@ -5,6 +5,9 @@ import { Input, Label } from "@/components/ui/input";
 import { formatFCFA } from "@/lib/utils";
 import type { ZoneLivraison } from "@/types/database";
 
+/** Tarifs de livraison proposés au commercial (décision de Yann, 17/10/2026). */
+export const TARIFS_LIVRAISON = [0, 1500, 2000, 2500, 3000, 3500, 4000];
+
 /**
  * Affichage + saisie du récapitulatif final — reçoit uniquement des valeurs
  * déjà calculées par le formulaire parent (aucune logique de répartition
@@ -50,23 +53,31 @@ export function RecapitulatifCommande({
       {modeTarification === "total" ? (
         <>
           <div className="py-1">
-            <Label htmlFor="prixLivraisonRecap">Prix de la livraison (FCFA)</Label>
-            <Input
-              id="prixLivraisonRecap"
-              type="number"
-              min={0}
-              value={prixLivraison || ""}
-              onChange={(e) => onChangePrixLivraison(Number(e.target.value))}
-              required
-            />
+            <p className="mb-2 text-sm font-medium">Livraison</p>
+            <div className="grid grid-cols-4 gap-2" role="radiogroup" aria-label="Prix de la livraison">
+              {TARIFS_LIVRAISON.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  role="radio"
+                  aria-checked={prixLivraison === t}
+                  onClick={() => onChangePrixLivraison(t)}
+                  className={`rounded-xl border px-2 py-2 text-sm font-medium transition ${
+                    prixLivraison === t
+                      ? "border-terracotta-500 bg-terracotta-500 text-white"
+                      : "border-ink-900/15 bg-surface text-ink-900/80"
+                  }`}
+                >
+                  {t === 0 ? "0 F" : `${t.toLocaleString("fr-FR")} F`}
+                </button>
+              ))}
+            </div>
             <p className="mt-1 text-xs text-ink-900/50">
-              {zone === "abidjan"
-                ? "Pré-rempli selon la commune choisie. Tu peux le modifier."
-                : "Renseigne le prix de la livraison hors Abidjan."}
+              {zone === "abidjan" ? "Présélectionné selon la commune choisie. Coche un autre tarif si besoin." : "Coche le tarif de livraison hors Abidjan."}
             </p>
           </div>
           <div className="py-1">
-            <Label htmlFor="prixTotalCommandeInput">Prix total de la commande, livraison comprise (FCFA)</Label>
+            <Label htmlFor="prixTotalCommandeInput">Prix total de la commande (prix du produit + prix de la livraison)</Label>
             <Input
               id="prixTotalCommandeInput"
               type="number"
@@ -75,7 +86,7 @@ export function RecapitulatifCommande({
               onChange={(e) => onChangePrixTotalCommande(Number(e.target.value))}
             />
             <p className="mt-1 text-xs text-ink-900/50">
-              C&apos;est le montant total que le client paie, livraison comprise. La part &quot;produits&quot; est calculée automatiquement en retirant le prix de la livraison saisi juste au-dessus, puis répartie entre les {nombreProduits || "..."} produit(s) au prorata des quantités.
+              C&apos;est le montant total que le client paie, livraison comprise. La part &quot;produits&quot; est calculée automatiquement en retirant la livraison cochée juste au-dessus, puis répartie entre les {nombreProduits || "..."} produit(s) au prorata des quantités.
             </p>
           </div>
           <div className="flex justify-between text-sm">

@@ -188,7 +188,7 @@ export function AjouterProduitCard({
             </div>
           ) : (
             <p className="text-xs text-ink-900/50">
-              Prix géré plus bas, en une seule fois pour toute la commande — pas besoin de le saisir produit par produit.
+              Le prix se saisit plus bas : choisis la livraison, puis le prix total de la commande (produit + livraison).
             </p>
           )}
 
