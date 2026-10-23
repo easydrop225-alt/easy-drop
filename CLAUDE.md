@@ -105,6 +105,7 @@ Plateforme de dropshipping interne pour la Côte d'Ivoire. Yann (le propriétair
 - Un CI GitHub vert ne garantit pas que Vercel a déployé : vérifier l'état du déploiement Vercel (MCP `list_deployments`). Erreur `git_info_fail` (construction jamais lancée) = passagère, se relance avec un commit vide.
 
 - Fonctions `SECURITY DEFINER` : toute nouvelle fonction est appelable par TOUT LE MONDE via `/rest/v1/rpc/...` (droit EXECUTE donné par défaut à `public`/`anon`). Si elle n'est appelée que par un déclencheur ou par une autre fonction, faire `revoke execute ... from public, anon, authenticated` dans la même migration (fait le 13/10/2026 pour `notifier_commerciaux`, ouverte au public : spam de notifications possible). Ne PAS retirer `authenticated` sur `is_admin()` / `fournisseur_a_acces_commande()` : les policies RLS en ont besoin.
+- 23/10/2026 : Next 15.5.27 → 15.5.28 (failles critiques GHSA-2464-fhr4-w9xw RCE optimisation d'images SVG, et GHSA-p3m5-59mp-jv5r DoS Server Actions). Les mises à jour de patch de sécurité de Next 15.x sont à appliquer sans attendre.
 - Vulnérabilités npm restantes (13/10/2026) : uniquement corrigeables par des versions majeures (Next 16, vitest 5, Tailwind 4) — postcss interne à Next (build seulement) et tinypool/vitest (tests seulement). Pas de risque en production ; migration majeure à planifier avec Yann.
 
 ## Ce qui reste ouvert / non fait
