@@ -65,6 +65,11 @@ export function ExigencesMotDePasse({ valeur }: { valeur: string }) {
   );
 }
 
+/** Libellés des critères pas encore respectés (pour un message clair près du bouton). */
+export function criteresManquants(valeur: string): string[] {
+  return CRITERES.filter((c) => !c.test(valeur)).map((c) => c.label.toLowerCase());
+}
+
 /** Utilisé côté serveur/tests pour vérifier qu'un mot de passe respecte bien tous les critères. */
 export function motDePasseValide(valeur: string): boolean {
   return CRITERES.every((c) => c.test(valeur));

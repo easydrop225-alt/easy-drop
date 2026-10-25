@@ -4,11 +4,13 @@ import { useActionState, useState } from "react";
 import { inscrireCommercial } from "./actions";
 import { Input, Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PasswordInput, ExigencesMotDePasse } from "@/components/ui/password-input";
+import { PasswordInput, ExigencesMotDePasse, criteresManquants } from "@/components/ui/password-input";
 
 export function FormulaireInscription() {
   const [state, formAction, pending] = useActionState(inscrireCommercial, undefined as { error?: string } | undefined);
   const [motDePasse, setMotDePasse] = useState("");
+  const manquants = criteresManquants(motDePasse);
+  const motDePasseOk = manquants.length === 0;
 
   return (
     <form action={formAction} className="space-y-4">
@@ -48,9 +50,16 @@ export function FormulaireInscription() {
         />
         <ExigencesMotDePasse valeur={motDePasse} />
       </div>
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Création en cours..." : "Créer mon compte"}
+      {motDePasse.length > 0 && !motDePasseOk && (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+          Mot de passe incomplet — il manque : <strong>{manquants.join(", ")}</strong>.
+        </p>
+      )}
+      {state?.error && (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{state.error}</p>
+      )}
+      <Button type="submit" disabled={pending || !motDePasseOk} className="w-full">
+        {pending ? "Création en cours..." : motDePasseOk ? "Créer mon compte" : "Complète le mot de passe"}
       </Button>
     </form>
   );

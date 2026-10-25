@@ -31,6 +31,8 @@ interface BeforeInstallPromptEvent extends Event {
  * application sans cette confirmation manuelle, c'est une règle de
  * sécurité universelle, pas une limite propre à Easy Drop).
  */
+const PAGES_SANS_BANDEAU = ["/inscription", "/connexion", "/mot-de-passe-oublie", "/reinitialiser-mot-de-passe"];
+
 export function InstallPrompt() {
   const [eventInstall, setEventInstall] = useState<BeforeInstallPromptEvent | null>(null);
   const [estIOS, setEstIOS] = useState(false);
@@ -86,6 +88,10 @@ export function InstallPrompt() {
     setVisible(false);
   }
 
+  // Jamais sur les pages publiques de compte : le bandeau recouvrait le bas du
+  // formulaire (règles du mot de passe, bouton, message d'erreur) — un
+  // commercial n'arrivait plus à comprendre pourquoi son inscription bloquait.
+  if (PAGES_SANS_BANDEAU.some((p) => pathname === p || pathname.startsWith(p + "/"))) return null;
   if (!visible || dejaInstalle) return null;
 
   return (

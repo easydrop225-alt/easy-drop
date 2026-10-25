@@ -5,10 +5,11 @@ import { useActionState, useState } from "react";
 import { definirNouveauMotDePasse } from "./actions";
 import { Label } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PasswordInput, ExigencesMotDePasse } from "@/components/ui/password-input";
+import { PasswordInput, ExigencesMotDePasse, criteresManquants } from "@/components/ui/password-input";
 
 export default function ReinitialiserMotDePassePage() {
   const [motDePasse, setMotDePasse] = useState("");
+  const manquants = criteresManquants(motDePasse);
   const [state, formAction, pending] = useActionState(
     definirNouveauMotDePasse,
     undefined as { error?: string; succes?: boolean } | undefined
@@ -41,8 +42,13 @@ export default function ReinitialiserMotDePassePage() {
           />
           <ExigencesMotDePasse valeur={motDePasse} />
         </div>
+        {motDePasse.length > 0 && manquants.length > 0 && (
+          <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+            Mot de passe incomplet — il manque : <strong>{manquants.join(", ")}</strong>.
+          </p>
+        )}
         {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-        <Button type="submit" disabled={pending} className="w-full">
+        <Button type="submit" disabled={pending || manquants.length > 0} className="w-full">
           {pending ? "Enregistrement..." : "Enregistrer le nouveau mot de passe"}
         </Button>
       </form>
