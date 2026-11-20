@@ -25,6 +25,8 @@ interface ProductCardProps {
   actif?: boolean; // produit désactivé par l'admin — absent = toujours considéré actif
   nouveau?: boolean; // ajouté il y a moins d'un mois
   favoris?: boolean; // affiche le bouton cœur (désactivé sur la vitrine publique)
+  /** Espace admin : un produit désactivé reste cliquable (pour le modifier / le réactiver). */
+  ouvrableSiDesactive?: boolean;
 }
 
 function resumeVariantes(couleurs?: string[], tailles?: string[]) {
@@ -39,12 +41,41 @@ function resumeVariantes(couleurs?: string[], tailles?: string[]) {
   return parties.length > 0 ? parties.join(" · ") : null;
 }
 
-export function ProductCard({ product, imageUrl, prixFournisseur, href, disponible, actif = true, nouveau, favoris = true }: ProductCardProps) {
+export function ProductCard({ product, imageUrl, prixFournisseur, href, disponible, actif = true, nouveau, favoris = true, ouvrableSiDesactive = false }: ProductCardProps) {
   const indisponible = disponible === false;
 
   // Un produit désactivé par l'admin ne montre plus rien d'autre que sa
   // photo de couverture, très grisée, et n'est plus cliquable — il n'y a
   // volontairement plus aucune information (prix, variantes) à afficher.
+  if (!actif && ouvrableSiDesactive) {
+    return (
+      <Link href={href} prefetch className="group block overflow-hidden rounded-2xl border border-dashed border-ink-900/20 bg-surface transition hover:shadow-md">
+        <div className="relative aspect-square w-full bg-beige-100">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={product.nom}
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              className="object-cover opacity-60 grayscale"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-ink-900/30">Photo à venir</div>
+          )}
+          <span className="absolute left-2 top-2 rounded-full bg-ink-900/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+            Désactivé
+          </span>
+        </div>
+        <div className="p-3">
+          <h3 className="truncate text-sm font-medium text-ink-900/70">{product.nom}</h3>
+          <span className="mt-2 block w-full rounded-xl border border-terracotta-500 px-3 py-1.5 text-center text-sm font-medium text-terracotta-600">
+            Ouvrir pour réactiver
+          </span>
+        </div>
+      </Link>
+    );
+  }
+
   if (!actif) {
     return (
       <div className="overflow-hidden rounded-2xl border border-ink-900/5 bg-surface opacity-75 grayscale">

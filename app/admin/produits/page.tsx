@@ -94,6 +94,7 @@ export default async function AdminProduitsPage() {
         categories={categoryList.map((c) => ({ id: c.id, nom: c.nom }))}
         hrefPrefix="/admin/produits"
         hrefSuffix="/edit"
+        ouvrableSiDesactive
         favoris={false}
       />
     </div>

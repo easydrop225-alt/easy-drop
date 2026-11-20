@@ -38,6 +38,7 @@ export function CatalogueRecherche({
   categories,
   hrefPrefix = "/catalogue",
   hrefSuffix = "",
+  ouvrableSiDesactive = false,
   favoris = true,
 }: {
   produits: ProduitPourRecherche[];
@@ -47,6 +48,8 @@ export function CatalogueRecherche({
   hrefPrefix?: string;
   /** Ajouté après l'id — "/edit" côté admin, vide côté commercial. */
   hrefSuffix?: string;
+  /** Espace admin : les produits désactivés restent cliquables. */
+  ouvrableSiDesactive?: boolean;
   /** Le cœur favoris n'a de sens que côté commercial. */
   favoris?: boolean;
 }) {
@@ -176,6 +179,7 @@ export function CatalogueRecherche({
                 actif={p.actif}
                 nouveau={p.nouveau}
                 favoris={favoris}
+                ouvrableSiDesactive={ouvrableSiDesactive}
               />
             ))}
           </div>
