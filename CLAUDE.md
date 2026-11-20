@@ -107,6 +107,8 @@ Plateforme de dropshipping interne pour la Côte d'Ivoire. Yann (le propriétair
 
 - **Ne jamais déclencher une action de formulaire (`requestSubmit`, dispatch de `useActionState`) depuis une fonction de mise à jour d'état `setX((v) => …)`** : React l'exécute pendant le rendu → erreur #485 « Cannot update action state while rendering » (14/11/2026, page /commandes/nouvelle, renvoi automatique au retour de la connexion). Garder l'info dans une ref et soumettre hors rendu (`use-connexion-commande.ts`).
 
+- Notifications programmées `pg_cron` (heure = UTC = Abidjan) : commande en SQL simple, `select cron.unschedule('nom')` à la fin — **jamais `perform` ni `begin/commit`** (hors PL/pgSQL → erreur de syntaxe : les 2 rappels du 28/09/2026 ne sont jamais partis). Vérifier ensuite `cron.job_run_details`.
+
 - Un CI GitHub vert ne garantit pas que Vercel a déployé : vérifier l'état du déploiement Vercel (MCP `list_deployments`). Erreur `git_info_fail` (construction jamais lancée) = passagère, se relance avec un commit vide.
 
 - Fonctions `SECURITY DEFINER` : toute nouvelle fonction est appelable par TOUT LE MONDE via `/rest/v1/rpc/...` (droit EXECUTE donné par défaut à `public`/`anon`). Si elle n'est appelée que par un déclencheur ou par une autre fonction, faire `revoke execute ... from public, anon, authenticated` dans la même migration (fait le 13/10/2026 pour `notifier_commerciaux`, ouverte au public : spam de notifications possible). Ne PAS retirer `authenticated` sur `is_admin()` / `fournisseur_a_acces_commande()` : les policies RLS en ont besoin.
