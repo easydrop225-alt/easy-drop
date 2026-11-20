@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { libelleVariante, libelleArticle } from "./libelle-variante";
+import { libelleVariante, libelleArticle, estVarianteStandard } from "./libelle-variante";
 
 describe("libelleVariante", () => {
   it("préfère le nom personnalisé de la variante", () => {
@@ -31,5 +31,15 @@ describe("libelleArticle", () => {
 
   it("tolère un nom de produit manquant", () => {
     expect(libelleArticle(undefined, { couleur: "Rouge" })).toBe("Produit — Rouge");
+  });
+});
+
+describe("variante Standard (produit sans variantes, stock suivi)", () => {
+  it("n'affiche que le nom du produit", () => {
+    expect(libelleArticle("Étendoir", { nom: null, couleur: null, taille: null })).toBe("Étendoir");
+  });
+  it("est reconnue seulement sans nom, couleur ni taille", () => {
+    expect(estVarianteStandard({ nom: null, couleur: null, taille: null })).toBe(true);
+    expect(estVarianteStandard({ nom: null, couleur: "Noir", taille: null })).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { estVarianteStandard } from "@/lib/produits/libelle-variante";
 import { notFound } from "next/navigation";
 import { ProduitForm } from "../../form";
 import { modifierProduit } from "../../actions";
@@ -32,6 +33,15 @@ export default async function EditProduitPage({
 
   const modifierCeProduit = modifierProduit.bind(null, id);
 
+  // Stock affiché dans la fiche : modifiable ici si le produit n'a pas de vraies
+  // variantes (seulement la variante « Standard » invisible, ou rien) ;
+  // sinon total en lecture seule, le réglage se fait par variante.
+  const listeVariantes = (variants ?? []) as (ProductVariant & { inventory: Inventory[] })[];
+  const stockTotal = listeVariantes.reduce((a, v) => a + (v.inventory?.[0]?.quantite_disponible ?? 0), 0);
+  const stockFiche = listeVariantes.some((v) => !estVarianteStandard(v))
+    ? ({ mode: "variantes", total: stockTotal } as const)
+    : ({ mode: "simple", valeur: listeVariantes[0]?.inventory?.[0] ? stockTotal : null } as const);
+
   return (
     <div className="mx-auto max-w-xl space-y-6">
       <h1 className="text-2xl font-semibold">Modifier — {(product as Product).nom}</h1>
@@ -41,6 +51,7 @@ export default async function EditProduitPage({
         produit={product as Product}
         action={modifierCeProduit}
         submitLabel="Enregistrer les modifications"
+        stock={stockFiche}
       />
 
       <MediaUploader productId={id} />

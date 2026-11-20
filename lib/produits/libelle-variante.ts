@@ -10,6 +10,15 @@ interface VarianteLibelle {
   taille?: string | null;
 }
 
+/**
+ * Variante « Standard » : créée automatiquement pour suivre le stock d'un
+ * produit qui n'a pas de variantes (ni nom, ni couleur, ni taille). Elle est
+ * invisible pour l'utilisateur : on affiche juste le nom du produit.
+ */
+export function estVarianteStandard(v: VarianteLibelle | null | undefined): boolean {
+  return !!v && !v.nom && !v.couleur && !v.taille;
+}
+
 /** Nom d'une variante : son nom personnalisé, sinon "couleur / taille". */
 export function libelleVariante(v: VarianteLibelle): string {
   return v.nom || [v.couleur, v.taille].filter(Boolean).join(" / ") || "Standard";
@@ -23,5 +32,5 @@ export function libelleVariante(v: VarianteLibelle): string {
  */
 export function libelleArticle(nomProduit: string | null | undefined, variante?: VarianteLibelle | null): string {
   const nom = nomProduit ?? "Produit";
-  return variante ? `${nom} — ${libelleVariante(variante)}` : nom;
+  return variante && !estVarianteStandard(variante) ? `${nom} — ${libelleVariante(variante)}` : nom;
 }

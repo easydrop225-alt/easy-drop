@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { appliquerStockProduit } from "@/lib/produits/stock-produit";
 
 export async function ajouterVariante(
   productId: string,
@@ -192,5 +193,17 @@ export async function modifierVariante(
 
   revalidatePath(`/admin/produits/${productId}/edit`);
   revalidatePath("/admin/stocks");
+  return { success: true };
+}
+
+/** Stock d'un produit sans variantes (Admin > Stocks et fiche produit). */
+export async function definirStockProduit(productId: string, quantite: number) {
+  const supabase = await createClient();
+  const res = await appliquerStockProduit(supabase, productId, quantite);
+  if (res.error) return res;
+  revalidatePath(`/admin/produits/${productId}/edit`);
+  revalidatePath("/admin/stocks");
+  revalidatePath("/admin/produits");
+  revalidatePath("/catalogue");
   return { success: true };
 }

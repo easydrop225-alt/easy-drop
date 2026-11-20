@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { compresserImage } from "@/lib/media/image-compression";
 import { compresserVideo, enMo } from "@/lib/media/compresser-video";
 import { LigneVideo } from "./ligne-video";
+import { estVarianteStandard } from "@/lib/produits/libelle-variante";
 import { ImagesReordonnables } from "./images-reordonnables";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,7 +29,8 @@ export function MediaUploader({ productId }: { productId: string }) {
 
   const loadVariants = useCallback(async () => {
     const { data } = await supabase.from("product_variants").select("*").eq("product_id", productId);
-    setVariants((data ?? []) as ProductVariant[]);
+    // la variante « Standard » (stock d'un produit sans variantes) n'a pas de photos à elle
+    setVariants(((data ?? []) as ProductVariant[]).filter((v) => !estVarianteStandard(v)));
   }, [productId, supabase]);
 
   useEffect(() => {

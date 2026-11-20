@@ -2,7 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { libelleVariante } from "@/lib/produits/libelle-variante";
+import { libelleVariante, estVarianteStandard } from "@/lib/produits/libelle-variante";
+import { DefinirStockInline } from "@/components/produits/definir-stock-inline";
 import { AjouterStockInline } from "@/components/produits/ajouter-stock-inline";
 import type { ProductVariant, Inventory as InventoryType, Product } from "@/types/database";
 
@@ -15,9 +16,10 @@ type InventoryRow = InventoryType & { product_variants: (ProductVariant & { prod
 
 export default async function StocksPage() {
   const supabase = await createClient();
-  const { data: inventory } = await supabase
-    .from("inventory")
-    .select("*, product_variants(*, products(*))");
+  const [{ data: inventory }, { data: produits }] = await Promise.all([
+    supabase.from("inventory").select("*, product_variants(*, products(*))"),
+    supabase.from("products").select("id, nom, actif").order("nom"),
+  ]);
 
   // Trié par produit puis par variante, pour retrouver d'un coup d'œil
   // toutes les variantes d'un même produit regroupées.
@@ -25,6 +27,11 @@ export default async function StocksPage() {
     (a.product_variants?.products?.nom ?? "").localeCompare(b.product_variants?.products?.nom ?? "", "fr") ||
     libelleVariante(a.product_variants ?? {}).localeCompare(libelleVariante(b.product_variants ?? {}), "fr"),
   );
+
+  // Produits dont le stock n'est pas encore suivi (aucune ligne de stock) :
+  // listés aussi, pour pouvoir renseigner leur stock d'ici.
+  const suivis = new Set(rows.map((r) => r.product_variants?.products?.id));
+  const nonSuivis = ((produits ?? []) as Pick<Product, "id" | "nom" | "actif">[]).filter((p) => !suivis.has(p.id));
 
   return (
     <div>
@@ -56,7 +63,7 @@ export default async function StocksPage() {
                   </Link>
                 </td>
                 <td className="p-3">
-                  {row.product_variants ? (
+                  {row.product_variants && !estVarianteStandard(row.product_variants) ? (
                     <span className="inline-block rounded-full bg-beige-100 px-2.5 py-0.5 font-medium">{libelleVariante(row.product_variants)}</span>
                   ) : "—"}
                 </td>
@@ -76,7 +83,18 @@ export default async function StocksPage() {
                 <td className="p-3">{row.seuil_alerte}</td>
               </tr>
             ))}
-            {rows.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-ink-900/40">Aucune donnée de stock.</td></tr>}
+            {nonSuivis.map((p) => (
+              <tr key={p.id} className="border-b border-ink-900/5 bg-amber-50/40 last:border-0">
+                <td className="p-3">
+                  <Link href={`/admin/produits/${p.id}/edit`} className="hover:underline">{p.nom}</Link>
+                  {!p.actif && <span className="ml-2 rounded-full bg-ink-900/10 px-2 py-0.5 text-[10px] font-medium uppercase">Désactivé</span>}
+                </td>
+                <td className="p-3 text-ink-900/40">—</td>
+                <td className="p-3 text-xs text-amber-700" colSpan={2}>Stock non suivi</td>
+                <td className="p-3" colSpan={3}><DefinirStockInline productId={p.id} /></td>
+              </tr>
+            ))}
+            {rows.length === 0 && nonSuivis.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-ink-900/40">Aucune donnée de stock.</td></tr>}
           </tbody>
         </table>
       </Card>

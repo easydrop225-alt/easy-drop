@@ -14,9 +14,12 @@ export function ProduitForm({
   produit,
   action = creerProduit,
   submitLabel = "Créer le produit",
+  stock,
 }: {
   categories: Category[];
   produit?: Product;
+  /** simple : produit sans variantes (stock modifiable ici) ; variantes : stock géré par variante. */
+  stock?: { mode: "simple"; valeur: number | null } | { mode: "variantes"; total: number };
   action?: ProduitAction;
   submitLabel?: string;
 }) {
@@ -87,6 +90,22 @@ export function ProduitForm({
         </div>
         <div><Label htmlFor="couleurs">Couleurs (séparées par des virgules)</Label><Input id="couleurs" name="couleurs" placeholder="Noir, Beige, Blanc" defaultValue={produit?.couleurs?.join(", ")} /></div>
         <div><Label htmlFor="tailles">Tailles (séparées par des virgules)</Label><Input id="tailles" name="tailles" placeholder="S, M, L, XL" defaultValue={produit?.tailles?.join(", ")} /></div>
+        {stock?.mode === "variantes" ? (
+          <div className="rounded-xl bg-beige-100 p-3 text-sm">
+            <p className="font-medium">Stock : {stock.total} pièce{stock.total > 1 ? "s" : ""}</p>
+            <p className="text-xs text-ink-900/60">Ce produit a des variantes : son stock se règle variante par variante, dans le bloc « Variantes » plus bas (ou dans Admin &gt; Stocks).</p>
+          </div>
+        ) : (
+          <div>
+            <Label htmlFor="stock">Stock disponible</Label>
+            <Input id="stock" name="stock" type="number" min={0} placeholder="Ex : 50" defaultValue={stock?.valeur ?? undefined} />
+            <input type="hidden" name="stockAvant" value={stock?.valeur ?? ""} />
+            <p className="mt-1 text-xs text-ink-900/50">
+              Nombre de pièces en stock. Il baisse automatiquement à chaque commande. Laisse vide si tu ne veux pas suivre le stock de ce produit.
+              {" "}Si le produit a des couleurs ou tailles différentes, ajoute plutôt des variantes avec leur propre stock.
+            </p>
+          </div>
+        )}
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="actif" defaultChecked={produit?.actif ?? true} /> Produit actif
         </label>

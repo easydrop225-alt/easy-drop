@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { estVarianteStandard } from "@/lib/produits/libelle-variante";
 import Image from "next/image";
 import { Input, Label } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -118,7 +119,28 @@ export function AjouterProduitCard({
             )}
           </div>
 
-          {stagingVariantes.length > 0 ? (
+          {stagingVariantes.length === 1 && estVarianteStandard(stagingVariantes[0]) ? (
+            (() => {
+              // Produit sans variantes dont le stock est suivi (variante « Standard » invisible)
+              const v = stagingVariantes[0]!;
+              const stock = v.inventory?.[0]?.quantite_disponible ?? 0;
+              return (
+                <div>
+                  <Label htmlFor="quantiteStandard">Quantité</Label>
+                  <Input
+                    id="quantiteStandard"
+                    type="number"
+                    min={0}
+                    max={stock > 0 ? stock : 0}
+                    disabled={stock <= 0}
+                    value={stagingQuantites[v.id] || ""}
+                    onChange={(e) => onQuantiteChange(v.id, Number(e.target.value))}
+                  />
+                  <p className={`mt-1 text-xs ${stock > 0 ? "text-ink-900/50" : "text-red-600"}`}>{stock > 0 ? "En stock" : "Rupture de stock"}</p>
+                </div>
+              );
+            })()
+          ) : stagingVariantes.length > 0 ? (
             <div className="space-y-2">
               <Label>Variantes commandées (quantité par couleur/taille)</Label>
               <div className="divide-y divide-ink-900/5 rounded-xl border border-ink-900/10">

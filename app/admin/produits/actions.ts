@@ -5,6 +5,15 @@ import { produitSchema } from "@/lib/validations/schemas";
 import { champsPrixModifies } from "@/lib/produits/historique-prix";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { appliquerStockProduit } from "@/lib/produits/stock-produit";
+
+/** Champ « Stock » de la fiche produit (produit sans variantes) : vide = non renseigné. */
+function lireStock(formData: FormData): number | null {
+  const brut = String(formData.get("stock") ?? "").trim();
+  if (brut === "") return null;
+  const n = Number(brut);
+  return Number.isFinite(n) ? Math.round(n) : null;
+}
 
 function slugify(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -74,7 +83,14 @@ export async function creerProduit(_prevState: unknown, formData: FormData) {
 
   if (error) return { error: error.message };
 
+  const stock = lireStock(formData);
+  if (stock != null) {
+    const res = await appliquerStockProduit(supabase, product.id, stock);
+    if (res.error) return { error: `Produit créé, mais stock non enregistré : ${res.error}` };
+  }
+
   revalidatePath("/admin/produits");
+  revalidatePath("/admin/stocks");
   redirect(`/admin/produits/${product.id}/edit`);
 }
 
@@ -114,6 +130,15 @@ export async function modifierProduit(productId: string, _prevState: unknown, fo
     .eq("id", productId);
 
   if (error) return { error: error.message };
+
+  // Stock (produit sans variantes) : enregistré seulement s'il a été modifié.
+  const stock = lireStock(formData);
+  const stockAvant = String(formData.get("stockAvant") ?? "");
+  if (stock != null && String(stock) !== stockAvant) {
+    const res = await appliquerStockProduit(supabase, productId, stock);
+    if (res.error) return { error: res.error };
+    revalidatePath("/admin/stocks");
+  }
 
   if (produitActuel) {
     const changements = champsPrixModifies(produitActuel, nouveauxPrix);

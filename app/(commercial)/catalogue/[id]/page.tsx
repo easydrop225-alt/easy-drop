@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { DescriptionCopiable } from "@/components/shared/description-copiable";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -112,6 +113,8 @@ export default async function MediasProduitPage({
           Créer une commande
         </Link>
       </div>
+
+      {(product as Product).description?.trim() && <DescriptionCopiable texte={(product as Product).description!.trim()} />}
 
       <Card>
         <h2 className="mb-3 font-medium">
