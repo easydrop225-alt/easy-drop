@@ -87,17 +87,17 @@ export const nouvelleCommandeSchema = z
   .superRefine((data, ctx) => {
     if (data.zone === "abidjan") {
       if (!data.clientCommune || data.clientCommune.trim().length < 2) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Commune requise.", path: ["clientCommune"] });
+        ctx.addIssue({ code: "custom", message: "Commune requise.", path: ["clientCommune"] });
       }
       if (!data.clientAdresse || data.clientAdresse.trim().length < 2) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Quartier requis.", path: ["clientAdresse"] });
+        ctx.addIssue({ code: "custom", message: "Quartier requis.", path: ["clientAdresse"] });
       }
     } else {
       if (!data.villeExpedition || data.villeExpedition.trim().length < 2) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Ville de destination requise.", path: ["villeExpedition"] });
+        ctx.addIssue({ code: "custom", message: "Ville de destination requise.", path: ["villeExpedition"] });
       }
       if (!data.gare || data.gare.trim().length < 2) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Gare requise.", path: ["gare"] });
+        ctx.addIssue({ code: "custom", message: "Gare requise.", path: ["gare"] });
       }
     }
   });
